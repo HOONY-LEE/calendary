@@ -27,8 +27,8 @@ export function AppleSpinner({ size = 20, className = "" }: { size?: number; cla
             backgroundColor: "currentColor",
             transform: `rotate(${i * 45}deg) translateY(${size * 0.22}px)`,
             transformOrigin: `${size * 0.045}px ${size / 2}px`,
-            animation: `appleSpinnerFade 1.05s linear infinite`,
-            animationDelay: `${-(bars - i) * (1.05 / bars)}s`,
+            animation: `appleSpinnerFade 1.4s linear infinite`,
+            animationDelay: `${-(bars - i) * (1.4 / bars)}s`,
           }}
         />
       ))}
