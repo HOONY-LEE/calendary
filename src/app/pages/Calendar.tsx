@@ -1289,6 +1289,7 @@ export function Calendar() {
                 endDate: selectedEvent.endDate,
                 recurrence: selectedEvent.recurrence,
                 rrule: selectedEvent.rrule,
+                isGoogleEvent: selectedEvent.isGoogleEvent,
               }
             : null
         }

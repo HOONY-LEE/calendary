@@ -113,6 +113,7 @@ interface EventCreatePopoverProps {
     endDate?: Date;
     recurrence?: RecurrenceRule;
     rrule?: string;
+    isGoogleEvent?: boolean;
   } | null;
   onDelete?: (
     deleteType?: "this" | "following" | "all",
@@ -1226,7 +1227,10 @@ export function EventCreatePopover({
               {/* 카테고리 목록 스크롤 영역 */}
               <DndProvider backend={HTML5Backend}>
                 <div className="space-y-0 max-h-[240px] overflow-y-auto scrollbar-macos mb-0">
-                  {localCategories.map((cat, index) => {
+                  {(event?.isGoogleEvent
+                    ? localCategories.filter((cat) => cat.isGoogleCalendar)
+                    : localCategories
+                  ).map((cat, index) => {
                     const isChecked = formData.categoryId === cat.id;
                     const isEditing = editingCategoryId === cat.id;
 
