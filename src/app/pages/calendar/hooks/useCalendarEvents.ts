@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { Session, User } from "@supabase/supabase-js";
 import type { CalendarEvent, Category, ViewType } from "../types";
@@ -6,6 +6,7 @@ import { eventsAPI, DBEvent } from "../../../../lib/api";
 import { projectId, publicAnonKey } from "../../../../lib/supabase-info";
 import { toast } from "sonner";
 import { getGoogleToken } from "../../../../lib/google-token";
+import { getCachedEvents, setCachedEvents, isCacheStale } from "../../../../lib/events-cache";
 
 interface UseCalendarEventsParams {
   session: Session | null;
@@ -28,8 +29,10 @@ export function useCalendarEvents({
   signOut,
   language,
 }: UseCalendarEventsParams): UseCalendarEventsReturn {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // 캐시가 있으면 즉시 사용, 없으면 빈 배열
+  const cached = getCachedEvents();
+  const [events, setEvents] = useState<CalendarEvent[]>(cached || []);
+  const [isLoading, setIsLoading] = useState(!cached);
 
   // 서버에서 이벤트 로드 함수 (컴포넌트 레벨)
   const loadEvents = useCallback(async () => {
@@ -207,6 +210,7 @@ export function useCalendarEvents({
 
       const allEvents = [...calendarEvents, ...googleEvents];
       setEvents(allEvents);
+      setCachedEvents(allEvents);
       console.log(
         "[Calendar] Successfully loaded",
         calendarEvents.length, "Supabase +",
@@ -271,13 +275,36 @@ export function useCalendarEvents({
   }, [session, language, signOut]);
 
   // 이벤트 로드 useEffect
+  // 캐시가 유효하면 백그라운드에서 조용히 갱신, 캐시가 없으면 즉시 로드
+  const hasInitialCache = useRef(!!cached);
   useEffect(() => {
-    loadEvents();
+    if (hasInitialCache.current && !isCacheStale()) {
+      // 캐시가 유효: 로딩 없이 백그라운드 갱신
+      hasInitialCache.current = false;
+      console.log("[Calendar] ♻️ Using cached events, refreshing in background...");
+      setIsLoading(false);
+      // 백그라운드 갱신 (로딩 스피너 없이)
+      loadEvents().then(() => {
+        console.log("[Calendar] ♻️ Background refresh complete");
+      });
+    } else {
+      hasInitialCache.current = false;
+      loadEvents();
+    }
   }, [session, language]);
+
+  // setEvents를 래핑하여 캐시도 동기화
+  const setEventsWithCache = useCallback((updater: React.SetStateAction<CalendarEvent[]>) => {
+    setEvents((prev) => {
+      const newEvents = typeof updater === 'function' ? updater(prev) : updater;
+      setCachedEvents(newEvents);
+      return newEvents;
+    });
+  }, []);
 
   return {
     events,
-    setEvents,
+    setEvents: setEventsWithCache,
     loadEvents,
     isLoading,
     setIsLoading,
