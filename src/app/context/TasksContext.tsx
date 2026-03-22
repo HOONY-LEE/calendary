@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useAuth } from './AuthContext';
 import { projectId, publicAnonKey } from '../../lib/supabase-info';
 import { categoriesAPI, tasksAPI } from '../../lib/api';
+import { getGoogleToken } from '../../lib/google-token';
 
 interface Task {
   id: number | string;
@@ -107,7 +108,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         hasUser: !!session.user,
         email: session.user?.email,
         hasAccessToken: !!session.access_token,
-        hasProviderToken: !!session.provider_token,
+        hasProviderToken: !!getGoogleToken(session),
       });
       return [];
     }
@@ -225,7 +226,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       return [];
     }
 
-    if (!session.provider_token) {
+    if (!getGoogleToken(session)) {
       console.log('[TasksContext] No Google provider token');
       return [];
     }
@@ -243,7 +244,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
           headers: {
             Authorization: `Bearer ${publicAnonKey}`,
             'X-User-JWT': session.access_token,
-            'X-Google-Access-Token': session.provider_token,
+            'X-Google-Access-Token': getGoogleToken(session),
             'Content-Type': 'application/json',
           },
         }
@@ -420,7 +421,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
 
     try {
       if (task.isGoogleTask && task.googleTaskId && task.googleListId) {
-        const accessToken = session?.provider_token;
+        const accessToken = getGoogleToken(session);
         if (!accessToken) {
           console.error('[TasksContext] No provider token for Google Task update');
           return;
@@ -491,7 +492,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
 
     try {
       if (task.isGoogleTask && task.googleTaskId && task.googleListId) {
-        const accessToken = session?.provider_token;
+        const accessToken = getGoogleToken(session);
         if (!accessToken) return;
 
         await fetch(

@@ -109,6 +109,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "../../lib/supabase";
 import { projectId, publicAnonKey } from "../../lib/supabase-info";
+import { getGoogleToken } from "../../lib/google-token";
 import googleIcon from "@/assets/ebb9edcfadcb4a0ed9d4fb9a34c8c95ec3d0a6aa.png";
 import { YearView } from "./calendar/views/YearView";
 import { MonthView } from "./calendar/views/MonthView";
@@ -385,16 +386,16 @@ export function Calendar() {
         );
         console.log(
           "  - Has provider token?",
-          !!session.provider_token,
+          !!getGoogleToken(session),
         );
         console.log(
           "  - Will create in Google Calendar?",
-          isGoogleCalendarCategory && !!session.provider_token,
+          isGoogleCalendarCategory && !!getGoogleToken(session),
         );
 
         if (
           isGoogleCalendarCategory &&
-          session.provider_token
+          getGoogleToken(session)
         ) {
           // 구글 캘린더에 직접 생성
           console.log(
@@ -410,7 +411,7 @@ export function Calendar() {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${publicAnonKey}`,
                 "X-User-JWT": session.access_token,
-                "X-Google-Access-Token": session.provider_token,
+                "X-Google-Access-Token": getGoogleToken(session),
               },
               body: JSON.stringify({
                 title: formData.title,
@@ -605,12 +606,29 @@ export function Calendar() {
           formData.categoryId = selectedEvent.categoryId;
         }
 
+        // 구글 캘린더 이벤트인 경우 토큰 확인
+        if (selectedEvent.isGoogleEvent && !getGoogleToken(session)) {
+          toast.error(
+            language === "ko"
+              ? "구글 캘린더 연동이 만료되었습니다. 설정에서 다시 연동해주세요."
+              : "Google Calendar connection expired. Please reconnect in Settings.",
+            {
+              duration: 5000,
+              action: {
+                label: "Settings",
+                onClick: () => navigate("/settings"),
+              },
+            },
+          );
+          return;
+        }
+
         // 구글 캘린더 이벤트인 경우 구글 API로 수정
         if (
           selectedEvent.isGoogleEvent &&
           selectedEvent.googleEventId &&
           selectedEvent.googleCalendarId &&
-          session.provider_token
+          getGoogleToken(session)
         ) {
           const response = await fetch(
             `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(selectedEvent.googleCalendarId)}/${selectedEvent.googleEventId}`,
@@ -620,7 +638,7 @@ export function Calendar() {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${publicAnonKey}`,
                 "X-User-JWT": session.access_token,
-                "X-Google-Access-Token": session.provider_token,
+                "X-Google-Access-Token": getGoogleToken(session),
               },
               body: JSON.stringify({
                 title: formData.title,
@@ -750,12 +768,31 @@ export function Calendar() {
     if (!selectedEvent || !session?.access_token) return;
 
     try {
+      // 구글 캘린더 이벤트인 경우
+      if (selectedEvent.isGoogleEvent) {
+        if (!getGoogleToken(session)) {
+          toast.error(
+            language === "ko"
+              ? "구글 캘린더 연동이 만료되었습니다. 설정에서 다시 연동해주세요."
+              : "Google Calendar connection expired. Please reconnect in Settings.",
+            {
+              duration: 5000,
+              action: {
+                label: "Settings",
+                onClick: () => navigate("/settings"),
+              },
+            },
+          );
+          return;
+        }
+      }
+
       // 구글 캘린더 이벤트인 경우 구글 API로 삭제
       if (
         selectedEvent.isGoogleEvent &&
         selectedEvent.googleEventId &&
         selectedEvent.googleCalendarId &&
-        session.provider_token
+        getGoogleToken(session)
       ) {
         const response = await fetch(
           `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(selectedEvent.googleCalendarId)}/${selectedEvent.googleEventId}`,
@@ -764,7 +801,7 @@ export function Calendar() {
             headers: {
               Authorization: `Bearer ${publicAnonKey}`,
               "X-User-JWT": session.access_token,
-              "X-Google-Access-Token": session.provider_token,
+              "X-Google-Access-Token": getGoogleToken(session),
             },
           },
         );
@@ -1318,43 +1355,88 @@ export function Calendar() {
                 selectedCategory?.isGoogleCalendar &&
                 selectedCategory?.googleCalendarId;
 
+              // 구글 이벤트인 경우 토큰 확인
+              if (selectedEvent.isGoogleEvent && !getGoogleToken(session)) {
+                toast.error(
+                  language === "ko"
+                    ? "구글 캘린더 연동이 만료되었습니다. 설정에서 다시 연동해주세요."
+                    : "Google Calendar connection expired. Please reconnect in Settings.",
+                  { duration: 5000 },
+                );
+                return;
+              }
+
               if (
-                isGoogleCalendarCategory &&
-                session.provider_token &&
+                selectedEvent.isGoogleEvent &&
+                getGoogleToken(session) &&
                 selectedEvent.googleEventId &&
                 selectedEvent.googleCalendarId
               ) {
-                // 구글 캘린더 일정 수정
-                const updateResponse = await fetch(
-                  `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${selectedEvent.googleEventId}`,
-                  {
-                    method: "PUT",
-                    headers: {
-                      "Content-Type": "application/json",
-                      Authorization: `Bearer ${publicAnonKey}`,
-                      "X-Provider-Token":
-                        session.provider_token,
-                      "X-Calendar-Id":
-                        selectedEvent.googleCalendarId,
-                    },
-                    body: JSON.stringify({
-                      summary: eventData.title,
-                      description: eventData.description || "",
-                      start: isAllDay
-                        ? { date: formatDate(startDate) }
-                        : { dateTime: startDate.toISOString() },
-                      end: isAllDay
-                        ? { date: formatDate(dbEndDate) }
-                        : { dateTime: endDate.toISOString() },
-                      recurrence,
-                    }),
-                  },
+                const newCategory = categories.find(
+                  (c) => c.id === eventData.categoryId,
                 );
+                const newGoogleCalendarId = newCategory?.googleCalendarId;
+                const categoryChanged = newGoogleCalendarId &&
+                  newGoogleCalendarId !== selectedEvent.googleCalendarId;
 
-                if (!updateResponse.ok) {
-                  throw new Error(
-                    "Failed to update Google Calendar event",
+                const eventBody = {
+                  title: eventData.title,
+                  description: eventData.description || "",
+                  startDate: formatDate(startDate),
+                  endDate: formatDate(dbEndDate),
+                  startTime: eventData.startTime || undefined,
+                  endTime: eventData.endTime || undefined,
+                  isAllDay,
+                  rrule: recurrence?.[0] || undefined,
+                };
+
+                if (categoryChanged) {
+                  // 다른 구글 캘린더로 이동 + 수정
+                  const moveResponse = await fetch(
+                    `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(selectedEvent.googleCalendarId)}/${selectedEvent.googleEventId}/move`,
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${publicAnonKey}`,
+                        "X-User-JWT": session.access_token,
+                        "X-Google-Access-Token":
+                          getGoogleToken(session),
+                      },
+                      body: JSON.stringify({
+                        destinationCalendarId: newGoogleCalendarId,
+                        eventData: eventBody,
+                      }),
+                    },
                   );
+
+                  if (!moveResponse.ok) {
+                    throw new Error(
+                      "Failed to move Google Calendar event",
+                    );
+                  }
+                } else {
+                  // 같은 캘린더 내 수정
+                  const updateResponse = await fetch(
+                    `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(selectedEvent.googleCalendarId)}/${selectedEvent.googleEventId}`,
+                    {
+                      method: "PATCH",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${publicAnonKey}`,
+                        "X-User-JWT": session.access_token,
+                        "X-Google-Access-Token":
+                          getGoogleToken(session),
+                      },
+                      body: JSON.stringify(eventBody),
+                    },
+                  );
+
+                  if (!updateResponse.ok) {
+                    throw new Error(
+                      "Failed to update Google Calendar event",
+                    );
+                  }
                 }
 
                 toast.success(
@@ -1362,7 +1444,7 @@ export function Calendar() {
                     ? "일정이 수정되었습니다"
                     : "Event updated",
                 );
-              } else {
+              } else if (!selectedEvent.isGoogleEvent) {
                 // 로컬 일정 수정
                 await eventsAPI.update(
                   selectedEvent.id,
@@ -1405,25 +1487,32 @@ export function Calendar() {
             const selectedCategory = categories.find(
               (c) => c.id === selectedEvent.categoryId,
             );
-            const isGoogleCalendarEvent =
-              selectedCategory?.isGoogleCalendar &&
-              selectedEvent.googleEventId &&
-              selectedEvent.googleCalendarId;
+            // 구글 이벤트인 경우 토큰 확인
+            if (selectedEvent.isGoogleEvent && !getGoogleToken(session)) {
+              toast.error(
+                language === "ko"
+                  ? "구글 캘린더 연동이 만료되었습니다. 설정에서 다시 연동해주세요."
+                  : "Google Calendar connection expired. Please reconnect in Settings.",
+                { duration: 5000 },
+              );
+              return;
+            }
 
             if (
-              isGoogleCalendarEvent &&
-              session.provider_token
+              selectedEvent.isGoogleEvent &&
+              getGoogleToken(session) &&
+              selectedEvent.googleEventId &&
+              selectedEvent.googleCalendarId
             ) {
               // 구글 캘린더 일정 삭제
               const deleteResponse = await fetch(
-                `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${selectedEvent.googleEventId}`,
+                `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(selectedEvent.googleCalendarId)}/${selectedEvent.googleEventId}`,
                 {
                   method: "DELETE",
                   headers: {
                     Authorization: `Bearer ${publicAnonKey}`,
-                    "X-Provider-Token": session.provider_token,
-                    "X-Calendar-Id":
-                      selectedEvent.googleCalendarId,
+                    "X-User-JWT": session.access_token,
+                    "X-Google-Access-Token": getGoogleToken(session),
                   },
                 },
               );
@@ -1439,7 +1528,7 @@ export function Calendar() {
                   ? "일정이 삭제되었습니다"
                   : "Event deleted",
               );
-            } else {
+            } else if (!selectedEvent.isGoogleEvent) {
               // 로컬 일정 삭제
               await eventsAPI.delete(
                 selectedEvent.id,

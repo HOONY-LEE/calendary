@@ -7,6 +7,7 @@ import { supabase } from "../../lib/supabase";
 import { toast } from "sonner";
 import { useTheme } from "../context/ThemeContext";
 import { projectId, publicAnonKey } from "../../lib/supabase-info";
+import { getGoogleToken } from "../../lib/google-token";
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
@@ -27,39 +28,42 @@ export default function Settings() {
   // OAuth 콜백 후 연동 상태 다시 확인
   useEffect(() => {
     const handleOAuthCallback = async () => {
-      // migrate=true 파라미터 확인
+      // migrate=true 또는 api_connect=true 파라미터 확인
       const urlParams = new URLSearchParams(window.location.search);
       const shouldMigrate = urlParams.get('migrate') === 'true';
-      
-      // URL에 hash fragment가 있거나 migrate 파라미터가 있으면 OAuth 콜백 처리
-      if (window.location.hash || shouldMigrate) {
-        console.log('[Settings] OAuth callback detected (hash or migrate param), checking connection...');
+      const isApiConnect = urlParams.get('api_connect') === 'true';
+
+      // URL에 hash fragment가 있거나 파라미터가 있으면 OAuth 콜백 처리
+      if (window.location.hash || shouldMigrate || isApiConnect) {
+        console.log('[Settings] OAuth callback detected, checking connection...');
         // 약간의 딜레이 후 연동 상태 재확인
         setTimeout(async () => {
           await checkGoogleConnection();
           // 연동 성공 메시지
           const { data: { session } } = await supabase.auth.getSession();
-          if (session?.provider_token) {
+          if (getGoogleToken(session)) {
             console.log('[Settings] ✅ Google Calendar connected successfully');
-            console.log('[Settings] Provider token (first 30 chars):', session.provider_token.substring(0, 30) + '...');
-            
-            // migrate=true 파라미터가 있으면 자동으로 마이그레이션 실행
+            console.log('[Settings] Provider token (first 30 chars):', getGoogleToken(session).substring(0, 30) + '...');
+
             if (shouldMigrate) {
+              // migrate=true: 데이터 일회성 가져오기
               console.log('[Settings] 🔄 Auto-migration triggered');
               toast.success("구글 연동 완료! 데이터를 가져오는 중...");
-              // URL 파라미터 제거
               window.history.replaceState({}, '', window.location.pathname);
-              // 마이그레이션 실행
-              console.log('[Settings] Migrating Google Calendar data...');
               setIsMigrating(true);
-              await performMigration(session.provider_token);
+              await performMigration(getGoogleToken(session));
               setIsMigrating(false);
+            } else if (isApiConnect) {
+              // api_connect=true: API 실시간 연동 완료
+              console.log('[Settings] 🔄 API Connect - syncing calendars...');
+              window.history.replaceState({}, '', window.location.pathname);
+              toast.success("✅ 구글 캘린더 API 연동 완료! 캘린더 페이지에서 구글 일정이 실시간으로 표시됩니다.", { duration: 5000 });
             } else {
               toast.success(t("settings.googleCalendar.connected"));
             }
             
             // 토큰 스코프 확인
-            await checkTokenScopes(session.provider_token);
+            await checkTokenScopes(getGoogleToken(session));
           }
         }, 1000);
       }
@@ -118,7 +122,7 @@ export default function Settings() {
       
       console.log('[Settings] 🔍 Checking Google connection...');
       console.log('[Settings] Session exists?', !!session);
-      console.log('[Settings] Provider token exists?', !!session?.provider_token);
+      console.log('[Settings] Provider token exists?', !!getGoogleToken(session));
       
       if (session) {
         // provider_token이 있는지 확인
@@ -136,11 +140,11 @@ export default function Settings() {
           console.log('[Settings] ✅ Google identity found');
           setIsGoogleConnected(true);
           // provider_token은 세션에서 가져와야 함
-          if (session.provider_token) {
-            console.log('[Settings] ✅ Provider token exists (first 30 chars):', session.provider_token.substring(0, 30) + '...');
-            setGoogleAccessToken(session.provider_token);
+          if (getGoogleToken(session)) {
+            console.log('[Settings] ✅ Provider token exists (first 30 chars):', getGoogleToken(session).substring(0, 30) + '...');
+            setGoogleAccessToken(getGoogleToken(session));
             // 토큰 스코프 확인
-            await checkTokenScopes(session.provider_token);
+            await checkTokenScopes(getGoogleToken(session));
           } else {
             console.log('[Settings] ⚠️ Google identity exists but no provider token');
           }
@@ -393,11 +397,27 @@ export default function Settings() {
   const handleConnectGoogleAPI = async () => {
     setLoading(true);
     try {
+      // 이미 토큰이 있으면 OAuth 없이 바로 연동 완료
+      if (googleAccessToken) {
+        const hasCalendarScope = tokenScopes.some(
+          scope => scope === 'https://www.googleapis.com/auth/calendar'
+        );
+
+        if (hasCalendarScope) {
+          console.log('[Settings] ✅ Already has calendar scope, API connect complete');
+          toast.success("✅ 구글 캘린더 API 연동 완료! 캘린더 페이지에서 구글 일정이 실시간으로 표시됩니다.", { duration: 5000 });
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 토큰이 없거나 스코프가 부족하면 OAuth 실행
+      console.log('[Settings] No valid token, initiating OAuth...');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           scopes: "openid email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks",
-          redirectTo: `${window.location.origin}/settings`,
+          redirectTo: `${window.location.origin}/settings?api_connect=true`,
           queryParams: {
             access_type: "offline",
             prompt: "consent",

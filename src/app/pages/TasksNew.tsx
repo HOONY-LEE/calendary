@@ -22,6 +22,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import { useAuth } from "../context/AuthContext";
 import { useTasks } from "../context/TasksContext";
 import { projectId, publicAnonKey } from "../../lib/supabase-info";
+import { getGoogleToken } from "../../lib/google-token";
 
 export function Tasks() {
   const { t, i18n } = useTranslation();
@@ -191,7 +192,7 @@ export function Tasks() {
       if (
         syncToGoogle &&
         hasGoogleTasks &&
-        session?.provider_token
+        getGoogleToken(session)
       ) {
         console.log("[Tasks] Creating Google Task...");
 
@@ -221,7 +222,7 @@ export function Tasks() {
               "Content-Type": "application/json",
               Authorization: `Bearer ${publicAnonKey}`,
               "X-User-JWT": session.access_token,
-              "X-Google-Access-Token": session.provider_token,
+              "X-Google-Access-Token": getGoogleToken(session),
             },
             body: JSON.stringify({
               title: newTaskTitle,

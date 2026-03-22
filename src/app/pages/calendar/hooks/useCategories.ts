@@ -3,7 +3,10 @@ import type { Session, User } from "@supabase/supabase-js";
 import type { Category } from "../types";
 import { categoriesAPI, DBCategory } from "../../../../lib/api";
 import { supabase } from "../../../../lib/supabase";
+import { projectId, publicAnonKey } from "../../../../lib/supabase-info";
 import { toast } from "sonner";
+import { GOOGLE_CALENDAR_COLOR_MAP } from "../utils/colorUtils";
+import { getGoogleToken } from "../../../../lib/google-token";
 
 interface UseCategoriesParams {
   session: Session | null;
@@ -378,9 +381,6 @@ export function useCategories({
           }),
         );
 
-        // 🔥 구글 캘린더 카테고리는 provider_token이 있을 때만 추가
-        let allCategories = [...mappedCategories];
-
         // 메이크 프리뷰 환경 체크 (makeproxy만 해당, figma.site는 배포 환경이므로 제외)
         const hostname = window.location.hostname;
         const isFigmaMakePreview =
@@ -394,7 +394,7 @@ export function useCategories({
         );
         console.log(
           "  - Provider token exists?",
-          !!session?.provider_token,
+          !!getGoogleToken(session),
         );
 
         // 🔥 order_index로 정렬 (오름차순)
@@ -404,10 +404,50 @@ export function useCategories({
           return aOrder - bOrder;
         });
 
-        // Google Calendar 카테고리는 이벤트 로드 시 동적으로 추가됨
-        setCategories(sortedCategories);
+        // 🔥 Google Calendar 카테고리 동적 로드
+        let allCategories = [...sortedCategories];
+
+        if (getGoogleToken(session)) {
+          try {
+            console.log("[Calendar] 📡 Loading Google Calendar list...");
+            const now = new Date();
+            const timeMin = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+            const timeMax = new Date(now.getFullYear(), now.getMonth() + 2, 0).toISOString();
+
+            const response = await fetch(
+              `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${publicAnonKey}`,
+                  'X-User-JWT': session.access_token,
+                  'X-Google-Access-Token': getGoogleToken(session),
+                },
+              }
+            );
+
+            if (response.ok) {
+              const data = await response.json();
+              const googleCalendars = data.calendars || [];
+
+              const googleCategories: Category[] = googleCalendars.map((cal: any) => ({
+                id: `gcal-${cal.id}`,
+                name: cal.summary || cal.id,
+                color: cal.backgroundColor || GOOGLE_CALENDAR_COLOR_MAP[cal.colorId] || '#4285F4',
+                isGoogleCalendar: true,
+                googleCalendarId: cal.id,
+              }));
+
+              allCategories = [...sortedCategories, ...googleCategories];
+              console.log("[Calendar] ✅ Added", googleCategories.length, "Google Calendar categories");
+            }
+          } catch (error) {
+            console.warn("[Calendar] ⚠️ Failed to load Google Calendars:", error);
+          }
+        }
+
+        setCategories(allCategories);
         setSelectedCategoryIds(
-          sortedCategories.map((c) => c.id),
+          allCategories.map((c) => c.id),
         );
 
         // 첫 번째 카테고리를 기본값으로 설정 (order_index가 가장 작은 카테고리 = 맨 위)

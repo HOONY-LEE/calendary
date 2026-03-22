@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import { eventsAPI, categoriesAPI } from "../../../../lib/api";
 import { projectId, publicAnonKey } from "../../../../lib/supabase-info";
+import { getGoogleToken } from "../../../../lib/google-token";
 
 interface PreviewEvent {
   title: string;
@@ -1424,12 +1425,12 @@ export function MonthView({
                         );
                         console.log(
                           "  - Has provider token?",
-                          !!session.provider_token,
+                          !!getGoogleToken(session),
                         );
 
                         if (
                           isGoogleCalendarCategory &&
-                          session.provider_token
+                          getGoogleToken(session)
                         ) {
                           // 구글 캘린더에 직접 생성
                           console.log(
@@ -1448,7 +1449,7 @@ export function MonthView({
                                 "X-User-JWT":
                                   session.access_token,
                                 "X-Google-Access-Token":
-                                  session.provider_token,
+                                  getGoogleToken(session),
                               },
                               body: JSON.stringify({
                                 title: eventData.title,

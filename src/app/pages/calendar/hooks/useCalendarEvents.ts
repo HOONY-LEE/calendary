@@ -3,7 +3,9 @@ import { useTranslation } from "react-i18next";
 import type { Session, User } from "@supabase/supabase-js";
 import type { CalendarEvent, Category, ViewType } from "../types";
 import { eventsAPI, DBEvent } from "../../../../lib/api";
+import { projectId, publicAnonKey } from "../../../../lib/supabase-info";
 import { toast } from "sonner";
+import { getGoogleToken } from "../../../../lib/google-token";
 
 interface UseCalendarEventsParams {
   session: Session | null;
@@ -126,19 +128,89 @@ export function useCalendarEvents({
         },
       );
 
-      // 🔥 구글 캘린더 자동 로드 제거 - 나중에 수동 연동 기능 추가 예정
-      console.log(
-        "[Calendar] ⏭️ Google Calendar auto-sync disabled - manual integration only",
-      );
-      const googleEvents: CalendarEvent[] = [];
+      // 🔥 구글 캘린더 실시간 동기화
+      let googleEvents: CalendarEvent[] = [];
 
-      // Supabase 일정만 사용
+      if (getGoogleToken(session)) {
+        try {
+          const now = new Date();
+          const timeMin = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+          const timeMax = new Date(now.getFullYear(), now.getMonth() + 2, 0).toISOString();
+
+          console.log("[Calendar] 📡 Fetching Google Calendar events...");
+
+          const response = await fetch(
+            `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${publicAnonKey}`,
+                'X-User-JWT': session.access_token,
+                'X-Google-Access-Token': getGoogleToken(session),
+              },
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log("[Calendar] ✅ Google Calendar: ", data.events?.length || 0, "events from", data.calendars?.length || 0, "calendars");
+
+            googleEvents = (data.events || []).map((gEvent: any) => {
+              let startDate: Date;
+              let endDate: Date | undefined;
+              let startTime: string | undefined;
+              let endTime: string | undefined;
+
+              if (gEvent.start?.date) {
+                // 종일 일정
+                startDate = new Date(gEvent.start.date);
+                if (gEvent.end?.date && gEvent.end.date !== gEvent.start.date) {
+                  const eDate = new Date(gEvent.end.date);
+                  eDate.setDate(eDate.getDate() - 1); // Google은 exclusive end
+                  endDate = eDate;
+                }
+              } else {
+                // 시간 지정 일정
+                const s = new Date(gEvent.start?.dateTime);
+                const e = new Date(gEvent.end?.dateTime);
+                startDate = s;
+                startTime = `${s.getHours().toString().padStart(2, '0')}:${s.getMinutes().toString().padStart(2, '0')}`;
+                endTime = `${e.getHours().toString().padStart(2, '0')}:${e.getMinutes().toString().padStart(2, '0')}`;
+                if (s.toDateString() !== e.toDateString()) {
+                  endDate = e;
+                }
+              }
+
+              return {
+                id: `google-${gEvent.id}`,
+                title: gEvent.summary || '(제목 없음)',
+                date: startDate,
+                endDate,
+                startTime,
+                endTime,
+                description: gEvent.description,
+                isGoogleEvent: true,
+                googleEventId: gEvent.id,
+                googleCalendarId: gEvent.calendarId,
+                googleCalendarName: gEvent.calendarSummary,
+                categoryId: `gcal-${gEvent.calendarId}`,
+              } as CalendarEvent;
+            });
+          } else {
+            console.warn("[Calendar] ⚠️ Google Calendar fetch failed:", response.status);
+          }
+        } catch (error) {
+          console.warn("[Calendar] ⚠️ Google Calendar sync failed, showing local events only:", error);
+        }
+      } else {
+        console.log("[Calendar] ⏭️ No provider_token - skipping Google Calendar sync");
+      }
+
       const allEvents = [...calendarEvents, ...googleEvents];
       setEvents(allEvents);
       console.log(
         "[Calendar] Successfully loaded",
-        calendarEvents.length,
-        "Supabase events",
+        calendarEvents.length, "Supabase +",
+        googleEvents.length, "Google events",
       );
 
       if (calendarEvents.length === 0) {
