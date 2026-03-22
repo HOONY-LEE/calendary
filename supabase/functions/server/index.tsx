@@ -610,28 +610,25 @@ app.patch("/make-server-f973dbc1/google-calendar/events/:calendarId/:eventId", a
       event
     );
     
-    // 캐시 무효화
-    try {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL');
-      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-      const supabase = createClient(supabaseUrl, supabaseServiceKey);
-      
-      const prefix = `google_calendar_cache:${user.id}:`;
-      const { data: cacheRows } = await supabase
-        .from('kv_store_f973dbc1')
-        .select('key')
-        .like('key', `${prefix}%`);
-      
-      if (cacheRows && cacheRows.length > 0) {
-        const keys = cacheRows.map(row => row.key);
-        await kv.mdel(keys);
-        console.log('[PATCH /google-calendar/events] Cache invalidated:', keys.length, 'keys');
-      }
-    } catch (cacheError) {
-      console.warn('[PATCH /google-calendar/events] Cache invalidation failed:', cacheError);
-    }
-    
     console.log('[PATCH /google-calendar/events] Success - Updated event:', result.id);
+
+    // 🔥 캐시 무효화를 응답 후 비동기 실행 (응답 속도 개선)
+    const userId = user.id;
+    queueMicrotask(async () => {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        const prefix = `google_calendar_cache:${userId}:`;
+        const { data: cacheRows } = await supabase.from('kv_store_f973dbc1').select('key').like('key', `${prefix}%`);
+        if (cacheRows && cacheRows.length > 0) {
+          await kv.mdel(cacheRows.map(row => row.key));
+        }
+      } catch (e) {
+        console.warn('[PATCH] Cache invalidation failed:', e);
+      }
+    });
+
     return c.json({ event: result });
   } catch (error) {
     console.error('[PATCH /google-calendar/events] Error:', error);
@@ -664,28 +661,25 @@ app.delete("/make-server-f973dbc1/google-calendar/events/:calendarId/:eventId", 
     
     await googleCalendar.deleteGoogleCalendarEvent(googleAccessToken, calendarId, eventId);
     
-    // 캐시 무효화
-    try {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL');
-      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-      const supabase = createClient(supabaseUrl, supabaseServiceKey);
-      
-      const prefix = `google_calendar_cache:${user.id}:`;
-      const { data: cacheRows } = await supabase
-        .from('kv_store_f973dbc1')
-        .select('key')
-        .like('key', `${prefix}%`);
-      
-      if (cacheRows && cacheRows.length > 0) {
-        const keys = cacheRows.map(row => row.key);
-        await kv.mdel(keys);
-        console.log('[DELETE /google-calendar/events] Cache invalidated:', keys.length, 'keys');
-      }
-    } catch (cacheError) {
-      console.warn('[DELETE /google-calendar/events] Cache invalidation failed:', cacheError);
-    }
-    
     console.log('[DELETE /google-calendar/events] Success - Deleted event:', eventId);
+
+    // 🔥 캐시 무효화를 응답 후 비동기 실행 (응답 속도 개선)
+    const userId = user.id;
+    queueMicrotask(async () => {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        const prefix = `google_calendar_cache:${userId}:`;
+        const { data: cacheRows } = await supabase.from('kv_store_f973dbc1').select('key').like('key', `${prefix}%`);
+        if (cacheRows && cacheRows.length > 0) {
+          await kv.mdel(cacheRows.map(row => row.key));
+        }
+      } catch (e) {
+        console.warn('[DELETE] Cache invalidation failed:', e);
+      }
+    });
+
     return c.json({ success: true });
   } catch (error) {
     console.error('[DELETE /google-calendar/events] Error:', error);

@@ -787,15 +787,26 @@ export function Calendar() {
         }
       }
 
-      // 구글 캘린더 이벤트인 경우 구글 API로 삭제
+      // 🔥 낙관적 UI 업데이트: 먼저 UI에서 제거
+      const deletedEvent = selectedEvent;
+      setEvents(
+        events.filter((e) => e.id !== deletedEvent.id),
+      );
+      toast.success(
+        language === "ko"
+          ? "일정이 삭제되었습니다"
+          : "Event deleted",
+      );
+
+      // 구글 캘린더 이벤트인 경우 구글 API로 백그라운드 삭제
       if (
-        selectedEvent.isGoogleEvent &&
-        selectedEvent.googleEventId &&
-        selectedEvent.googleCalendarId &&
+        deletedEvent.isGoogleEvent &&
+        deletedEvent.googleEventId &&
+        deletedEvent.googleCalendarId &&
         getGoogleToken(session)
       ) {
-        const response = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(selectedEvent.googleCalendarId)}/${selectedEvent.googleEventId}`,
+        fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(deletedEvent.googleCalendarId)}/${deletedEvent.googleEventId}`,
           {
             method: "DELETE",
             headers: {
@@ -804,59 +815,32 @@ export function Calendar() {
               "X-Google-Access-Token": getGoogleToken(session),
             },
           },
-        );
-
-        if (!response.ok) {
-          const errorData = await response
-            .json()
-            .catch(() => ({}));
-
-          // 403 권한 부족 에러 처리
-          if (response.status === 403) {
-            console.error(
-              "[Calendar] ⚠️ Google Calendar permission error:",
-              errorData,
-            );
+        ).then(async (response) => {
+          if (!response.ok) {
+            console.error("[Calendar] Google delete failed, restoring event");
+            // 실패 시 이벤트 복원
+            setEvents((prev) => [...prev, deletedEvent]);
             toast.error(
               language === "ko"
-                ? "🚨 구글 캘린더 삭제 권한이 없습니다. Settings에서 재연결하세요."
-                : "🚨 No permission to delete Google Calendar event. Reconnect in Settings.",
-              {
-                duration: 8000,
-                action: {
-                  label: "Settings",
-                  onClick: () =>
-                    navigate("/settings?permission_error=true"),
-                },
-              },
-            );
-            throw new Error(
-              "Insufficient Google Calendar permissions",
+                ? "구글 캘린더 삭제에 실패했습니다. 일정이 복원됩니다."
+                : "Failed to delete from Google Calendar. Event restored.",
             );
           }
-
-          throw new Error(
-            "Failed to delete Google Calendar event",
+        }).catch(() => {
+          setEvents((prev) => [...prev, deletedEvent]);
+          toast.error(
+            language === "ko"
+              ? "구글 캘린더 삭제에 실패했습니다. 일정이 복원됩니다."
+              : "Failed to delete from Google Calendar. Event restored.",
           );
-        }
-
-        console.log("[Calendar] Google Calendar event deleted");
+        });
       } else {
         // 일반 이벤트는 Supabase DB에서 삭제
         await eventsAPI.delete(
-          selectedEvent.id,
+          deletedEvent.id,
           session.access_token,
         );
       }
-
-      setEvents(
-        events.filter((e) => e.id !== selectedEvent.id),
-      );
-      toast.success(
-        language === "ko"
-          ? "일정이 삭제되었습니다"
-          : "Event deleted",
-      );
     } catch (error) {
       console.error(
         "[Calendar] Failed to delete event:",
@@ -1486,8 +1470,25 @@ export function Calendar() {
                 );
               }
 
-              // 이벤트 목록 새로고침
-              await loadEvents();
+              // 🔥 낙관적 UI 업데이트: 전체 재조회 대신 로컬 상태만 갱신
+              setEvents((prev) =>
+                prev.map((e) =>
+                  e.id === selectedEvent.id
+                    ? {
+                        ...e,
+                        title: eventData.title,
+                        description: eventData.description,
+                        date: startDate,
+                        endDate: eventData.endDate ? new Date(eventData.endDate) : undefined,
+                        startTime: eventData.startTime,
+                        endTime: eventData.endTime,
+                        categoryId: eventData.categoryId,
+                        recurrence: eventData.recurrence,
+                        rrule: eventData.rrule,
+                      }
+                    : e,
+                ),
+              );
             }
           } catch (error) {
             console.error("Failed to update event:", error);
@@ -1516,15 +1517,28 @@ export function Calendar() {
               return;
             }
 
+            // 🔥 낙관적 UI 업데이트: 먼저 UI에서 제거
+            const deletedEvent = selectedEvent;
+            setEvents((prev) => prev.filter((e) => e.id !== deletedEvent.id));
+            toast.success(
+              language === "ko"
+                ? "일정이 삭제되었습니다"
+                : "Event deleted",
+            );
+            setCreatePopoverOpen(false);
+            setPopoverMode(false);
+            setPopoverAnchor(null);
+            setSelectedEvent(null);
+
             if (
-              selectedEvent.isGoogleEvent &&
+              deletedEvent.isGoogleEvent &&
               getGoogleToken(session) &&
-              selectedEvent.googleEventId &&
-              selectedEvent.googleCalendarId
+              deletedEvent.googleEventId &&
+              deletedEvent.googleCalendarId
             ) {
-              // 구글 캘린더 일정 삭제
-              const deleteResponse = await fetch(
-                `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(selectedEvent.googleCalendarId)}/${selectedEvent.googleEventId}`,
+              // 구글 캘린더 일정 백그라운드 삭제
+              fetch(
+                `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(deletedEvent.googleCalendarId)}/${deletedEvent.googleEventId}`,
                 {
                   method: "DELETE",
                   headers: {
@@ -1533,39 +1547,30 @@ export function Calendar() {
                     "X-Google-Access-Token": getGoogleToken(session),
                   },
                 },
-              );
-
-              if (!deleteResponse.ok) {
-                throw new Error(
-                  "Failed to delete Google Calendar event",
+              ).then(async (res) => {
+                if (!res.ok) {
+                  setEvents((prev) => [...prev, deletedEvent]);
+                  toast.error(
+                    language === "ko"
+                      ? "구글 캘린더 삭제 실패. 일정이 복원됩니다."
+                      : "Google delete failed. Event restored.",
+                  );
+                }
+              }).catch(() => {
+                setEvents((prev) => [...prev, deletedEvent]);
+                toast.error(
+                  language === "ko"
+                    ? "구글 캘린더 삭제 실패. 일정이 복원됩니다."
+                    : "Google delete failed. Event restored.",
                 );
-              }
-
-              toast.success(
-                language === "ko"
-                  ? "일정이 삭제되었습니다"
-                  : "Event deleted",
-              );
-            } else if (!selectedEvent.isGoogleEvent) {
+              });
+            } else if (!deletedEvent.isGoogleEvent) {
               // 로컬 일정 삭제
               await eventsAPI.delete(
-                selectedEvent.id,
+                deletedEvent.id,
                 session.access_token,
               );
-
-              toast.success(
-                language === "ko"
-                  ? "일정이 삭제되었습니다"
-                  : "Event deleted",
-              );
             }
-
-            // 이벤트 목록 새로고침
-            await loadEvents();
-            setCreatePopoverOpen(false);
-            setPopoverMode(false);
-            setPopoverAnchor(null);
-            setSelectedEvent(null);
           } catch (error) {
             console.error("Failed to delete event:", error);
             toast.error(
