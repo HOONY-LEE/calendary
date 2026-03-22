@@ -910,7 +910,7 @@ export function Calendar() {
       {/* 로딩 오버레이 */}
       {isLoading && (
         <div className="fixed inset-0 bg-black/5 z-50 flex items-center justify-center">
-          <AppleSpinner size={32} className="text-muted-foreground" />
+          <AppleSpinner size={44} className="text-muted-foreground" />
         </div>
       )}
 
