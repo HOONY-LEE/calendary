@@ -29,7 +29,6 @@ import {
   MoreVertical,
   Edit2,
   Trash2,
-  Loader2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../components/ui/button";
@@ -110,6 +109,7 @@ import { toast } from "sonner";
 import { supabase } from "../../lib/supabase";
 import { projectId, publicAnonKey } from "../../lib/supabase-info";
 import { getGoogleToken } from "../../lib/google-token";
+import { AppleSpinner } from "../components/AppleSpinner";
 import googleIcon from "@/assets/ebb9edcfadcb4a0ed9d4fb9a34c8c95ec3d0a6aa.png";
 import { YearView } from "./calendar/views/YearView";
 import { MonthView } from "./calendar/views/MonthView";
@@ -909,8 +909,8 @@ export function Calendar() {
     <div className="flex flex-col h-screen px-[24px] pt-[10px] pb-[24px] relative">
       {/* 로딩 오버레이 */}
       {isLoading && (
-        <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="fixed inset-0 bg-black/5 z-50 flex items-center justify-center">
+          <AppleSpinner size={32} className="text-muted-foreground" />
         </div>
       )}
 
