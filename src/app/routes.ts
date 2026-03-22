@@ -5,7 +5,7 @@ import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Calendar } from './pages/Calendar';
 import { Tasks } from './pages/TasksNew'; // 🔥 캐싱 최적화 버전
-import Settings from './pages/Settings';
+// Settings는 이제 SettingsDialog로 모달 표시 (별도 페이지 아님)
 // 🚧 통계 페이지 임시 숨김
 // import { Analytics } from './pages/Analytics';
 import { NotFound } from './pages/NotFound';
@@ -39,10 +39,7 @@ export const router = createBrowserRouter([
             path: 'tasks',
             Component: Tasks,
           },
-          {
-            path: 'settings',
-            Component: Settings,
-          },
+          // settings는 SettingsDialog 모달로 대체됨
           // 🚧 통계 페이지 임시 숨김
           // {
           //   path: 'analytics',

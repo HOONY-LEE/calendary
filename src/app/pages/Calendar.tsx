@@ -443,9 +443,7 @@ export function Calendar() {
                   action: {
                     label: "Settings",
                     onClick: () =>
-                      navigate(
-                        "/settings?permission_error=true",
-                      ),
+                      {},
                   },
                 },
               );
@@ -616,7 +614,7 @@ export function Calendar() {
               duration: 5000,
               action: {
                 label: "Settings",
-                onClick: () => navigate("/settings"),
+                onClick: () => {},
               },
             },
           );
@@ -672,9 +670,7 @@ export function Calendar() {
                   action: {
                     label: "Settings",
                     onClick: () =>
-                      navigate(
-                        "/settings?permission_error=true",
-                      ),
+                      {},
                   },
                 },
               );
@@ -779,7 +775,7 @@ export function Calendar() {
               duration: 5000,
               action: {
                 label: "Settings",
-                onClick: () => navigate("/settings"),
+                onClick: () => {},
               },
             },
           );

@@ -1494,10 +1494,7 @@ export function MonthView({
                                   duration: 8000,
                                   action: {
                                     label: "Settings",
-                                    onClick: () =>
-                                      navigate(
-                                        "/settings?permission_error=true",
-                                      ),
+                                    onClick: () => {},
                                   },
                                 },
                               );
