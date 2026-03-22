@@ -6,6 +6,7 @@ export interface Category {
   color: string;
   isGoogleCalendar?: boolean;
   googleCalendarId?: string;
+  googleCalendarAccessRole?: string; // 'owner' | 'writer' | 'reader' | 'freeBusyReader'
 }
 
 export interface CalendarEvent {

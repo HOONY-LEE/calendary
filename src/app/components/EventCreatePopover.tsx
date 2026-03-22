@@ -1228,7 +1228,10 @@ export function EventCreatePopover({
               <DndProvider backend={HTML5Backend}>
                 <div className="space-y-0 max-h-[240px] overflow-y-auto scrollbar-macos mb-0">
                   {(event?.isGoogleEvent
-                    ? localCategories.filter((cat) => cat.isGoogleCalendar)
+                    ? localCategories.filter((cat) =>
+                        cat.isGoogleCalendar &&
+                        (cat.googleCalendarAccessRole === 'owner' || cat.googleCalendarAccessRole === 'writer')
+                      )
                     : localCategories
                   ).map((cat, index) => {
                     const isChecked = formData.categoryId === cat.id;

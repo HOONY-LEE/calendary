@@ -435,6 +435,7 @@ export function useCategories({
                 color: cal.backgroundColor || GOOGLE_CALENDAR_COLOR_MAP[cal.colorId] || '#4285F4',
                 isGoogleCalendar: true,
                 googleCalendarId: cal.id,
+                googleCalendarAccessRole: cal.accessRole, // 'owner' | 'writer' | 'reader' | 'freeBusyReader'
               }));
 
               allCategories = [...sortedCategories, ...googleCategories];
