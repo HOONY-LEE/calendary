@@ -1376,6 +1376,19 @@ export function Calendar() {
                   (c) => c.id === eventData.categoryId,
                 );
                 const newGoogleCalendarId = newCategory?.googleCalendarId;
+
+                // 구글→로컬 카테고리 변경은 불가 (구글 이벤트는 구글 캘린더 간만 이동 가능)
+                const isMovingToLocalCategory = !newCategory?.isGoogleCalendar;
+                if (isMovingToLocalCategory) {
+                  toast.error(
+                    language === "ko"
+                      ? "구글 캘린더 일정은 다른 구글 캘린더로만 이동할 수 있습니다."
+                      : "Google Calendar events can only be moved to other Google Calendars.",
+                    { duration: 4000 },
+                  );
+                  return;
+                }
+
                 const categoryChanged = newGoogleCalendarId &&
                   newGoogleCalendarId !== selectedEvent.googleCalendarId;
 
@@ -1411,6 +1424,8 @@ export function Calendar() {
                   );
 
                   if (!moveResponse.ok) {
+                    const errorData = await moveResponse.json().catch(() => ({}));
+                    console.error("[Calendar] Move failed:", errorData);
                     throw new Error(
                       "Failed to move Google Calendar event",
                     );
@@ -1433,6 +1448,8 @@ export function Calendar() {
                   );
 
                   if (!updateResponse.ok) {
+                    const errorData = await updateResponse.json().catch(() => ({}));
+                    console.error("[Calendar] Update failed:", errorData);
                     throw new Error(
                       "Failed to update Google Calendar event",
                     );
