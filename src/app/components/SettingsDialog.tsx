@@ -50,8 +50,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [loading, setLoading] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
 
-  const language = i18n.language as "ko" | "en";
-
   // 다이얼로그 열릴 때 구글 연동 상태 확인
   useEffect(() => {
     if (open) {
@@ -212,10 +210,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   };
 
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
-    { id: "google", label: language === "ko" ? "구글 캘린더" : "Google Calendar", icon: <CalendarIcon className="w-4 h-4" /> },
-    { id: "theme", label: language === "ko" ? "테마" : "Theme", icon: <Palette className="w-4 h-4" /> },
-    { id: "language", label: language === "ko" ? "언어" : "Language", icon: <Globe className="w-4 h-4" /> },
-    { id: "account", label: language === "ko" ? "계정" : "Account", icon: <User className="w-4 h-4" /> },
+    { id: "google", label: t("settings.tabs.googleCalendar"), icon: <CalendarIcon className="w-4 h-4" /> },
+    { id: "theme", label: t("settings.tabs.theme"), icon: <Palette className="w-4 h-4" /> },
+    { id: "language", label: t("settings.tabs.language"), icon: <Globe className="w-4 h-4" /> },
+    { id: "account", label: t("settings.tabs.account"), icon: <User className="w-4 h-4" /> },
   ];
 
   return (
@@ -232,7 +230,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           </DialogPrimitive.Close>
 
           <DialogTitle className="sr-only">
-            {language === "ko" ? "앱 설정" : "App Settings"}
+            {t("settings.appSettings")}
           </DialogTitle>
 
           {/* Content */}
@@ -262,10 +260,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               {activeTab === "google" && (
                 <div>
                   <h2 className="text-base font-semibold mb-4">
-                    {language === "ko" ? "구글 캘린더 연동 방식" : "Google Calendar Integration"}
+                    {t("settings.googleCalendar.integrationMethod")}
                   </h2>
                   <p className="text-sm text-muted-foreground mb-5">
-                    {language === "ko" ? "원하는 연동 방식을 선택하세요." : "Choose your preferred integration method."}
+                    {t("settings.googleCalendar.chooseMethod")}
                   </p>
 
                   <div className="space-y-4">
@@ -277,18 +275,18 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         </div>
                         <div className="flex-1">
                           <h3 className="font-medium text-sm mb-0.5">
-                            {language === "ko" ? "구글 캘린더 데이터 가져오기" : "Import Google Calendar Data"}
+                            {t("settings.googleCalendar.importTitle")}
                           </h3>
                           <p className="text-xs text-muted-foreground">
-                            {language === "ko" ? "일회성 마이그레이션" : "One-time migration"}
+                            {t("settings.googleCalendar.importDesc")}
                           </p>
                         </div>
                       </div>
                       <div className="space-y-1.5 mb-3 ml-0">
                         {[
-                          language === "ko" ? "구글 캘린더의 모든 이벤트와 태스크를 한 번에 가져옵니다" : "Import all events and tasks at once",
-                          language === "ko" ? "가져온 후에는 Calendary에서만 독립적으로 관리됩니다" : "Managed independently in Calendary after import",
-                          language === "ko" ? "구글과 실시간 동기화되지 않습니다" : "No real-time sync with Google",
+                          t("settings.googleCalendar.importFeature1"),
+                          t("settings.googleCalendar.importFeature2"),
+                          t("settings.googleCalendar.importFeature3"),
                         ].map((text, i) => (
                           <div key={i} className="flex items-start gap-2">
                             <Check className="w-3.5 h-3.5 text-green-600 mt-0.5 flex-shrink-0" />
@@ -305,14 +303,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         {isMigrating ? (
                           <>
                             <RefreshCw className="w-3.5 h-3.5 mr-2 animate-spin" />
-                            {language === "ko" ? "데이터 가져오는 중..." : "Importing..."}
+                            {t("settings.googleCalendar.importing")}
                           </>
                         ) : (
                           <>
                             <Download className="w-3.5 h-3.5 mr-2" />
-                            {language === "ko"
-                              ? !isGoogleConnected ? "구글 연동 후 데이터 가져오기" : "데이터 가져오기"
-                              : !isGoogleConnected ? "Connect & Import" : "Import Data"}
+                            {!isGoogleConnected ? t("settings.googleCalendar.connectAndImport") : t("settings.googleCalendar.importData")}
                           </>
                         )}
                       </Button>
@@ -326,18 +322,18 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         </div>
                         <div className="flex-1">
                           <h3 className="font-medium text-sm mb-0.5">
-                            {language === "ko" ? "구글 캘린더 API 연동하기" : "Connect Google Calendar API"}
+                            {t("settings.googleCalendar.apiTitle")}
                           </h3>
                           <p className="text-xs text-muted-foreground">
-                            {language === "ko" ? "실시간 동기화" : "Real-time sync"}
+                            {t("settings.googleCalendar.apiDesc")}
                           </p>
                         </div>
                       </div>
                       <div className="space-y-1.5 mb-3 ml-0">
                         {[
-                          language === "ko" ? "구글 캘린더와 실시간으로 동기화됩니다" : "Real-time sync with Google Calendar",
-                          language === "ko" ? "Calendary에서 수정하면 구글에도 자동 반영됩니다" : "Changes in Calendary auto-sync to Google",
-                          language === "ko" ? "구글에서 수정한 내용도 실시간 반영됩니다" : "Changes in Google auto-sync to Calendary",
+                          t("settings.googleCalendar.apiFeature1"),
+                          t("settings.googleCalendar.apiFeature2"),
+                          t("settings.googleCalendar.apiFeature3"),
                         ].map((text, i) => (
                           <div key={i} className="flex items-start gap-2">
                             <Check className="w-3.5 h-3.5 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -352,11 +348,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                       >
                         <Cloud className="w-3.5 h-3.5 mr-2" />
-                        {language === "ko" ? "API 연동하기" : "Connect API"}
+                        {t("settings.googleCalendar.connectApi")}
                       </Button>
                       {isGoogleConnected && (
                         <p className="text-xs text-green-600 dark:text-green-400 mt-2 text-center">
-                          {language === "ko" ? "이미 구글과 연동되어 있습니다" : "Already connected to Google"}
+                          {t("settings.googleCalendar.alreadyConnected")}
                         </p>
                       )}
                     </div>
@@ -428,7 +424,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               {activeTab === "account" && (
                 <div>
                   <h2 className="text-base font-semibold mb-4">
-                    {language === "ko" ? "계정" : "Account"}
+                    {t("settings.tabs.account")}
                   </h2>
                   <Button
                     variant="outline"
@@ -438,7 +434,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     }}
                     className="text-red-600 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950"
                   >
-                    {language === "ko" ? "로그아웃" : "Sign Out"}
+                    {t("settings.signOut")}
                   </Button>
                 </div>
               )}

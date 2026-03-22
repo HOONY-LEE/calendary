@@ -151,8 +151,33 @@
       "connectError": "Failed to connect Google",
       "disconnectError": "Failed to disconnect",
       "disconnectInfo": "To disconnect Google, you need to unlink from Supabase dashboard",
-      "tokenInfo": "Access Token (for development)"
-    }
+      "tokenInfo": "Access Token (for development)",
+      "integrationMethod": "Google Calendar Integration",
+      "chooseMethod": "Choose your preferred integration method.",
+      "importTitle": "Import Google Calendar Data",
+      "importDesc": "One-time migration",
+      "importFeature1": "Import all events and tasks at once",
+      "importFeature2": "Managed independently in Calendary after import",
+      "importFeature3": "No real-time sync with Google",
+      "importing": "Importing...",
+      "connectAndImport": "Connect & Import",
+      "importData": "Import Data",
+      "apiTitle": "Connect Google Calendar API",
+      "apiDesc": "Real-time sync",
+      "apiFeature1": "Real-time sync with Google Calendar",
+      "apiFeature2": "Changes in Calendary auto-sync to Google",
+      "apiFeature3": "Changes in Google auto-sync to Calendary",
+      "connectApi": "Connect API",
+      "alreadyConnected": "Already connected to Google"
+    },
+    "tabs": {
+      "googleCalendar": "Google Calendar",
+      "theme": "Theme",
+      "language": "Language",
+      "account": "Account"
+    },
+    "appSettings": "App Settings",
+    "signOut": "Sign Out"
   },
   "notFound": {
     "title": "Page Not Found",

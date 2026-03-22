@@ -151,8 +151,33 @@
       "connectError": "Google 연동에 실패했습니다",
       "disconnectError": "연동 해제에 실패했습니다",
       "disconnectInfo": "Google 연동을 해제하려면 Supabase 대시보드에서 직접 해제해야 합니다",
-      "tokenInfo": "Access Token (개발용)"
-    }
+      "tokenInfo": "Access Token (개발용)",
+      "integrationMethod": "구글 캘린더 연동 방식",
+      "chooseMethod": "원하는 연동 방식을 선택하세요.",
+      "importTitle": "구글 캘린더 데이터 가져오기",
+      "importDesc": "일회성 마이그레이션",
+      "importFeature1": "구글 캘린더의 모든 이벤트와 태스크를 한 번에 가져옵니다",
+      "importFeature2": "가져온 후에는 Calendary에서만 독립적으로 관리됩니다",
+      "importFeature3": "구글과 실시간 동기화되지 않습니다",
+      "importing": "데이터 가져오는 중...",
+      "connectAndImport": "구글 연동 후 데이터 가져오기",
+      "importData": "데이터 가져오기",
+      "apiTitle": "구글 캘린더 API 연동하기",
+      "apiDesc": "실시간 동기화",
+      "apiFeature1": "구글 캘린더와 실시간으로 동기화됩니다",
+      "apiFeature2": "Calendary에서 수정하면 구글에도 자동 반영됩니다",
+      "apiFeature3": "구글에서 수정한 내용도 실시간 반영됩니다",
+      "connectApi": "API 연동하기",
+      "alreadyConnected": "이미 구글과 연동되어 있습니다"
+    },
+    "tabs": {
+      "googleCalendar": "구글 캘린더",
+      "theme": "테마",
+      "language": "언어",
+      "account": "계정"
+    },
+    "appSettings": "앱 설정",
+    "signOut": "로그아웃"
   },
   "notFound": {
     "title": "페이지를 찾을 수 없습니다",
