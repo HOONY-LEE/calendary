@@ -1,9 +1,13 @@
 /**
  * Apple-style activity indicator spinner
- * 8 rounded bars with staggered opacity animation
+ * 8 rounded bars with staggered opacity animation and hollow center
  */
 export function AppleSpinner({ size = 20, className = "" }: { size?: number; className?: string }) {
   const bars = 8;
+  const barWidth = size * 0.095;
+  const barHeight = size * 0.27;
+  const halfSize = size / 2;
+  const innerGap = size * 0.18; // 중앙 빈 원 반지름
 
   return (
     <div
@@ -19,14 +23,14 @@ export function AppleSpinner({ size = 20, className = "" }: { size?: number; cla
           key={i}
           style={{
             position: "absolute",
-            top: 0,
-            left: (size - size * 0.09) / 2,
-            width: size * 0.09,
-            height: size * 0.28,
-            borderRadius: size * 0.045,
+            width: barWidth,
+            height: barHeight,
+            borderRadius: barWidth,
             backgroundColor: "currentColor",
-            transform: `rotate(${i * 45}deg) translateY(${size * 0.22}px)`,
-            transformOrigin: `${size * 0.045}px ${size / 2}px`,
+            top: halfSize - barHeight - innerGap,
+            left: halfSize - barWidth / 2,
+            transformOrigin: `${barWidth / 2}px ${barHeight + innerGap}px`,
+            transform: `rotate(${i * 45}deg)`,
             animation: `appleSpinnerFade 1.4s linear infinite`,
             animationDelay: `${-(bars - i) * (1.4 / bars)}s`,
           }}
