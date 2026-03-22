@@ -1,9 +1,9 @@
 /**
  * Apple-style activity indicator spinner
- * 12 bars with staggered opacity animation
+ * 8 thick rounded bars with staggered opacity animation
  */
 export function AppleSpinner({ size = 20, className = "" }: { size?: number; className?: string }) {
-  const bars = 12;
+  const bars = 8;
 
   return (
     <div
@@ -20,22 +20,22 @@ export function AppleSpinner({ size = 20, className = "" }: { size?: number; cla
           style={{
             position: "absolute",
             top: 0,
-            left: (size - size * 0.08) / 2,
-            width: size * 0.08,
-            height: size * 0.26,
-            borderRadius: size * 0.04,
+            left: (size - size * 0.13) / 2,
+            width: size * 0.13,
+            height: size * 0.32,
+            borderRadius: size * 0.07,
             backgroundColor: "currentColor",
-            transform: `rotate(${i * 30}deg) translateY(${size * 0.14}px)`,
-            transformOrigin: `${size * 0.04}px ${size / 2}px`,
-            animation: `appleSpinnerFade 1s linear infinite`,
-            animationDelay: `${-(bars - i) * (1 / bars)}s`,
+            transform: `rotate(${i * 45}deg) translateY(${size * 0.12}px)`,
+            transformOrigin: `${size * 0.065}px ${size / 2}px`,
+            animation: `appleSpinnerFade 0.8s linear infinite`,
+            animationDelay: `${-(bars - i) * (0.8 / bars)}s`,
           }}
         />
       ))}
       <style>{`
         @keyframes appleSpinnerFade {
-          0%, 40% { opacity: 1; }
-          100% { opacity: 0.15; }
+          0%, 30% { opacity: 1; }
+          100% { opacity: 0.12; }
         }
       `}</style>
     </div>
