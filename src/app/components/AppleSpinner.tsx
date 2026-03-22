@@ -1,6 +1,6 @@
 /**
  * Apple-style activity indicator spinner
- * 8 thick rounded bars with staggered opacity animation
+ * 8 rounded bars with staggered opacity animation
  */
 export function AppleSpinner({ size = 20, className = "" }: { size?: number; className?: string }) {
   const bars = 8;
@@ -22,13 +22,13 @@ export function AppleSpinner({ size = 20, className = "" }: { size?: number; cla
             top: 0,
             left: (size - size * 0.09) / 2,
             width: size * 0.09,
-            height: size * 0.32,
+            height: size * 0.28,
             borderRadius: size * 0.045,
             backgroundColor: "currentColor",
-            transform: `rotate(${i * 45}deg) translateY(${size * 0.12}px)`,
+            transform: `rotate(${i * 45}deg) translateY(${size * 0.22}px)`,
             transformOrigin: `${size * 0.045}px ${size / 2}px`,
-            animation: `appleSpinnerFade 0.8s linear infinite`,
-            animationDelay: `${-(bars - i) * (0.8 / bars)}s`,
+            animation: `appleSpinnerFade 1.05s linear infinite`,
+            animationDelay: `${-(bars - i) * (1.05 / bars)}s`,
           }}
         />
       ))}
