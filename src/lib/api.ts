@@ -616,6 +616,7 @@ export interface DBTask {
   is_completed: boolean;
   due_date: string;
   task_type: 'single' | 'routine' | 'event';
+  order_index?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -628,7 +629,7 @@ export const tasksAPI = {
     const result = await supabaseClientFetch<DBTask[]>(
       'tasks',
       'select',
-      { order: { column: 'created_at', ascending: false } }
+      { order: { column: 'created_at', ascending: true } }
     );
     
     const tasks = Array.isArray(result) ? result : [result];
@@ -711,13 +712,33 @@ export const tasksAPI = {
   // Task 삭제
   async delete(id: string, accessToken: string): Promise<void> {
     console.log('[API] Deleting task from Supabase:', id);
-    
+
     await supabaseClientFetch<DBTask>(
       'tasks',
       'delete',
       { filter: { id } }
     );
-    
+
     console.log('[API] Successfully deleted task:', id);
+  },
+
+  // Task 순서 일괄 업데이트
+  async reorder(
+    taskOrders: { id: string; order_index: number }[],
+    accessToken: string
+  ): Promise<void> {
+    console.log('[API] Reordering tasks:', taskOrders.length);
+
+    await Promise.all(
+      taskOrders.map(({ id, order_index }) =>
+        supabaseClientFetch<DBTask>(
+          'tasks',
+          'update',
+          { data: { order_index }, filter: { id } }
+        )
+      )
+    );
+
+    console.log('[API] Successfully reordered tasks');
   },
 };

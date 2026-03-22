@@ -16,7 +16,8 @@ interface Task {
   googleListName?: string;
   notes?: string;
   isGoogleTask?: boolean;
-  createdAt?: string; // 🔥 생성 시간 추가
+  createdAt?: string;
+  orderIndex?: number;
 }
 
 interface Category {
@@ -58,6 +59,8 @@ interface TasksContextType {
   addTask: (task: Omit<Task, 'id'>) => Promise<Task | null>;
   updateTask: (id: number | string, updates: Partial<Task>) => Promise<void>;
   deleteTask: (id: number | string) => Promise<void>;
+  moveTask: (dragIndex: number, hoverIndex: number) => void;
+  saveTaskOrder: () => Promise<void>;
   addCategory: (category: Omit<Category, 'id'>) => Promise<Category | null>;
   updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
@@ -176,7 +179,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       
       const localTasks = dbTasks.map((t) => {
         const cat = categories.find((c) => c.id === t.category_id);
-        
+
         return {
           id: t.id,
           title: t.title,
@@ -186,11 +189,15 @@ export function TasksProvider({ children }: { children: ReactNode }) {
           date: t.due_date?.split('T')[0] || new Date().toISOString().split('T')[0],
           notes: t.notes,
           isGoogleTask: false,
-          createdAt: t.created_at, // 🔥 생성 시간 추가
+          createdAt: t.created_at,
+          orderIndex: t.order_index ?? 0,
         };
       })
-      // 🔥 생성 순서대로 정렬 (오래된 것부터)
+      // order_index 기준 정렬 (같으면 생성시간 순)
       .sort((a, b) => {
+        if (a.orderIndex !== b.orderIndex) {
+          return (a.orderIndex ?? 0) - (b.orderIndex ?? 0);
+        }
         const timeA = new Date(a.createdAt || 0).getTime();
         const timeB = new Date(b.createdAt || 0).getTime();
         return timeA - timeB;
@@ -513,6 +520,37 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Task 순서 변경 (UI 즉시 업데이트 - optimistic)
+  const moveTask = (dragIndex: number, hoverIndex: number) => {
+    setTasks(prev => {
+      const updated = [...prev];
+      const [removed] = updated.splice(dragIndex, 1);
+      updated.splice(hoverIndex, 0, removed);
+      return updated;
+    });
+  };
+
+  // Task 순서 서버 저장
+  const saveTaskOrder = async () => {
+    if (!session) return;
+
+    // 현재 날짜의 로컬 태스크만 순서 저장
+    const localTasks = tasks.filter(t => !t.isGoogleTask);
+    const taskOrders = localTasks.map((t, i) => ({
+      id: t.id as string,
+      order_index: i,
+    }));
+
+    try {
+      await tasksAPI.reorder(taskOrders, session.access_token);
+      console.log('[TasksContext] ✅ Task order saved');
+      // 캐시 무효화
+      setTasksCache(null);
+    } catch (error) {
+      console.error('[TasksContext] Failed to save task order:', error);
+    }
+  };
+
   // Category CRUD (간단한 구현)
   const addCategory = async (category: Omit<Category, 'id'>): Promise<Category | null> => {
     // TODO: API 구현
@@ -598,6 +636,8 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         addTask,
         updateTask,
         deleteTask,
+        moveTask,
+        saveTaskOrder,
         addCategory,
         updateCategory,
         deleteCategory,

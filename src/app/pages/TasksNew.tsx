@@ -3,10 +3,8 @@ import {
   Plus,
   Check,
   X,
-  Edit2,
   RefreshCw,
   Loader2,
-  Trash2,
   ChevronLeft,
   ChevronRight,
   CornerDownLeft,
@@ -16,8 +14,11 @@ import { useTranslation } from "react-i18next";
 import { Button } from "../components/ui/button";
 import { SegmentTabs } from "../components/SegmentTabs";
 import { TaskInput } from "../components/TaskInput";
+import { DraggableTaskItem } from "../components/DraggableTaskItem";
 import { Switch } from "../components/ui/switch";
 import { Label } from "../components/ui/label";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import { useAuth } from "../context/AuthContext";
 import { useTasks } from "../context/TasksContext";
 import { projectId, publicAnonKey } from "../../lib/supabase-info";
@@ -38,6 +39,8 @@ export function Tasks() {
     updateTask,
     addTask: contextAddTask,
     deleteTask: contextDeleteTask,
+    moveTask,
+    saveTaskOrder,
     googleTaskLists,
     setNeedsReauth,
     setApiNotEnabled,
@@ -529,103 +532,30 @@ export function Tasks() {
 
       {/* Tasks List */}
       {!isLoading || tasks.length > 0 ? (
-        <div className="space-y-2">
-          {filteredTasks.map((task) => (
-            <div
-              key={task.id}
-              className={`rounded-md border border-border transition-all duration-200 hover:border-[#0C8CE9]/30 cursor-pointer ${task.completed ? "bg-muted/30 dark:bg-muted/10" : "bg-card"} px-[12px] py-[10px]`}
-              onMouseEnter={() => setHoveredTaskId(task.id)}
-              onMouseLeave={() => setHoveredTaskId(null)}
-              onClick={() => {
-                // 편집 모드가 아닐 때만 토글
-                if (editingTaskId !== task.id) {
-                  toggleTask(task.id);
-                }
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleTask(task.id);
-                  }}
-                  className="flex-shrink-0 -m-2 p-2"
-                >
-                  <div
-                    className="w-5 h-5 rounded flex items-center justify-center border-2 transition-all"
-                    style={{
-                      backgroundColor: task.completed
-                        ? "#0C8CE9"
-                        : "transparent",
-                      borderColor: task.completed
-                        ? "#0C8CE9"
-                        : "#D1D5DB",
-                    }}
-                  >
-                    {task.completed && (
-                      <Check className="h-3.5 w-3.5 text-white stroke-[3]" />
-                    )}
-                  </div>
-                </button>
-
-                {editingTaskId === task.id ? (
-                  <input
-                    value={editingTaskTitle}
-                    onChange={(e) =>
-                      setEditingTaskTitle(e.target.value)
-                    }
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") saveEditingTask();
-                      else if (e.key === "Escape")
-                        cancelEditingTask();
-                    }}
-                    onBlur={saveEditingTask}
-                    className="flex-1 min-w-0 font-normal text-[16px] bg-transparent border-none outline-none"
-                    autoFocus
-                  />
-                ) : (
-                  <div className="flex-1 min-w-0 text-left">
-                    <h3
-                      className={`font-normal ${task.completed ? "text-muted-foreground line-through" : ""} text-[16px]`}
-                    >
-                      {task.title}
-                    </h3>
-                  </div>
-                )}
-
-                {/* 수정/삭제 아이콘 버튼 (호버 시 표시) */}
-                <div
-                  className={`flex items-center gap-1 transition-opacity duration-200 ${hoveredTaskId === task.id ? "opacity-100" : "opacity-0"}`}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    className="p-1.5 rounded hover:bg-muted/80 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      startEditingTask(task);
-                    }}
-                    title={language === "ko" ? "편집" : "Edit"}
-                  >
-                    <Edit2 className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                  </button>
-                  <button
-                    className="p-1.5 rounded hover:bg-muted/80 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteTask(task.id);
-                    }}
-                    title={
-                      language === "ko" ? "삭제" : "Delete"
-                    }
-                  >
-                    <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <DndProvider backend={HTML5Backend}>
+          <div className="space-y-2">
+            {filteredTasks.map((task, index) => (
+              <DraggableTaskItem
+                key={task.id}
+                task={task}
+                index={index}
+                isEditing={editingTaskId === task.id}
+                editingTaskTitle={editingTaskTitle}
+                isHovered={hoveredTaskId === task.id}
+                language={language}
+                onMove={moveTask}
+                onDragEnd={saveTaskOrder}
+                onToggle={() => toggleTask(task.id)}
+                onEdit={() => startEditingTask(task)}
+                onDelete={() => deleteTask(task.id)}
+                onEditChange={setEditingTaskTitle}
+                onEditSave={saveEditingTask}
+                onEditCancel={cancelEditingTask}
+                onHover={setHoveredTaskId}
+              />
+            ))}
+          </div>
+        </DndProvider>
       ) : null}
 
       {/* Divider */}
