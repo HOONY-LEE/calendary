@@ -74,14 +74,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // 🔥 세션이 있으면 바로 상태 업데이트 (getUser 호출 제거 - 블로킹 이슈)
         console.log('[AuthContext] ✅ Session detected, updating state...');
 
-        // 🔥 Google provider_token + refresh_token 관리
-        // getGoogleToken() 호출 시 자동으로 localStorage에 저장됨
+        // 🔥 Google Calendar token 관리
+        // session.provider_token은 기본 scope일 수 있으므로 calendar token과 별도 관리
+        // Calendar scope 토큰은 google-token.ts의 getGoogleTokenAsync()가 관리
         if (!session.provider_token) {
-          // session에 provider_token이 없으면 localStorage에서 복원
-          const savedToken = localStorage.getItem('google_provider_token');
+          // session에 provider_token이 없으면 calendar token으로 복원
+          const { getGoogleToken: getCalToken } = await import('../../lib/google-token');
+          const savedToken = getCalToken(session);
           if (savedToken) {
             (session as any).provider_token = savedToken;
-            console.log('[AuthContext] 🔄 Google provider_token restored from localStorage');
+            console.log('[AuthContext] 🔄 Google calendar token restored');
           }
         }
 
