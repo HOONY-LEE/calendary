@@ -171,10 +171,21 @@
       "alreadyConnected": "Already connected to Google"
     },
     "tabs": {
+      "calendar": "Calendar",
       "googleCalendar": "Google Calendar",
+      "timezone": "Timezone",
       "theme": "Theme",
       "language": "Language",
       "account": "Account"
+    },
+    "timezone": {
+      "title": "Timezone",
+      "description": "Set the timezone used for calendar and tasks.",
+      "current": "Current timezone",
+      "browserDefault": "Browser default timezone",
+      "reset": "Reset to default",
+      "searchPlaceholder": "Search timezone...",
+      "noResults": "No results found"
     },
     "appSettings": "App Settings",
     "signOut": "Sign Out"

@@ -171,10 +171,21 @@
       "alreadyConnected": "已与 Google 连接"
     },
     "tabs": {
+      "calendar": "日历",
       "googleCalendar": "Google 日历",
+      "timezone": "时区",
       "theme": "主题",
       "language": "语言",
       "account": "账户"
+    },
+    "timezone": {
+      "title": "时区",
+      "description": "设置日历和任务使用的时区。",
+      "current": "当前时区",
+      "browserDefault": "浏览器默认时区",
+      "reset": "恢复默认",
+      "searchPlaceholder": "搜索时区...",
+      "noResults": "未找到结果"
     },
     "appSettings": "应用设置",
     "signOut": "退出登录"

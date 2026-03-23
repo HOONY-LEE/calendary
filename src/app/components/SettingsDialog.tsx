@@ -15,6 +15,7 @@ import {
   Palette,
   Globe,
   User,
+  Clock,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { supabase } from "../../lib/supabase";
@@ -32,7 +33,7 @@ import {
 } from "./ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 
-type SettingsTab = "google" | "theme" | "language" | "account";
+type SettingsTab = "google" | "timezone" | "theme" | "language" | "account";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -49,6 +50,71 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [tokenScopes, setTokenScopes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
+
+  // 시간대 설정
+  const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const [timezone, setTimezone] = useState<string>(() => {
+    return localStorage.getItem("app_timezone") || browserTimezone;
+  });
+  const [timezoneSearch, setTimezoneSearch] = useState("");
+
+  // 주요 시간대 목록
+  const timezones = Intl.supportedValuesOf("timeZone");
+  const popularTimezones = [
+    "Asia/Seoul",
+    "Asia/Tokyo",
+    "Asia/Shanghai",
+    "Asia/Hong_Kong",
+    "Asia/Singapore",
+    "America/New_York",
+    "America/Chicago",
+    "America/Denver",
+    "America/Los_Angeles",
+    "Europe/London",
+    "Europe/Paris",
+    "Europe/Berlin",
+    "Australia/Sydney",
+    "Pacific/Auckland",
+  ];
+
+  const filteredTimezones = timezoneSearch
+    ? timezones.filter((tz) =>
+        tz.toLowerCase().includes(timezoneSearch.toLowerCase())
+      )
+    : popularTimezones;
+
+  const handleTimezoneChange = (tz: string) => {
+    setTimezone(tz);
+    localStorage.setItem("app_timezone", tz);
+    toast.success(
+      ({ ko: "시간대가 변경되었습니다.", en: "Timezone updated.", zh: "时区已更新。" } as Record<string, string>)[i18n.language] || "Timezone updated."
+    );
+  };
+
+  const handleResetTimezone = () => {
+    setTimezone(browserTimezone);
+    localStorage.removeItem("app_timezone");
+    setTimezoneSearch("");
+    toast.success(
+      ({ ko: "브라우저 시간대로 복원되었습니다.", en: "Reset to browser timezone.", zh: "已恢复为浏览器时区。" } as Record<string, string>)[i18n.language] || "Reset to browser timezone."
+    );
+  };
+
+  // 시간대 표시 포맷
+  const formatTimezoneOffset = (tz: string) => {
+    try {
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: tz,
+        timeZoneName: "shortOffset",
+      });
+      const parts = formatter.formatToParts(now);
+      const offsetPart = parts.find((p) => p.type === "timeZoneName");
+      return offsetPart?.value || "";
+    } catch {
+      return "";
+    }
+  };
 
   // 다이얼로그 열릴 때 구글 연동 상태 확인
   useEffect(() => {
@@ -210,7 +276,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   };
 
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
-    { id: "google", label: t("settings.tabs.googleCalendar"), icon: <CalendarIcon className="w-4 h-4" /> },
+    { id: "google", label: t("settings.tabs.calendar"), icon: <CalendarIcon className="w-4 h-4" /> },
+    { id: "timezone", label: t("settings.tabs.timezone"), icon: <Clock className="w-4 h-4" /> },
     { id: "theme", label: t("settings.tabs.theme"), icon: <Palette className="w-4 h-4" /> },
     { id: "language", label: t("settings.tabs.language"), icon: <Globe className="w-4 h-4" /> },
     { id: "account", label: t("settings.tabs.account"), icon: <User className="w-4 h-4" /> },
@@ -234,7 +301,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           </DialogTitle>
 
           {/* Content */}
-          <div className="flex h-[480px] pt-12 pb-6">
+          <div className="flex h-[580px] pt-12 pb-6">
             {/* Left nav */}
             <nav className="w-[170px] flex-shrink-0 px-4 border-r border-border">
               <div className="space-y-0.5">
@@ -387,6 +454,75 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         {theme === item.value && <Check className="w-4 h-4 text-primary" />}
                       </button>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "timezone" && (
+                <div>
+                  <h2 className="text-base font-semibold mb-1">
+                    {t("settings.timezone.title")}
+                  </h2>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    {t("settings.timezone.description")}
+                  </p>
+
+                  {/* 현재 시간대 */}
+                  <div className="bg-muted/50 rounded-lg px-3 py-2.5 mb-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-muted-foreground">{t("settings.timezone.current")}</p>
+                        <p className="text-sm font-medium">{timezone.replace(/_/g, " ")} ({formatTimezoneOffset(timezone)})</p>
+                      </div>
+                      {timezone !== browserTimezone && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleResetTimezone}
+                          className="text-xs h-7"
+                        >
+                          {t("settings.timezone.reset")}
+                        </Button>
+                      )}
+                    </div>
+                    {timezone === browserTimezone && (
+                      <p className="text-xs text-muted-foreground mt-1">{t("settings.timezone.browserDefault")}</p>
+                    )}
+                  </div>
+
+                  {/* 검색 */}
+                  <input
+                    type="text"
+                    value={timezoneSearch}
+                    onChange={(e) => setTimezoneSearch(e.target.value)}
+                    placeholder={t("settings.timezone.searchPlaceholder")}
+                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background mb-3 focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+
+                  {/* 시간대 목록 */}
+                  <div className="space-y-0.5 max-h-[280px] overflow-y-auto">
+                    {filteredTimezones.map((tz) => (
+                      <button
+                        key={tz}
+                        onClick={() => handleTimezoneChange(tz)}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                          timezone === tz
+                            ? "bg-muted font-medium"
+                            : "hover:bg-muted/50"
+                        }`}
+                      >
+                        <span>{tz.replace(/_/g, " ")}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{formatTimezoneOffset(tz)}</span>
+                          {timezone === tz && <Check className="w-4 h-4 text-primary" />}
+                        </div>
+                      </button>
+                    ))}
+                    {filteredTimezones.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        {t("settings.timezone.noResults")}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

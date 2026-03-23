@@ -171,10 +171,21 @@
       "alreadyConnected": "이미 구글과 연동되어 있습니다"
     },
     "tabs": {
+      "calendar": "캘린더",
       "googleCalendar": "구글 캘린더",
+      "timezone": "시간대",
       "theme": "테마",
       "language": "언어",
       "account": "계정"
+    },
+    "timezone": {
+      "title": "시간대",
+      "description": "캘린더와 작업에 사용되는 시간대를 설정합니다.",
+      "current": "현재 시간대",
+      "browserDefault": "브라우저 기본 시간대",
+      "reset": "기본값 복원",
+      "searchPlaceholder": "시간대 검색...",
+      "noResults": "검색 결과가 없습니다"
     },
     "appSettings": "앱 설정",
     "signOut": "로그아웃"
