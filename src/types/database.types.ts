@@ -23,7 +23,7 @@ export interface Database {
           full_name: string | null
           avatar_url: string | null
           timezone: string
-          language: 'ko' | 'en'
+          language: 'ko' | 'en' | 'zh'
           theme: 'light' | 'dark' | 'system'
           google_calendar_connected: boolean
           google_refresh_token: string | null
@@ -38,7 +38,7 @@ export interface Database {
           full_name?: string | null
           avatar_url?: string | null
           timezone?: string
-          language?: 'ko' | 'en'
+          language?: 'ko' | 'en' | 'zh'
           theme?: 'light' | 'dark' | 'system'
           google_calendar_connected?: boolean
           google_refresh_token?: string | null
@@ -53,7 +53,7 @@ export interface Database {
           full_name?: string | null
           avatar_url?: string | null
           timezone?: string
-          language?: 'ko' | 'en'
+          language?: 'ko' | 'en' | 'zh'
           theme?: 'light' | 'dark' | 'system'
           google_calendar_connected?: boolean
           google_refresh_token?: string | null

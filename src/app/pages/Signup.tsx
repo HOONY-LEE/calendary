@@ -8,7 +8,7 @@ import calendaryIcon from '@/assets/e735c8e5404257a8d70b2c1243da5c30fde7a306.png
 export function Signup() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const language = i18n.language as 'ko' | 'en';
+  const language = i18n.language;
   const { signUpWithEmail, signInWithGoogle } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

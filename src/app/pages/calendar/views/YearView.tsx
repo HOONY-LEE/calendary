@@ -6,7 +6,7 @@ interface YearViewProps {
   events: CalendarEvent[];
   selectedCategoryIds: string[];
   categories: Category[];
-  language: "ko" | "en";
+  language: string;
   onDateClick: (date: Date) => void;
   onViewChange: (view: "month") => void;
 }

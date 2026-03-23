@@ -1,6 +1,6 @@
 import type { ViewType } from "../types";
 
-export const monthNames: { ko: string[]; en: string[] } = {
+export const monthNames: Record<string, string[]> = {
   ko: [
     "1월",
     "2월",
@@ -29,11 +29,26 @@ export const monthNames: { ko: string[]; en: string[] } = {
     "November",
     "December",
   ],
+  zh: [
+    "一月",
+    "二月",
+    "三月",
+    "四月",
+    "五月",
+    "六月",
+    "七月",
+    "八月",
+    "九月",
+    "十月",
+    "十一月",
+    "十二月",
+  ],
 };
 
-export const dayNames: { ko: string[]; en: string[] } = {
+export const dayNames: Record<string, string[]> = {
   ko: ["일", "월", "화", "수", "목", "금", "토"],
   en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+  zh: ["日", "一", "二", "三", "四", "五", "六"],
 };
 
 export const getDaysInMonth = (

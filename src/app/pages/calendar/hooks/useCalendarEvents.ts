@@ -12,7 +12,7 @@ interface UseCalendarEventsParams {
   session: Session | null;
   user: User | null;
   signOut: () => Promise<void>;
-  language: "ko" | "en";
+  language: string;
 }
 
 interface UseCalendarEventsReturn {

@@ -12,7 +12,7 @@ interface UseCategoriesParams {
   session: Session | null;
   user: User | null;
   signOut: () => Promise<void>;
-  language: "ko" | "en";
+  language: string;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   formData: { categoryId: string };
   setFormData: React.Dispatch<React.SetStateAction<any>>;

@@ -77,7 +77,7 @@ interface EventCreatePopoverProps {
   defaultStartTime?: string;
   defaultEndTime?: string;
   categories: Category[];
-  language: "ko" | "en";
+  language: string;
   onSave: (eventData: {
     title: string;
     startTime: string;

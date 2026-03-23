@@ -18,7 +18,7 @@ interface DateRangePickerProps {
   value?: DateRange;
   onChange: (range: DateRange | undefined) => void;
   placeholder?: string;
-  language?: "ko" | "en";
+  language?: string;
   className?: string;
   disabled?: boolean;
 }

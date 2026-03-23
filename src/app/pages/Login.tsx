@@ -11,7 +11,7 @@ export function Login() {
   const { signInWithGoogle, signInWithEmail } = useAuth();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const language = i18n.language as "ko" | "en";
+  const language = i18n.language;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

@@ -28,7 +28,7 @@ export function Tasks() {
   const { t, i18n } = useTranslation();
   const { reauthorizeWithTasks, hasGoogleTasks, session } =
     useAuth();
-  const language = i18n.language as "ko" | "en";
+  const language = i18n.language;
 
   // TasksContext 사용 (캐싱된 데이터)
   const {

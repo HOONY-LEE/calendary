@@ -43,7 +43,7 @@ interface MonthViewProps {
   events: CalendarEvent[];
   selectedCategoryIds: string[];
   categories: Category[];
-  language: "ko" | "en";
+  language: string;
   selectedEvent: CalendarEvent | null;
   previewEvent: PreviewEvent | null;
   isDragging: boolean;

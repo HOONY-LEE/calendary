@@ -122,7 +122,7 @@ import { useDragSelection } from "./calendar/hooks/useDragSelection";
 
 export function Calendar() {
   const { t, i18n } = useTranslation();
-  const language = i18n.language as "ko" | "en";
+  const language = i18n.language;
   const { session, user, signOut } = useAuth();
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());

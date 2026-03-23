@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "../ui/button";
 
 export interface DeleteOptionsDialogProps {
-  language: "ko" | "en";
+  language: string;
   selectedDeleteType: "this" | "following" | "all";
   setSelectedDeleteType: (type: "this" | "following" | "all") => void;
   onCancel: () => void;

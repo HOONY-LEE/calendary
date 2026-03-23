@@ -32,7 +32,7 @@ export interface PopoverDraggableCategoryItemProps {
   newCategoryName: string;
   newCategoryColor: string;
   colorPalette: string[];
-  language: "ko" | "en";
+  language: string;
   formData: any;
   onSelectCategory: (categoryId: string) => void;
   onMove: (dragIndex: number, hoverIndex: number) => void;
@@ -64,7 +64,7 @@ export interface SidebarDraggableCategoryItemProps {
   newCategoryName: string;
   newCategoryColor: string;
   colorPalette: string[];
-  language: "ko" | "en";
+  language: string;
   onToggleSelect: () => void;
   onMove: (dragIndex: number, hoverIndex: number) => void;
   onDragEnd?: () => void;

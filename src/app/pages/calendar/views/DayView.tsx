@@ -27,7 +27,7 @@ interface DayViewProps {
   events: CalendarEvent[];
   selectedCategoryIds: string[];
   categories: Category[];
-  language: "ko" | "en";
+  language: string;
   selectedEvent: CalendarEvent | null;
   previewEvent: PreviewEvent | null;
   onEventClick: (event: CalendarEvent, element?: HTMLElement) => void;

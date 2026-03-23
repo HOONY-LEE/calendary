@@ -26,3 +26,5 @@ Thumbs.db
 src/imports/
 tmp/
 utils/
+
+.vercel

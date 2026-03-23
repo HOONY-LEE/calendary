@@ -66,7 +66,7 @@ export function isAuthError(error: unknown): boolean {
 /**
  * 에러 타입에 따라 사용자 친화적인 메시지 반환
  */
-export function getErrorMessage(error: unknown, language: 'ko' | 'en' = 'ko'): string {
+export function getErrorMessage(error: unknown, language: string = 'ko'): string {
   if (isNetworkError(error)) {
     return language === 'ko'
       ? '서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.'

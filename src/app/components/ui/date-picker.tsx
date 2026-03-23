@@ -17,7 +17,7 @@ interface DatePickerProps {
   value?: Date;
   onChange: (date: Date | undefined) => void;
   placeholder?: string;
-  language?: "ko" | "en";
+  language?: string;
   min?: Date;
   className?: string;
   disabled?: boolean;

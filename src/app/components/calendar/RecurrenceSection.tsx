@@ -3,7 +3,7 @@ import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 
 export interface RecurrenceSectionProps {
-  language: "ko" | "en";
+  language: string;
   recurrenceFreq: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
   setRecurrenceFreq: (freq: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY") => void;
   selectedWeekdays: number[];
@@ -44,10 +44,10 @@ export function RecurrenceSection({
           ] as const
         ).map((freq) => {
           const labels = {
-            DAILY: { ko: "매일", en: "Daily" },
-            WEEKLY: { ko: "매주", en: "Weekly" },
-            MONTHLY: { ko: "매월", en: "Monthly" },
-            YEARLY: { ko: "년", en: "Yearly" },
+            DAILY: { ko: "매일", en: "Daily", zh: "每天" } as Record<string, string>,
+            WEEKLY: { ko: "매주", en: "Weekly", zh: "每周" } as Record<string, string>,
+            MONTHLY: { ko: "매월", en: "Monthly", zh: "每月" } as Record<string, string>,
+            YEARLY: { ko: "년", en: "Yearly", zh: "每年" } as Record<string, string>,
           };
           return (
             <button
@@ -59,7 +59,7 @@ export function RecurrenceSection({
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {labels[freq][language]}
+              {labels[freq][language] || labels[freq]["en"]}
             </button>
           );
         })}
@@ -75,13 +75,13 @@ export function RecurrenceSection({
           </Label>
           <div className="grid grid-cols-7 gap-1">
             {[
-              { ko: "월", en: "M", value: 0 },
-              { ko: "화", en: "T", value: 1 },
-              { ko: "수", en: "W", value: 2 },
-              { ko: "목", en: "T", value: 3 },
-              { ko: "금", en: "F", value: 4 },
-              { ko: "토", en: "S", value: 5 },
-              { ko: "일", en: "S", value: 6 },
+              { ko: "월", en: "M", zh: "一", value: 0 },
+              { ko: "화", en: "T", zh: "二", value: 1 },
+              { ko: "수", en: "W", zh: "三", value: 2 },
+              { ko: "목", en: "T", zh: "四", value: 3 },
+              { ko: "금", en: "F", zh: "五", value: 4 },
+              { ko: "토", en: "S", zh: "六", value: 5 },
+              { ko: "일", en: "S", zh: "日", value: 6 },
             ].map((day) => {
               const isSelected =
                 selectedWeekdays.includes(day.value);
@@ -110,7 +110,7 @@ export function RecurrenceSection({
                       : "bg-muted/50 hover:bg-muted text-muted-foreground"
                   }`}
                 >
-                  {day[language]}
+                  {(day as Record<string, any>)[language] || day["en"]}
                 </button>
               );
             })}
@@ -131,9 +131,9 @@ export function RecurrenceSection({
               ["never", "date", "count"] as const
             ).map((type) => {
               const labels = {
-                never: { ko: "없음", en: "Never" },
-                date: { ko: "날짜", en: "Date" },
-                count: { ko: "횟수", en: "Count" },
+                never: { ko: "없음", en: "Never", zh: "永不" } as Record<string, string>,
+                date: { ko: "날짜", en: "Date", zh: "日期" } as Record<string, string>,
+                count: { ko: "횟수", en: "Count", zh: "次数" } as Record<string, string>,
               };
               return (
                 <button
@@ -163,7 +163,7 @@ export function RecurrenceSection({
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {labels[type][language]}
+                  {labels[type][language] || labels[type]["en"]}
                 </button>
               );
             })}

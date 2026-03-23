@@ -15,7 +15,7 @@ interface DraggableTaskItemProps {
   isEditing: boolean;
   editingTaskTitle: string;
   isHovered: boolean;
-  language: 'ko' | 'en';
+  language: string;
   onMove: (dragIndex: number, hoverIndex: number) => void;
   onDragEnd: () => void;
   onToggle: () => void;
