@@ -234,7 +234,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           </DialogTitle>
 
           {/* Content */}
-          <div className="flex min-h-[420px] pt-12 pb-6">
+          <div className="flex h-[480px] pt-12 pb-6">
             {/* Left nav */}
             <nav className="w-[170px] flex-shrink-0 px-4 border-r border-border">
               <div className="space-y-0.5">
