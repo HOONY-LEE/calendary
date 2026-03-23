@@ -5,7 +5,7 @@ import type { CalendarEvent, Category, ViewType } from "../types";
 import { eventsAPI, DBEvent } from "../../../../lib/api";
 import { projectId, publicAnonKey } from "../../../../lib/supabase-info";
 import { toast } from "sonner";
-import { getGoogleToken } from "../../../../lib/google-token";
+import { getGoogleToken, getGoogleTokenAsync } from "../../../../lib/google-token";
 import { getCachedEvents, setCachedEvents, isCacheStale } from "../../../../lib/events-cache";
 
 interface UseCalendarEventsParams {
@@ -131,10 +131,11 @@ export function useCalendarEvents({
         },
       );
 
-      // 🔥 구글 캘린더 실시간 동기화
+      // 🔥 구글 캘린더 실시간 동기화 (만료 시 자동 갱신)
       let googleEvents: CalendarEvent[] = [];
+      const googleToken = await getGoogleTokenAsync(session);
 
-      if (getGoogleToken(session)) {
+      if (googleToken) {
         try {
           const now = new Date();
           const timeMin = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
@@ -148,7 +149,7 @@ export function useCalendarEvents({
               headers: {
                 'Authorization': `Bearer ${publicAnonKey}`,
                 'X-User-JWT': session.access_token,
-                'X-Google-Access-Token': getGoogleToken(session),
+                'X-Google-Access-Token': googleToken,
               },
             }
           );

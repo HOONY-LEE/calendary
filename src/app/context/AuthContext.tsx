@@ -74,12 +74,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // 🔥 세션이 있으면 바로 상태 업데이트 (getUser 호출 제거 - 블로킹 이슈)
         console.log('[AuthContext] ✅ Session detected, updating state...');
 
-        // 🔥 Google provider_token 영구 저장
-        // Supabase는 세션 갱신 시 provider_token을 유지하지 않으므로 localStorage에 백업
-        if (session.provider_token) {
-          localStorage.setItem('google_provider_token', session.provider_token);
-          console.log('[AuthContext] 💾 Google provider_token saved to localStorage');
-        } else {
+        // 🔥 Google provider_token + refresh_token 관리
+        // getGoogleToken() 호출 시 자동으로 localStorage에 저장됨
+        if (!session.provider_token) {
           // session에 provider_token이 없으면 localStorage에서 복원
           const savedToken = localStorage.getItem('google_provider_token');
           if (savedToken) {
@@ -319,7 +316,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       // 🔥 저장된 Google 토큰도 정리
-      localStorage.removeItem('google_provider_token');
+      const { clearGoogleTokens } = await import('../../lib/google-token');
+      clearGoogleTokens();
       console.log('[AuthContext] ✅ Sign out successful');
       
       // 상태 초기화
