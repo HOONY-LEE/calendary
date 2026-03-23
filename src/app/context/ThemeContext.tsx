@@ -27,7 +27,7 @@ const defaultCustomColors: CustomColors = {
   accent: 'oklch(0.696 0.17 162.48)',
   success: 'oklch(0.696 0.17 162.48)',
   warning: 'oklch(0.828 0.189 84.429)',
-  danger: '#d4183d',
+  danger: '#E30000',
   calendarHighlight: 'oklch(0.489 0.243 264.376)',
   taskCompleted: 'oklch(0.696 0.17 162.48)',
   taskPending: 'oklch(0.828 0.189 84.429)',

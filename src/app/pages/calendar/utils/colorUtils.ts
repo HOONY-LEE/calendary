@@ -1,5 +1,5 @@
 export const COLOR_PRESETS = [
-  "#FF2D55",
+  "#E30000",
   "#FF9500",
   "#FFCC00",
   "#34C759",
@@ -41,7 +41,7 @@ export const GOOGLE_CALENDAR_COLOR_MAP: { [key: string]: string } = {
 
 // 색상 팔레트
 export const colorPalette = [
-  "#FF2D55",
+  "#E30000",
   "#FF9500",
   "#FFCC00",
   "#34C759",
@@ -60,7 +60,7 @@ export const colorPalette = [
 export const getBackgroundColor = (color?: string): string => {
   // color가 없으면 기본 색상 사용
   if (!color) {
-    color = "#FF2D55";
+    color = "#E30000";
   }
   // #RRGGBB 형식을 rgba로 변환
   const hex = color.replace("#", "");

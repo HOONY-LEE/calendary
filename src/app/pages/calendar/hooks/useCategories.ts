@@ -62,7 +62,7 @@ export function useCategories({
   const [newCategoryNameInDropdown, setNewCategoryNameInDropdown] =
     useState("");
   const [newCategoryColorInDropdown, setNewCategoryColorInDropdown] =
-    useState("#FF2D55");
+    useState("#E30000");
   const [showColorPickerInDropdown, setShowColorPickerInDropdown] =
     useState(false);
   const [editingCategoryIdInDropdown, setEditingCategoryIdInDropdown] =
@@ -180,7 +180,7 @@ export function useCategories({
 
       // 초기화
       setNewCategoryNameInDropdown("");
-      setNewCategoryColorInDropdown("#FF2D55");
+      setNewCategoryColorInDropdown("#E30000");
       setShowAddCategoryInDropdown(false);
     } catch (error) {
       console.error("Failed to create category:", error);
@@ -192,7 +192,7 @@ export function useCategories({
 
   const handleCancelAddCategoryInDropdown = () => {
     setNewCategoryNameInDropdown("");
-    setNewCategoryColorInDropdown("#FF2D55");
+    setNewCategoryColorInDropdown("#E30000");
     setShowAddCategoryInDropdown(false);
     setEditingCategoryIdInDropdown(null);
   };
@@ -255,7 +255,7 @@ export function useCategories({
 
       // 초기화
       setNewCategoryNameInDropdown("");
-      setNewCategoryColorInDropdown("#FF2D55");
+      setNewCategoryColorInDropdown("#E30000");
       setShowAddCategoryInDropdown(false);
       setEditingCategoryIdInDropdown(null);
     } catch (error) {
@@ -653,7 +653,7 @@ export function useCategories({
           const defaultCategories = [
             {
               name: "개인",
-              color: "#FF2D55",
+              color: "#E30000",
               order_index: 1,
               is_default: true,
             },
@@ -733,7 +733,7 @@ export function useCategories({
           const defaultCategories = [
             {
               name: "개인",
-              color: "#FF2D55",
+              color: "#E30000",
               order_index: 1,
               is_default: true,
             },

@@ -623,7 +623,7 @@ export function MonthView({
                             backgroundColor:
                               getBackgroundColor(
                                 categories[0]?.color ||
-                                  "#FF2D55",
+                                  "#E30000",
                               ),
                             borderTopLeftRadius:
                               isStartDate || isFirstDayOfWeek
@@ -655,7 +655,7 @@ export function MonthView({
                                 style={{
                                   color:
                                     categories[0]?.color ||
-                                    "#FF2D55",
+                                    "#E30000",
                                 }}
                               />
                               <span
@@ -663,7 +663,7 @@ export function MonthView({
                                 style={{
                                   color:
                                     categories[0]?.color ||
-                                    "#FF2D55",
+                                    "#E30000",
                                 }}
                               >
                                 {t("calendar.newEvent")}
@@ -689,10 +689,10 @@ export function MonthView({
                       ? categories.find(
                           (c) =>
                             c.id === previewEvent.categoryId,
-                        )?.color || "#FF2D55"
+                        )?.color || "#E30000"
                       : categories.find(
                           (c) => c.id === event.categoryId,
-                        )?.color || "#FF2D55";
+                        )?.color || "#E30000";
 
                     const eventStartDate = new Date(
                       event.date.getFullYear(),
@@ -941,10 +941,10 @@ export function MonthView({
                       ? categories.find(
                           (c) =>
                             c.id === previewEvent.categoryId,
-                        )?.color || "#FF2D55"
+                        )?.color || "#E30000"
                       : categories.find(
                           (c) => c.id === event.categoryId,
-                        )?.color || "#FF2D55";
+                        )?.color || "#E30000";
 
                     return (
                       <div

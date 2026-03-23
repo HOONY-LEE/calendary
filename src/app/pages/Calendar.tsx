@@ -917,7 +917,7 @@ export function Calendar() {
                 // 드롭다운이 닫힐 때 상태 초기화
                 setShowAddCategoryInDropdown(false);
                 setNewCategoryNameInDropdown("");
-                setNewCategoryColorInDropdown("#FF2D55");
+                setNewCategoryColorInDropdown("#E30000");
                 setEditingCategoryIdInDropdown(null);
                 setShowColorPickerInDropdown(false);
               }

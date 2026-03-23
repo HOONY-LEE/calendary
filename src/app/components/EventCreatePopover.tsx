@@ -748,11 +748,11 @@ export function EventCreatePopover({
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryColor, setNewCategoryColor] =
-    useState("#FF2D55");
+    useState("#E30000");
 
   // 미리 정의된 색상 팔레트
   const colorPalette = [
-    "#FF2D55",
+    "#E30000",
     "#FF9500",
     "#FFCC00",
     "#34C759",
@@ -796,7 +796,7 @@ export function EventCreatePopover({
       }
       // 초기화
       setNewCategoryName("");
-      setNewCategoryColor("#FF2D55");
+      setNewCategoryColor("#E30000");
       setEditingCategoryId(null);
       setShowAddCategory(false);
 
@@ -809,7 +809,7 @@ export function EventCreatePopover({
 
   const handleCancelAddCategory = () => {
     setNewCategoryName("");
-    setNewCategoryColor("#FF2D55");
+    setNewCategoryColor("#E30000");
     setEditingCategoryId(null);
     setShowAddCategory(false);
   };

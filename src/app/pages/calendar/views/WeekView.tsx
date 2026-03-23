@@ -249,10 +249,10 @@ export function WeekView({
               const displayColor = isBeingEdited
                 ? categories.find(
                     (c) => c.id === previewEvent.categoryId,
-                  )?.color || "#FF2D55"
+                  )?.color || "#E30000"
                 : categories.find(
                     (c) => c.id === event.categoryId,
-                  )?.color || "#FF2D55";
+                  )?.color || "#E30000";
 
               // 표시할 시간 계산
               const displayStartHour = displayData.startTime

@@ -197,7 +197,7 @@ export function YearView({
                           (c) => c.id === event.categoryId,
                         );
                         const eventColor =
-                          category?.color || "#FF2D55";
+                          category?.color || "#E30000";
                         return (
                           <div
                             key={i}
