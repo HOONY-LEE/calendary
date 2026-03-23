@@ -402,7 +402,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         <button
                           onClick={handleHolidayToggle}
                           className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                            holidayEnabled ? "bg-primary" : "bg-muted-foreground/30"
+                            holidayEnabled ? "bg-[#0C8CE9]" : "bg-muted-foreground/30"
                           }`}
                         >
                           <span
@@ -464,61 +464,66 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
                     <div className="space-y-3">
                       {/* 데이터 가져오기 */}
-                      <button
-                        type="button"
-                        onClick={handleMigrateGoogleCalendar}
-                        disabled={isMigrating}
-                        className="w-full border rounded-lg p-4 text-left hover:border-green-400 transition-colors"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="p-1.5 bg-green-50 dark:bg-green-950 rounded-lg">
-                            {isMigrating ? (
-                              <RefreshCw className="w-4 h-4 text-green-600 dark:text-green-400 animate-spin" />
-                            ) : (
-                              <Download className="w-4 h-4 text-green-600 dark:text-green-400" />
-                            )}
+                      <div className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-start gap-3">
+                            <div className="p-1.5 bg-green-50 dark:bg-green-950 rounded-lg">
+                              {isMigrating ? (
+                                <RefreshCw className="w-4 h-4 text-green-600 dark:text-green-400 animate-spin" />
+                              ) : (
+                                <Download className="w-4 h-4 text-green-600 dark:text-green-400" />
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-sm mb-0.5">
+                                {t("settings.googleCalendar.importTitle")}
+                              </h3>
+                              <p className="text-xs text-muted-foreground">
+                                {isMigrating ? t("settings.googleCalendar.importing") : t("settings.googleCalendar.importDesc")}
+                              </p>
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <h3 className="font-medium text-sm mb-0.5">
-                              {t("settings.googleCalendar.importTitle")}
-                            </h3>
-                            <p className="text-xs text-muted-foreground">
-                              {isMigrating ? t("settings.googleCalendar.importing") : t("settings.googleCalendar.importDesc")}
-                            </p>
-                          </div>
+                          <button
+                            onClick={handleMigrateGoogleCalendar}
+                            disabled={isMigrating}
+                            className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors bg-muted-foreground/30 hover:bg-muted-foreground/40 flex-shrink-0 ml-3"
+                          >
+                            <span className="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform translate-x-0.5" />
+                          </button>
                         </div>
-                      </button>
+                      </div>
 
                       {/* API 연동 */}
-                      <button
-                        type="button"
-                        onClick={handleConnectGoogleAPI}
-                        disabled={loading}
-                        className={`w-full border rounded-lg p-4 text-left transition-colors ${
-                          isGoogleConnected
-                            ? "border-blue-400 bg-blue-50/50 dark:bg-blue-950/30"
-                            : "hover:border-blue-400"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="p-1.5 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                            <Cloud className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-medium text-sm mb-0.5">
-                              {t("settings.googleCalendar.apiTitle")}
-                            </h3>
-                            <p className="text-xs text-muted-foreground">
-                              {t("settings.googleCalendar.apiDesc")}
-                            </p>
-                            {isGoogleConnected && (
-                              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                                {t("settings.googleCalendar.alreadyConnected")}
+                      <div className={`border rounded-lg p-4 ${isGoogleConnected ? "border-[#0C8CE9]/40" : ""}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-start gap-3">
+                            <div className="p-1.5 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                              <Cloud className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-sm mb-0.5">
+                                {t("settings.googleCalendar.apiTitle")}
+                              </h3>
+                              <p className="text-xs text-muted-foreground">
+                                {t("settings.googleCalendar.apiDesc")}
                               </p>
-                            )}
+                            </div>
                           </div>
+                          <button
+                            onClick={handleConnectGoogleAPI}
+                            disabled={loading}
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ml-3 ${
+                              isGoogleConnected ? "bg-[#0C8CE9]" : "bg-muted-foreground/30 hover:bg-muted-foreground/40"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                                isGoogleConnected ? "translate-x-4.5" : "translate-x-0.5"
+                              }`}
+                            />
+                          </button>
                         </div>
-                      </button>
+                      </div>
                     </div>
                   </div>
                 </div>
