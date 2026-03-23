@@ -171,18 +171,26 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     }
   }, [open]);
 
-  const checkTokenScopes = async (accessToken: string) => {
+  const checkTokenScopes = async (accessToken: string): Promise<boolean> => {
     try {
       const response = await fetch(
         `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${accessToken}`
       );
+      if (!response.ok) {
+        // 토큰 만료 또는 무효
+        console.warn("[Settings] Token invalid or expired");
+        return false;
+      }
       const data = await response.json();
       if (data.scope) {
         const scopes = data.scope.split(" ");
         setTokenScopes(scopes);
+        return true;
       }
+      return false;
     } catch (error) {
       console.error("[Settings] Failed to check token scopes:", error);
+      return false;
     }
   };
 
@@ -190,24 +198,24 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        const { data: { user } } = await supabase.auth.getUser();
-        const googleIdentity = user?.identities?.find(
-          (identity) => identity.provider === "google"
-        );
-        if (googleIdentity) {
-          setIsGoogleConnected(true);
-          if (getGoogleToken(session)) {
-            setGoogleAccessToken(getGoogleToken(session));
-            await checkTokenScopes(getGoogleToken(session)!);
+        const token = getGoogleToken(session);
+        if (token) {
+          // 토큰이 있으면 실제로 유효한지 확인
+          const isValid = await checkTokenScopes(token);
+          if (isValid) {
+            setIsGoogleConnected(true);
+            setGoogleAccessToken(token);
+            return;
           }
-        } else {
-          setIsGoogleConnected(false);
-          setGoogleAccessToken(null);
-          setTokenScopes([]);
         }
+        // 토큰이 없거나 만료됨
+        setIsGoogleConnected(false);
+        setGoogleAccessToken(null);
+        setTokenScopes([]);
       }
     } catch (error) {
       console.error("[Settings] Failed to check Google connection:", error);
+      setIsGoogleConnected(false);
     }
   };
 
@@ -445,7 +453,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   {/* 구분선 */}
                   <div className="border-t border-border" />
 
-                  {/* 2 & 3. 구글 캘린더 연동 */}
+                  {/* 2 & 3. 구글 캘린더 연동 (상호 배타적 선택) */}
                   <div>
                     <h2 className="text-base font-semibold mb-1">
                       {t("settings.googleCalendar.integrationMethod")}
@@ -454,97 +462,64 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       {t("settings.googleCalendar.chooseMethod")}
                     </p>
 
-                  <div className="space-y-3">
-                    {/* 데이터 가져오기 */}
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="p-1.5 bg-green-50 dark:bg-green-950 rounded-lg">
-                          <Download className="w-4 h-4 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-medium text-sm mb-0.5">
-                            {t("settings.googleCalendar.importTitle")}
-                          </h3>
-                          <p className="text-xs text-muted-foreground">
-                            {t("settings.googleCalendar.importDesc")}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="space-y-1.5 mb-3 ml-0">
-                        {[
-                          t("settings.googleCalendar.importFeature1"),
-                          t("settings.googleCalendar.importFeature2"),
-                          t("settings.googleCalendar.importFeature3"),
-                        ].map((text, i) => (
-                          <div key={i} className="flex items-start gap-2">
-                            <Check className="w-3.5 h-3.5 text-green-600 mt-0.5 flex-shrink-0" />
-                            <p className="text-xs text-foreground/80">{text}</p>
-                          </div>
-                        ))}
-                      </div>
-                      <Button
+                    <div className="space-y-3">
+                      {/* 데이터 가져오기 */}
+                      <button
+                        type="button"
                         onClick={handleMigrateGoogleCalendar}
                         disabled={isMigrating}
-                        size="sm"
-                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        className="w-full border rounded-lg p-4 text-left hover:border-green-400 transition-colors"
                       >
-                        {isMigrating ? (
-                          <>
-                            <RefreshCw className="w-3.5 h-3.5 mr-2 animate-spin" />
-                            {t("settings.googleCalendar.importing")}
-                          </>
-                        ) : (
-                          <>
-                            <Download className="w-3.5 h-3.5 mr-2" />
-                            {!isGoogleConnected ? t("settings.googleCalendar.connectAndImport") : t("settings.googleCalendar.importData")}
-                          </>
-                        )}
-                      </Button>
-                    </div>
-
-                    {/* API 연동 */}
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="p-1.5 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                          <Cloud className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-medium text-sm mb-0.5">
-                            {t("settings.googleCalendar.apiTitle")}
-                          </h3>
-                          <p className="text-xs text-muted-foreground">
-                            {t("settings.googleCalendar.apiDesc")}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="space-y-1.5 mb-3 ml-0">
-                        {[
-                          t("settings.googleCalendar.apiFeature1"),
-                          t("settings.googleCalendar.apiFeature2"),
-                          t("settings.googleCalendar.apiFeature3"),
-                        ].map((text, i) => (
-                          <div key={i} className="flex items-start gap-2">
-                            <Check className="w-3.5 h-3.5 text-blue-600 mt-0.5 flex-shrink-0" />
-                            <p className="text-xs text-foreground/80">{text}</p>
+                        <div className="flex items-start gap-3">
+                          <div className="p-1.5 bg-green-50 dark:bg-green-950 rounded-lg">
+                            {isMigrating ? (
+                              <RefreshCw className="w-4 h-4 text-green-600 dark:text-green-400 animate-spin" />
+                            ) : (
+                              <Download className="w-4 h-4 text-green-600 dark:text-green-400" />
+                            )}
                           </div>
-                        ))}
-                      </div>
-                      <Button
+                          <div className="flex-1">
+                            <h3 className="font-medium text-sm mb-0.5">
+                              {t("settings.googleCalendar.importTitle")}
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                              {isMigrating ? t("settings.googleCalendar.importing") : t("settings.googleCalendar.importDesc")}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+
+                      {/* API 연동 */}
+                      <button
+                        type="button"
                         onClick={handleConnectGoogleAPI}
                         disabled={loading}
-                        size="sm"
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        className={`w-full border rounded-lg p-4 text-left transition-colors ${
+                          isGoogleConnected
+                            ? "border-blue-400 bg-blue-50/50 dark:bg-blue-950/30"
+                            : "hover:border-blue-400"
+                        }`}
                       >
-                        <Cloud className="w-3.5 h-3.5 mr-2" />
-                        {t("settings.googleCalendar.connectApi")}
-                      </Button>
-                      {isGoogleConnected && (
-                        <p className="text-xs text-green-600 dark:text-green-400 mt-2 text-center">
-                          {t("settings.googleCalendar.alreadyConnected")}
-                        </p>
-                      )}
+                        <div className="flex items-start gap-3">
+                          <div className="p-1.5 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                            <Cloud className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-medium text-sm mb-0.5">
+                              {t("settings.googleCalendar.apiTitle")}
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                              {t("settings.googleCalendar.apiDesc")}
+                            </p>
+                            {isGoogleConnected && (
+                              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                                {t("settings.googleCalendar.alreadyConnected")}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
                     </div>
-                  </div>
                   </div>
                 </div>
               )}
