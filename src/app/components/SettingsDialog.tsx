@@ -97,13 +97,19 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     }
   }, [i18n.language]);
 
+  // 주요 국가 목록 (검색 없을 때 기본 표시)
+  const popularCountryCodes = [
+    "US", "KR", "GB", "FR", "DE", "JP", "CN", "ES", "IT", "CA",
+    "IN", "MX", "BR", "AU", "CH", "NZ", "TH", "VN", "SG",
+  ];
+
   const filteredCountries = countrySearch
     ? availableCountries.filter((c) => {
         const q = countrySearch.toLowerCase();
         const localDisplay = getLocalizedCountryName(c.countryCode, c.name).toLowerCase();
         return localDisplay.includes(q) || c.countryCode.toLowerCase().includes(q) || c.name.toLowerCase().includes(q);
       })
-    : availableCountries;
+    : availableCountries.filter((c) => popularCountryCodes.includes(c.countryCode));
 
   const handleHolidayToggle = () => {
     const newEnabled = !holidayEnabled;
@@ -390,8 +396,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     onClick={() => setActiveTab(tab.id)}
                     className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[15px] transition-colors ${
                       activeTab === tab.id
-                        ? "bg-muted font-medium text-foreground"
-                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                        ? "bg-[#FBFBFC] dark:bg-accent font-medium text-foreground"
+                        : "text-muted-foreground hover:bg-[#FBFBFC] dark:hover:bg-accent hover:text-foreground"
                     }`}
                   >
                     {tab.icon}
@@ -456,8 +462,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                   onClick={() => handleCountryChange(country.countryCode)}
                                   className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-sm transition-colors ${
                                     holidayCountry === country.countryCode
-                                      ? "bg-muted font-medium"
-                                      : "hover:bg-muted/50"
+                                      ? "bg-[#FBFBFC] dark:bg-accent font-medium"
+                                      : "hover:bg-[#FBFBFC] dark:hover:bg-accent"
                                   }`}
                                 >
                                   <span>{getLocalizedCountryName(country.countryCode, country.name)}</span>
