@@ -378,12 +378,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     }
   };
 
-  const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
-    { id: "google", label: t("settings.tabs.calendar"), icon: <CalendarIcon className="w-4.5 h-4.5 text-primary" /> },
-    { id: "timezone", label: t("settings.tabs.timezone"), icon: <Clock className="w-4.5 h-4.5 text-primary" /> },
-    { id: "theme", label: t("settings.tabs.theme"), icon: <Palette className="w-4.5 h-4.5 text-primary" /> },
-    { id: "language", label: t("settings.tabs.language"), icon: <Globe className="w-4.5 h-4.5 text-primary" /> },
-    { id: "account", label: t("settings.tabs.account"), icon: <User className="w-4.5 h-4.5 text-primary" /> },
+  const tabs: { id: SettingsTab; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
+    { id: "google", label: t("settings.tabs.calendar"), Icon: CalendarIcon },
+    { id: "timezone", label: t("settings.tabs.timezone"), Icon: Clock },
+    { id: "theme", label: t("settings.tabs.theme"), Icon: Palette },
+    { id: "language", label: t("settings.tabs.language"), Icon: Globe },
+    { id: "account", label: t("settings.tabs.account"), Icon: User },
   ];
 
   return (
@@ -408,20 +408,23 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             {/* Left nav - full height divider like Apple Calendar */}
             <nav className="w-[180px] flex-shrink-0 pt-14 pb-6 px-3 border-r border-border">
               <div className="space-y-0.5">
-                {tabs.map((tab) => (
+                {tabs.map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[15px] transition-colors ${
-                      activeTab === tab.id
-                        ? "bg-[#FBFBFC] dark:bg-accent font-medium text-foreground"
+                      isActive
+                        ? "bg-primary font-medium text-white"
                         : "text-muted-foreground hover:bg-[#FBFBFC] dark:hover:bg-accent hover:text-foreground"
                     }`}
                   >
-                    {tab.icon}
+                    <tab.Icon className={`w-4.5 h-4.5 ${isActive ? "text-white" : "text-primary"}`} />
                     {tab.label}
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </nav>
 
