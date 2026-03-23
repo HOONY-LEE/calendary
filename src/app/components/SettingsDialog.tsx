@@ -332,11 +332,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   };
 
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
-    { id: "google", label: t("settings.tabs.calendar"), icon: <CalendarIcon className="w-4 h-4" /> },
-    { id: "timezone", label: t("settings.tabs.timezone"), icon: <Clock className="w-4 h-4" /> },
-    { id: "theme", label: t("settings.tabs.theme"), icon: <Palette className="w-4 h-4" /> },
-    { id: "language", label: t("settings.tabs.language"), icon: <Globe className="w-4 h-4" /> },
-    { id: "account", label: t("settings.tabs.account"), icon: <User className="w-4 h-4" /> },
+    { id: "google", label: t("settings.tabs.calendar"), icon: <CalendarIcon className="w-4.5 h-4.5 text-primary" /> },
+    { id: "timezone", label: t("settings.tabs.timezone"), icon: <Clock className="w-4.5 h-4.5 text-primary" /> },
+    { id: "theme", label: t("settings.tabs.theme"), icon: <Palette className="w-4.5 h-4.5 text-primary" /> },
+    { id: "language", label: t("settings.tabs.language"), icon: <Globe className="w-4.5 h-4.5 text-primary" /> },
+    { id: "account", label: t("settings.tabs.account"), icon: <User className="w-4.5 h-4.5 text-primary" /> },
   ];
 
   return (
@@ -347,7 +347,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           className="fixed top-[50%] left-[50%] z-50 translate-x-[-50%] translate-y-[-50%] bg-background border rounded-xl shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200 w-[90vw] max-w-[680px]"
         >
           {/* Close button */}
-          <DialogPrimitive.Close className="absolute top-4 left-4 rounded-sm opacity-70 hover:opacity-100 transition-opacity">
+          <DialogPrimitive.Close className="absolute top-3.5 left-3.5 rounded-sm opacity-70 hover:opacity-100 transition-opacity z-10">
             <X className="h-5 w-5" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
@@ -357,15 +357,15 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           </DialogTitle>
 
           {/* Content */}
-          <div className="flex h-[580px] pt-12 pb-6">
-            {/* Left nav */}
-            <nav className="w-[170px] flex-shrink-0 px-4 border-r border-border">
+          <div className="flex h-[580px]">
+            {/* Left nav - full height divider like Apple Calendar */}
+            <nav className="w-[180px] flex-shrink-0 pt-14 pb-6 px-3 border-r border-border">
               <div className="space-y-0.5">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[15px] transition-colors ${
                       activeTab === tab.id
                         ? "bg-muted font-medium text-foreground"
                         : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
@@ -379,7 +379,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             </nav>
 
             {/* Right content */}
-            <div className="flex-1 px-6 overflow-y-auto">
+            <div className="flex-1 px-6 pt-14 pb-6 overflow-y-auto">
               {activeTab === "google" && (
                 <div className="space-y-6">
                   {/* 1. 공휴일 표시 */}
