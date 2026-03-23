@@ -425,9 +425,27 @@ export function useCategories({
         }
 
         setCategories(allCategories);
-        setSelectedCategoryIds(
-          allCategories.map((c) => c.id),
-        );
+
+        // localStorage에서 저장된 카테고리 선택 상태 복원
+        const savedSelection = localStorage.getItem("selected_category_ids");
+        if (savedSelection) {
+          try {
+            const savedIds = JSON.parse(savedSelection) as string[];
+            // 존재하는 카테고리만 필터링 (삭제된 카테고리 제외)
+            const validIds = savedIds.filter((id) =>
+              allCategories.some((c) => c.id === id)
+            );
+            // 새로 추가된 카테고리는 기본 선택
+            const newCategoryIds = allCategories
+              .filter((c) => !savedIds.includes(c.id))
+              .map((c) => c.id);
+            setSelectedCategoryIds([...validIds, ...newCategoryIds]);
+          } catch {
+            setSelectedCategoryIds(allCategories.map((c) => c.id));
+          }
+        } else {
+          setSelectedCategoryIds(allCategories.map((c) => c.id));
+        }
 
         // 첫 번째 카테고리를 기본값으로 설정 (order_index가 가장 작은 카테고리 = 맨 위)
         if (
@@ -756,11 +774,20 @@ export function useCategories({
     };
   }, [session]);
 
+  // selectedCategoryIds 변경 시 localStorage에 자동 저장
+  const setSelectedCategoryIdsWithSave = useCallback((updater: React.SetStateAction<string[]>) => {
+    setSelectedCategoryIds((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      localStorage.setItem("selected_category_ids", JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   return {
     categories,
     setCategories,
     selectedCategoryIds,
-    setSelectedCategoryIds,
+    setSelectedCategoryIds: setSelectedCategoryIdsWithSave,
     showAddCategoryInDropdown,
     setShowAddCategoryInDropdown,
     newCategoryNameInDropdown,
