@@ -559,9 +559,24 @@ export function useCategories({
               );
 
               setCategories(reloadedCategories);
-              setSelectedCategoryIds(
-                reloadedCategories.map((c) => c.id),
-              );
+              // localStorage에서 저장된 선택 상태 복원
+              const saved = localStorage.getItem("selected_category_ids");
+              if (saved) {
+                try {
+                  const savedIds = JSON.parse(saved) as string[];
+                  const validIds = savedIds.filter((id) =>
+                    reloadedCategories.some((c) => c.id === id)
+                  );
+                  const newIds = reloadedCategories
+                    .filter((c) => !savedIds.includes(c.id))
+                    .map((c) => c.id);
+                  setSelectedCategoryIds([...validIds, ...newIds]);
+                } catch {
+                  setSelectedCategoryIds(reloadedCategories.map((c) => c.id));
+                }
+              } else {
+                setSelectedCategoryIds(reloadedCategories.map((c) => c.id));
+              }
 
               // 첫 번째 카테고리를 기본값으로 설정
               if (
@@ -775,19 +790,17 @@ export function useCategories({
   }, [session]);
 
   // selectedCategoryIds 변경 시 localStorage에 자동 저장
-  const setSelectedCategoryIdsWithSave = useCallback((updater: React.SetStateAction<string[]>) => {
-    setSelectedCategoryIds((prev) => {
-      const next = typeof updater === 'function' ? updater(prev) : updater;
-      localStorage.setItem("selected_category_ids", JSON.stringify(next));
-      return next;
-    });
-  }, []);
+  useEffect(() => {
+    if (selectedCategoryIds.length > 0) {
+      localStorage.setItem("selected_category_ids", JSON.stringify(selectedCategoryIds));
+    }
+  }, [selectedCategoryIds]);
 
   return {
     categories,
     setCategories,
     selectedCategoryIds,
-    setSelectedCategoryIds: setSelectedCategoryIdsWithSave,
+    setSelectedCategoryIds,
     showAddCategoryInDropdown,
     setShowAddCategoryInDropdown,
     newCategoryNameInDropdown,
