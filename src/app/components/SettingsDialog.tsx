@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Calendar as CalendarIcon,
@@ -18,6 +18,7 @@ import {
   Clock,
 } from "lucide-react";
 import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 import { supabase } from "../../lib/supabase";
 import { toast } from "sonner";
 import { useTheme } from "../context/ThemeContext";
@@ -74,12 +75,34 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     }
   }, [open]);
 
+  // 국가 이름 현지화: Intl.DisplayNames 사용
+  const getLocalizedCountryName = useCallback((countryCode: string, englishName: string): string => {
+    const lang = i18n.language;
+    try {
+      const displayNames = new Intl.DisplayNames([lang], { type: "region" });
+      const localName = displayNames.of(countryCode);
+      if (!localName || localName === countryCode) return englishName;
+
+      if (lang === "en") {
+        // 영어: English Name (CC)
+        return `${englishName} (${countryCode})`;
+      }
+      // 기타 언어: 현지이름 (English Name)
+      if (localName !== englishName) {
+        return `${localName} (${englishName})`;
+      }
+      return englishName;
+    } catch {
+      return englishName;
+    }
+  }, [i18n.language]);
+
   const filteredCountries = countrySearch
-    ? availableCountries.filter(
-        (c) =>
-          c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
-          c.countryCode.toLowerCase().includes(countrySearch.toLowerCase())
-      )
+    ? availableCountries.filter((c) => {
+        const q = countrySearch.toLowerCase();
+        const localDisplay = getLocalizedCountryName(c.countryCode, c.name).toLowerCase();
+        return localDisplay.includes(q) || c.countryCode.toLowerCase().includes(q) || c.name.toLowerCase().includes(q);
+      })
     : availableCountries;
 
   const handleHolidayToggle = () => {
@@ -416,12 +439,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       {/* 국가 선택 */}
                       {holidayEnabled && (
                         <div className="space-y-2">
-                          <input
+                          <Input
                             type="text"
                             value={countrySearch}
                             onChange={(e) => setCountrySearch(e.target.value)}
                             placeholder={t("settings.holiday.searchPlaceholder")}
-                            className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="h-8"
                           />
                           <div className="max-h-[140px] overflow-y-auto space-y-0.5">
                             {loadingCountries ? (
@@ -437,7 +460,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                       : "hover:bg-muted/50"
                                   }`}
                                 >
-                                  <span>{country.name}</span>
+                                  <span>{getLocalizedCountryName(country.countryCode, country.name)}</span>
                                   {holidayCountry === country.countryCode && (
                                     <Check className="w-3.5 h-3.5 text-primary" />
                                   )}
@@ -593,12 +616,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   </div>
 
                   {/* 검색 */}
-                  <input
+                  <Input
                     type="text"
                     value={timezoneSearch}
                     onChange={(e) => setTimezoneSearch(e.target.value)}
                     placeholder={t("settings.timezone.searchPlaceholder")}
-                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background mb-3 focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="mb-3"
                   />
 
                   {/* 시간대 목록 */}
