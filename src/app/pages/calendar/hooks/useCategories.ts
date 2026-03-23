@@ -352,19 +352,15 @@ export function useCategories({
           dbCategories,
         );
 
-        // 카테고리가 없으면 빈 배열로 설정
+        // DB 카테고리가 없어도 Google Calendar 카테고리가 있을 수 있으므로 계속 진행
         if (!dbCategories || dbCategories.length === 0) {
           console.log(
-            "[Calendar] No categories found, setting empty array",
+            "[Calendar] No DB categories found, continuing to check Google calendars...",
           );
-          setCategories([]);
-          setSelectedCategoryIds([]);
-          setIsLoading(false); // 🔥 카테고리가 없을 때도 로딩 해제
-          return;
         }
 
         // DB 카테고리를 Category 형식으로 변환 + order_index 포함
-        const mappedCategories: Category[] = dbCategories.map(
+        const mappedCategories: Category[] = (dbCategories || []).map(
           (dbCat) => ({
             id: dbCat.id,
             name: dbCat.name,
