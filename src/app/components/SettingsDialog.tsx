@@ -51,6 +51,54 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [loading, setLoading] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
 
+  // 공휴일 설정
+  const [holidayEnabled, setHolidayEnabled] = useState<boolean>(() => {
+    return localStorage.getItem("holiday_enabled") === "true";
+  });
+  const [holidayCountry, setHolidayCountry] = useState<string>(() => {
+    return localStorage.getItem("holiday_country") || "KR";
+  });
+  const [availableCountries, setAvailableCountries] = useState<{ countryCode: string; name: string }[]>([]);
+  const [countrySearch, setCountrySearch] = useState("");
+  const [loadingCountries, setLoadingCountries] = useState(false);
+
+  // 국가 목록 로드
+  useEffect(() => {
+    if (open && availableCountries.length === 0) {
+      setLoadingCountries(true);
+      fetch("https://date.nager.at/api/v3/AvailableCountries")
+        .then((res) => res.json())
+        .then((data) => setAvailableCountries(data))
+        .catch(() => {})
+        .finally(() => setLoadingCountries(false));
+    }
+  }, [open]);
+
+  const filteredCountries = countrySearch
+    ? availableCountries.filter(
+        (c) =>
+          c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+          c.countryCode.toLowerCase().includes(countrySearch.toLowerCase())
+      )
+    : availableCountries;
+
+  const handleHolidayToggle = () => {
+    const newEnabled = !holidayEnabled;
+    setHolidayEnabled(newEnabled);
+    localStorage.setItem("holiday_enabled", String(newEnabled));
+    toast.success(newEnabled ? t("settings.holiday.enabledToast") : t("settings.holiday.disabledToast"));
+    // 캘린더 이벤트 새로고침을 위해 커스텀 이벤트 발행
+    window.dispatchEvent(new CustomEvent("holiday-settings-changed"));
+  };
+
+  const handleCountryChange = (code: string) => {
+    setHolidayCountry(code);
+    localStorage.setItem("holiday_country", code);
+    if (holidayEnabled) {
+      window.dispatchEvent(new CustomEvent("holiday-settings-changed"));
+    }
+  };
+
   // 시간대 설정
   const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [timezone, setTimezone] = useState<string>(() => {
@@ -325,15 +373,88 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             {/* Right content */}
             <div className="flex-1 px-6 overflow-y-auto">
               {activeTab === "google" && (
-                <div>
-                  <h2 className="text-base font-semibold mb-4">
-                    {t("settings.googleCalendar.integrationMethod")}
-                  </h2>
-                  <p className="text-sm text-muted-foreground mb-5">
-                    {t("settings.googleCalendar.chooseMethod")}
-                  </p>
+                <div className="space-y-6">
+                  {/* 1. 공휴일 표시 */}
+                  <div>
+                    <h2 className="text-base font-semibold mb-1">
+                      {t("settings.holiday.title")}
+                    </h2>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      {t("settings.holiday.description")}
+                    </p>
 
-                  <div className="space-y-4">
+                    <div className="border rounded-lg p-4 space-y-3">
+                      {/* 토글 + 상태 */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">
+                            {holidayEnabled ? t("settings.holiday.enabled") : t("settings.holiday.disabled")}
+                          </span>
+                        </div>
+                        <button
+                          onClick={handleHolidayToggle}
+                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                            holidayEnabled ? "bg-primary" : "bg-muted-foreground/30"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                              holidayEnabled ? "translate-x-4.5" : "translate-x-0.5"
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {/* 국가 선택 */}
+                      {holidayEnabled && (
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={countrySearch}
+                            onChange={(e) => setCountrySearch(e.target.value)}
+                            placeholder={t("settings.holiday.searchPlaceholder")}
+                            className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                          <div className="max-h-[140px] overflow-y-auto space-y-0.5">
+                            {loadingCountries ? (
+                              <p className="text-xs text-muted-foreground text-center py-2">{t("settings.holiday.loading")}</p>
+                            ) : (
+                              filteredCountries.map((country) => (
+                                <button
+                                  key={country.countryCode}
+                                  onClick={() => handleCountryChange(country.countryCode)}
+                                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-sm transition-colors ${
+                                    holidayCountry === country.countryCode
+                                      ? "bg-muted font-medium"
+                                      : "hover:bg-muted/50"
+                                  }`}
+                                >
+                                  <span>{country.name}</span>
+                                  {holidayCountry === country.countryCode && (
+                                    <Check className="w-3.5 h-3.5 text-primary" />
+                                  )}
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 구분선 */}
+                  <div className="border-t border-border" />
+
+                  {/* 2 & 3. 구글 캘린더 연동 */}
+                  <div>
+                    <h2 className="text-base font-semibold mb-1">
+                      {t("settings.googleCalendar.integrationMethod")}
+                    </h2>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      {t("settings.googleCalendar.chooseMethod")}
+                    </p>
+
+                  <div className="space-y-3">
                     {/* 데이터 가져오기 */}
                     <div className="border rounded-lg p-4">
                       <div className="flex items-start gap-3 mb-3">
@@ -423,6 +544,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         </p>
                       )}
                     </div>
+                  </div>
                   </div>
                 </div>
               )}

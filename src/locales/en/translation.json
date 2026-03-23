@@ -187,6 +187,19 @@
       "searchPlaceholder": "Search timezone...",
       "noResults": "No results found"
     },
+    "holiday": {
+      "title": "Public Holidays",
+      "description": "Display national holidays and observances on the calendar.",
+      "selectCountry": "Select Country",
+      "enabled": "Holidays displayed",
+      "disabled": "Holidays hidden",
+      "enable": "Show Holidays",
+      "disable": "Hide Holidays",
+      "loading": "Loading countries...",
+      "enabledToast": "Public holidays are now displayed on the calendar.",
+      "disabledToast": "Public holidays have been hidden.",
+      "searchPlaceholder": "Search country..."
+    },
     "appSettings": "App Settings",
     "signOut": "Sign Out"
   },

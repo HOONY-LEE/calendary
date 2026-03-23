@@ -208,13 +208,39 @@ export function useCalendarEvents({
         console.log("[Calendar] ⏭️ No provider_token - skipping Google Calendar sync");
       }
 
-      const allEvents = [...calendarEvents, ...googleEvents];
+      // 공휴일 fetch
+      let holidayEvents: CalendarEvent[] = [];
+      const holidayEnabled = localStorage.getItem("holiday_enabled") === "true";
+      const holidayCountry = localStorage.getItem("holiday_country") || "KR";
+
+      if (holidayEnabled && holidayCountry) {
+        try {
+          const currentYear = new Date().getFullYear();
+          const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${currentYear}/${holidayCountry}`);
+          if (res.ok) {
+            const holidays = await res.json();
+            holidayEvents = holidays.map((h: any) => ({
+              id: `holiday-${h.countryCode}-${h.date}`,
+              title: h.localName || h.name,
+              date: new Date(h.date + "T00:00:00"),
+              isHoliday: true,
+              description: h.name !== h.localName ? h.name : undefined,
+            }));
+            console.log(`[Calendar] 🎌 Loaded ${holidayEvents.length} holidays for ${holidayCountry}`);
+          }
+        } catch (error) {
+          console.warn("[Calendar] ⚠️ Holiday fetch failed:", error);
+        }
+      }
+
+      const allEvents = [...calendarEvents, ...googleEvents, ...holidayEvents];
       setEvents(allEvents);
       setCachedEvents(allEvents);
       console.log(
         "[Calendar] Successfully loaded",
         calendarEvents.length, "Supabase +",
-        googleEvents.length, "Google events",
+        googleEvents.length, "Google +",
+        holidayEvents.length, "Holiday events",
       );
 
       if (calendarEvents.length === 0) {
@@ -286,6 +312,16 @@ export function useCalendarEvents({
       loadEvents();
     }
   }, [session, language]);
+
+  // 공휴일 설정 변경 시 이벤트 새로고침
+  useEffect(() => {
+    const handler = () => {
+      console.log("[Calendar] 🎌 Holiday settings changed, reloading...");
+      loadEvents();
+    };
+    window.addEventListener("holiday-settings-changed", handler);
+    return () => window.removeEventListener("holiday-settings-changed", handler);
+  }, [loadEvents]);
 
   // setEvents를 래핑하여 캐시도 동기화
   const setEventsWithCache = useCallback((updater: React.SetStateAction<CalendarEvent[]>) => {

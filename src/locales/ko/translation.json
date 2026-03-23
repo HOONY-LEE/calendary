@@ -187,6 +187,19 @@
       "searchPlaceholder": "시간대 검색...",
       "noResults": "검색 결과가 없습니다"
     },
+    "holiday": {
+      "title": "공휴일 표시",
+      "description": "국가별 공휴일 및 기념일을 캘린더에 표시합니다.",
+      "selectCountry": "국가 선택",
+      "enabled": "공휴일 표시 중",
+      "disabled": "공휴일 표시 안 함",
+      "enable": "공휴일 표시",
+      "disable": "표시 해제",
+      "loading": "국가 목록을 불러오는 중...",
+      "enabledToast": "공휴일이 캘린더에 표시됩니다.",
+      "disabledToast": "공휴일 표시가 해제되었습니다.",
+      "searchPlaceholder": "국가 검색..."
+    },
     "appSettings": "앱 설정",
     "signOut": "로그아웃"
   },

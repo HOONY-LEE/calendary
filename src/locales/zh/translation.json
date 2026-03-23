@@ -187,6 +187,19 @@
       "searchPlaceholder": "搜索时区...",
       "noResults": "未找到结果"
     },
+    "holiday": {
+      "title": "公共假日",
+      "description": "在日历上显示各国公共假日和纪念日。",
+      "selectCountry": "选择国家",
+      "enabled": "假日已显示",
+      "disabled": "假日已隐藏",
+      "enable": "显示假日",
+      "disable": "隐藏假日",
+      "loading": "加载国家列表...",
+      "enabledToast": "公共假日已显示在日历上。",
+      "disabledToast": "公共假日已隐藏。",
+      "searchPlaceholder": "搜索国家..."
+    },
     "appSettings": "应用设置",
     "signOut": "退出登录"
   },
