@@ -519,28 +519,28 @@ function SidebarDraggableCategoryItem(props: SidebarDraggableCategoryItemProps) 
         )}
       </button>
 
-      {/* More menu - only for non-Google calendars */}
-      {!cat.isGoogleCalendar && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-muted transition-opacity flex-shrink-0"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <MoreVertical className="h-4 w-4 text-muted-foreground" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-28">
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditStart();
-              }}
-              className="gap-2 text-sm"
-            >
-              <Edit2 className="h-4 w-4" />
-              {({ ko: "수정", en: "Edit", zh: "编辑" } as Record<string, string>)[language] || "Edit"}
-            </DropdownMenuItem>
+      {/* More menu */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-muted transition-opacity flex-shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MoreVertical className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-28">
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditStart();
+            }}
+            className="gap-2 text-sm"
+          >
+            <Edit2 className="h-4 w-4" />
+            {({ ko: "수정", en: "Edit", zh: "编辑" } as Record<string, string>)[language] || "Edit"}
+          </DropdownMenuItem>
+          {!cat.isGoogleCalendar && (
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();
@@ -551,9 +551,9 @@ function SidebarDraggableCategoryItem(props: SidebarDraggableCategoryItemProps) 
               <Trash2 className="h-4 w-4" />
               {({ ko: "삭제", en: "Delete", zh: "删除" } as Record<string, string>)[language] || "Delete"}
             </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

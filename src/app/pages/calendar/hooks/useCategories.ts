@@ -206,21 +206,35 @@ export function useCategories({
       return;
 
     try {
-      if (!session?.access_token) {
-        toast.error(
-          ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
-        );
-        return;
-      }
+      // Google 카테고리인지 확인
+      const isGoogleCategory = editingCategoryIdInDropdown.startsWith("gcal-");
 
-      await categoriesAPI.update(
-        editingCategoryIdInDropdown,
-        {
+      if (isGoogleCategory) {
+        // Google 카테고리: localStorage에 커스텀 이름/색상 저장
+        const overrides = JSON.parse(localStorage.getItem("gcal_category_overrides") || "{}");
+        overrides[editingCategoryIdInDropdown] = {
           name: newCategoryNameInDropdown,
           color: newCategoryColorInDropdown,
-        },
-        session.access_token,
-      );
+        };
+        localStorage.setItem("gcal_category_overrides", JSON.stringify(overrides));
+      } else {
+        // 로컬 카테고리: DB 업데이트
+        if (!session?.access_token) {
+          toast.error(
+            ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
+          );
+          return;
+        }
+
+        await categoriesAPI.update(
+          editingCategoryIdInDropdown,
+          {
+            name: newCategoryNameInDropdown,
+            color: newCategoryColorInDropdown,
+          },
+          session.access_token,
+        );
+      }
 
       // 로컬 상태 업데이트
       setCategories(
@@ -407,14 +421,21 @@ export function useCategories({
               const data = await response.json();
               const googleCalendars = data.calendars || [];
 
-              const googleCategories: Category[] = googleCalendars.map((cal: any) => ({
-                id: `gcal-${cal.id}`,
-                name: cal.summary || cal.id,
-                color: cal.backgroundColor || GOOGLE_CALENDAR_COLOR_MAP[cal.colorId] || '#4285F4',
-                isGoogleCalendar: true,
-                googleCalendarId: cal.id,
-                googleCalendarAccessRole: cal.accessRole, // 'owner' | 'writer' | 'reader' | 'freeBusyReader'
-              }));
+              // localStorage에서 Google 카테고리 커스텀 오버라이드 가져오기
+              const gcalOverrides = JSON.parse(localStorage.getItem("gcal_category_overrides") || "{}");
+
+              const googleCategories: Category[] = googleCalendars.map((cal: any) => {
+                const catId = `gcal-${cal.id}`;
+                const override = gcalOverrides[catId];
+                return {
+                  id: catId,
+                  name: override?.name || cal.summary || cal.id,
+                  color: override?.color || cal.backgroundColor || GOOGLE_CALENDAR_COLOR_MAP[cal.colorId] || '#4285F4',
+                  isGoogleCalendar: true,
+                  googleCalendarId: cal.id,
+                  googleCalendarAccessRole: cal.accessRole,
+                };
+              });
 
               allCategories = [...sortedCategories, ...googleCategories];
               console.log("[Calendar] ✅ Added", googleCategories.length, "Google Calendar categories");
