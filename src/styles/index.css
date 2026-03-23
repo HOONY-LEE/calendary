@@ -5,3 +5,9 @@
 body {
   font-family: var(--font-family);
 }
+
+/* 중국어 폰트 */
+html[lang="zh"] body,
+html[lang="zh"] * {
+  font-family: var(--font-family-zh);
+}

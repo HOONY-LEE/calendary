@@ -299,18 +299,14 @@ export function Calendar() {
   const handleSave = async () => {
     if (!session?.access_token) {
       toast.error(
-        language === "ko"
-          ? "로그인이 필요합니다"
-          : "Login required",
+        ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
       );
       return;
     }
 
     if (!formData.title.trim()) {
       toast.error(
-        language === "ko"
-          ? "제목을 입력해주세요"
-          : "Please enter a title",
+        ({ ko: "제목을 입력해주세요", en: "Please enter a title", zh: "请输入标题" } as Record<string, string>)[language] || "Please enter a title",
       );
       return;
     }
@@ -435,9 +431,7 @@ export function Calendar() {
                 errorData,
               );
               toast.error(
-                language === "ko"
-                  ? "🚨 구글 캘린더 생성 권한이 없습니다. Settings에서 재연결하세요."
-                  : "🚨 No permission to create Google Calendar event. Reconnect in Settings.",
+                ({ ko: "🚨 구글 캘린더 생성 권한이 없습니다. Settings에서 재연결하세요.", en: "🚨 No permission to create Google Calendar event. Reconnect in Settings.", zh: "🚨 没有创建 Google 日历事件的权限。请在设置中重新连接。" } as Record<string, string>)[language] || "🚨 No permission to create Google Calendar event. Reconnect in Settings.",
                 {
                   duration: 8000,
                   action: {
@@ -480,9 +474,7 @@ export function Calendar() {
           setEvents([...events, newEvent]);
           setIsCreating(false);
           toast.success(
-            language === "ko"
-              ? "구글 캘린���에 일정이 생성되었습니다"
-              : "Event created in Google Calendar",
+            ({ ko: "구글 캘린더에 일정이 생성되었습니다", en: "Event created in Google Calendar", zh: "已在 Google 日历中创建事件" } as Record<string, string>)[language] || "Event created in Google Calendar",
           );
           console.log("[Calendar] Google event added to UI");
         } else {
@@ -529,9 +521,7 @@ export function Calendar() {
           setEvents([...events, newEvent]);
           setIsCreating(false);
           toast.success(
-            language === "ko"
-              ? "일정이 생성되었습니다"
-              : "Event created",
+            ({ ko: "일정이 생성되었습니다", en: "Event created", zh: "事件已创建" } as Record<string, string>)[language] || "Event created",
           );
           console.log(
             "[Calendar] Event added to UI, total events:",
@@ -595,9 +585,7 @@ export function Calendar() {
           newIsGoogleCategory
         ) {
           toast.warning(
-            language === "ko"
-              ? "⚠️ 구글 캘린더 간 이동은 지원되지 않습니다. 카테고리 변경이 무시됩니다."
-              : "⚠️ Moving between Google Calendars is not supported. Category change will be ignored.",
+            ({ ko: "⚠️ 구글 캘린더 간 이동은 지원되지 않습니다. 카테고리 변경이 무시됩니다.", en: "⚠️ Moving between Google Calendars is not supported. Category change will be ignored.", zh: "⚠️ 不支持在 Google 日历之间移动。分类更改将被忽略。" } as Record<string, string>)[language] || "⚠️ Moving between Google Calendars is not supported. Category change will be ignored.",
             { duration: 6000 },
           );
           // 카테고리 변경 무시
@@ -607,9 +595,7 @@ export function Calendar() {
         // 구글 캘린더 이벤트인 경우 토큰 확인
         if (selectedEvent.isGoogleEvent && !getGoogleToken(session)) {
           toast.error(
-            language === "ko"
-              ? "구글 캘린더 연동이 만료되었습니다. 설정에서 다시 연동해주세요."
-              : "Google Calendar connection expired. Please reconnect in Settings.",
+            ({ ko: "구글 캘린더 연동이 만료되었습니다. 설정에서 다시 연동해주세요.", en: "Google Calendar connection expired. Please reconnect in Settings.", zh: "Google 日历连接已过期。请在设置中重新连接。" } as Record<string, string>)[language] || "Google Calendar connection expired. Please reconnect in Settings.",
             {
               duration: 5000,
               action: {
@@ -662,9 +648,7 @@ export function Calendar() {
                 errorData,
               );
               toast.error(
-                language === "ko"
-                  ? "🚨 구글 캘린더 수정 권한이 없습니다. Settings에서 재연결하세요."
-                  : "🚨 No permission to modify Google Calendar. Reconnect in Settings.",
+                ({ ko: "🚨 구글 캘린더 수정 권한이 없습니다. Settings에서 재연결하세요.", en: "🚨 No permission to modify Google Calendar. Reconnect in Settings.", zh: "🚨 没有修改 Google 日历的权限。请在设置中重新连接。" } as Record<string, string>)[language] || "🚨 No permission to modify Google Calendar. Reconnect in Settings.",
                 {
                   duration: 8000,
                   action: {
@@ -729,9 +713,7 @@ export function Calendar() {
           ),
         );
         toast.success(
-          language === "ko"
-            ? "일정이 수정되었습니다"
-            : "Event updated",
+          ({ ko: "일정이 수정되었습니다", en: "Event updated", zh: "事件已更新" } as Record<string, string>)[language] || "Event updated",
         );
       }
     } catch (error) {
@@ -744,18 +726,14 @@ export function Calendar() {
       ) {
         console.log("[Calendar] Session expired, signing out");
         toast.error(
-          language === "ko"
-            ? "세션이 만료되었습니다. 다시 로그인해주세요."
-            : "Session expired. Please sign in again.",
+          ({ ko: "세션이 만료되었습니다. 다시 로그인해주세요.", en: "Session expired. Please sign in again.", zh: "会话已过期。请重新登录。" } as Record<string, string>)[language] || "Session expired. Please sign in again.",
         );
         await signOut();
         return;
       }
 
       toast.error(
-        language === "ko"
-          ? "일정 저장에 실패했습니다"
-          : "Failed to save event",
+        ({ ko: "일정 저장에 실패했습니다", en: "Failed to save event", zh: "保存事件失败" } as Record<string, string>)[language] || "Failed to save event",
       );
     }
   };
@@ -768,9 +746,7 @@ export function Calendar() {
       if (selectedEvent.isGoogleEvent) {
         if (!getGoogleToken(session)) {
           toast.error(
-            language === "ko"
-              ? "구글 캘린더 연동이 만료되었습니다. 설정에서 다시 연동해주세요."
-              : "Google Calendar connection expired. Please reconnect in Settings.",
+            ({ ko: "구글 캘린더 연동이 만료되었습니다. 설정에서 다시 연동해주세요.", en: "Google Calendar connection expired. Please reconnect in Settings.", zh: "Google 日历连接已过期。请在设置中重新连接。" } as Record<string, string>)[language] || "Google Calendar connection expired. Please reconnect in Settings.",
             {
               duration: 5000,
               action: {
@@ -789,9 +765,7 @@ export function Calendar() {
         events.filter((e) => e.id !== deletedEvent.id),
       );
       toast.success(
-        language === "ko"
-          ? "일정이 삭제되었습니다"
-          : "Event deleted",
+        ({ ko: "일정이 삭제되었습니다", en: "Event deleted", zh: "事件已删除" } as Record<string, string>)[language] || "Event deleted",
       );
 
       // 구글 캘린더 이벤트인 경우 구글 API로 백그라운드 삭제
@@ -817,17 +791,13 @@ export function Calendar() {
             // 실패 시 이벤트 복원
             setEvents((prev) => [...prev, deletedEvent]);
             toast.error(
-              language === "ko"
-                ? "구글 캘린더 삭제에 실패했습니다. 일정이 복원됩니다."
-                : "Failed to delete from Google Calendar. Event restored.",
+              ({ ko: "구글 캘린더 삭제에 실패했습니다. 일정이 복원됩니다.", en: "Failed to delete from Google Calendar. Event restored.", zh: "Google 日历删除失败。事件已恢复。" } as Record<string, string>)[language] || "Failed to delete from Google Calendar. Event restored.",
             );
           }
         }).catch(() => {
           setEvents((prev) => [...prev, deletedEvent]);
           toast.error(
-            language === "ko"
-              ? "구글 캘린더 삭제에 실패했습니다. 일정이 복원됩니다."
-              : "Failed to delete from Google Calendar. Event restored.",
+            ({ ko: "구글 캘린더 삭제에 실패했습니다. 일정이 복원됩니다.", en: "Failed to delete from Google Calendar. Event restored.", zh: "Google 日历删除失败。事件已恢复。" } as Record<string, string>)[language] || "Failed to delete from Google Calendar. Event restored.",
           );
         });
       } else {
@@ -850,18 +820,14 @@ export function Calendar() {
       ) {
         console.log("[Calendar] Session expired, signing out");
         toast.error(
-          language === "ko"
-            ? "세션이 만료되었습니다. 다시 로그인해주세요."
-            : "Session expired. Please sign in again.",
+          ({ ko: "세션이 만료되었습니다. 다시 로그인해주세요.", en: "Session expired. Please sign in again.", zh: "会话已过期。请重新登录。" } as Record<string, string>)[language] || "Session expired. Please sign in again.",
         );
         await signOut();
         return;
       }
 
       toast.error(
-        language === "ko"
-          ? "일정 삭제에 실패했습니다"
-          : "Failed to delete event",
+        ({ ko: "일정 삭제에 실패했습니다", en: "Failed to delete event", zh: "删除事件失败" } as Record<string, string>)[language] || "Failed to delete event",
       );
     }
   };
@@ -939,7 +905,7 @@ export function Calendar() {
             variant="outline"
             size="sm"
           >
-            {language === "ko" ? "오늘" : "Today"}
+            {({ ko: "오늘", en: "Today", zh: "今天" } as Record<string, string>)[language] || "Today"}
           </Button>
         </div>
 
@@ -960,12 +926,8 @@ export function Calendar() {
             <DropdownMenuTrigger className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 border border-border bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-[240px] justify-between">
               <span className="text-sm">
                 {selectedCategoryIds.length === 6
-                  ? language === "ko"
-                    ? "전체 카테고리"
-                    : "All Categories"
-                  : language === "ko"
-                    ? `${selectedCategoryIds.length}개 선택됨`
-                    : `${selectedCategoryIds.length} selected`}
+                  ? ({ ko: "전체 카테고리", en: "All Categories", zh: "全部分类" } as Record<string, string>)[language] || "All Categories"
+                  : ({ ko: `${selectedCategoryIds.length}개 선택됨`, en: `${selectedCategoryIds.length} selected`, zh: `${selectedCategoryIds.length}个已选` } as Record<string, string>)[language] || `${selectedCategoryIds.length} selected`}
               </span>
               <ChevronDown className="h-4 w-4 opacity-50" />
             </DropdownMenuTrigger>
@@ -1096,9 +1058,7 @@ export function Calendar() {
                       }
                     }}
                     placeholder={
-                      language === "ko"
-                        ? "카테고리 이름"
-                        : "Category name"
+                      ({ ko: "카테고리 이름", en: "Category name", zh: "分类名称" } as Record<string, string>)[language] || "Category name"
                     }
                     className="h-7 text-sm flex-1 min-w-0 border-0 bg-transparent outline-none px-0 placeholder:text-muted-foreground"
                     autoFocus
@@ -1114,7 +1074,7 @@ export function Calendar() {
                       }
                       className="px-3 py-1.5 text-sm font-medium text-white bg-[#0C8CE9] rounded-md hover:bg-[#0A7BC9] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     >
-                      {language === "ko" ? "저장" : "Save"}
+                      {({ ko: "저장", en: "Save", zh: "保存" } as Record<string, string>)[language] || "Save"}
                     </button>
                   </div>
                 </div>
@@ -1127,9 +1087,7 @@ export function Calendar() {
                 >
                   <Plus className="h-3.5 w-3.5 text-muted-foreground group-hover:text-[#0C8CE9] transition-colors" />
                   <span className="text-sm text-muted-foreground group-hover:text-[#0C8CE9] transition-colors">
-                    {language === "ko"
-                      ? "새 카테고리"
-                      : "New Category"}
+                    {({ ko: "새 카테고리", en: "New Category", zh: "新分类" } as Record<string, string>)[language] || "New Category"}
                   </span>
                 </button>
               )}
@@ -1143,19 +1101,19 @@ export function Calendar() {
             options={[
               {
                 value: "day",
-                label: language === "ko" ? "일간" : "Day",
+                label: ({ ko: "일간", en: "Day", zh: "日" } as Record<string, string>)[language] || "Day",
               },
               {
                 value: "week",
-                label: language === "ko" ? "주간" : "Week",
+                label: ({ ko: "주간", en: "Week", zh: "周" } as Record<string, string>)[language] || "Week",
               },
               {
                 value: "month",
-                label: language === "ko" ? "월간" : "Month",
+                label: ({ ko: "월간", en: "Month", zh: "月" } as Record<string, string>)[language] || "Month",
               },
               {
                 value: "year",
-                label: language === "ko" ? "연간" : "Year",
+                label: ({ ko: "연간", en: "Year", zh: "年" } as Record<string, string>)[language] || "Year",
               },
             ]}
           />
@@ -1276,18 +1234,14 @@ export function Calendar() {
         onSave={async (eventData) => {
           if (!session?.access_token) {
             toast.error(
-              language === "ko"
-                ? "로그인이 필요합니다"
-                : "Login required",
+              ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
             );
             return;
           }
 
           if (!eventData.title.trim()) {
             toast.error(
-              language === "ko"
-                ? "제목을 입력해주세요"
-                : "Please enter a title",
+              ({ ko: "제목을 입력해주세요", en: "Please enter a title", zh: "请输入标题" } as Record<string, string>)[language] || "Please enter a title",
             );
             return;
           }
@@ -1339,9 +1293,7 @@ export function Calendar() {
               // 구글 이벤트인 경우 토큰 확인
               if (selectedEvent.isGoogleEvent && !getGoogleToken(session)) {
                 toast.error(
-                  language === "ko"
-                    ? "구글 캘린더 연동이 만료되었습니다. 설정에서 다시 연동해주세요."
-                    : "Google Calendar connection expired. Please reconnect in Settings.",
+                  ({ ko: "구글 캘린더 연동이 만료되었습니다. 설정에서 다시 연동해주세요.", en: "Google Calendar connection expired. Please reconnect in Settings.", zh: "Google 日历连接已过期。请在设置中重新连接。" } as Record<string, string>)[language] || "Google Calendar connection expired. Please reconnect in Settings.",
                   { duration: 5000 },
                 );
                 return;
@@ -1362,9 +1314,7 @@ export function Calendar() {
                 const isMovingToLocalCategory = !newCategory?.isGoogleCalendar;
                 if (isMovingToLocalCategory) {
                   toast.error(
-                    language === "ko"
-                      ? "구글 캘린더 일정은 다른 구글 캘린더로만 이동할 수 있습니다."
-                      : "Google Calendar events can only be moved to other Google Calendars.",
+                    ({ ko: "구글 캘린더 일정은 다른 구글 캘린더로만 이동할 수 있습니다.", en: "Google Calendar events can only be moved to other Google Calendars.", zh: "Google 日历事件只能移动到其他 Google 日历。" } as Record<string, string>)[language] || "Google Calendar events can only be moved to other Google Calendars.",
                     { duration: 4000 },
                   );
                   return;
@@ -1438,9 +1388,7 @@ export function Calendar() {
                 }
 
                 toast.success(
-                  language === "ko"
-                    ? "일정이 수정되었습니다"
-                    : "Event updated",
+                  ({ ko: "일정이 수정되었습니다", en: "Event updated", zh: "事件已更新" } as Record<string, string>)[language] || "Event updated",
                 );
               } else if (!selectedEvent.isGoogleEvent) {
                 // 로컬 일정 수정
@@ -1460,9 +1408,7 @@ export function Calendar() {
                 );
 
                 toast.success(
-                  language === "ko"
-                    ? "일정이 수정되었습니다"
-                    : "Event updated",
+                  ({ ko: "일정이 수정되었습니다", en: "Event updated", zh: "事件已更新" } as Record<string, string>)[language] || "Event updated",
                 );
               }
 
@@ -1489,9 +1435,7 @@ export function Calendar() {
           } catch (error) {
             console.error("Failed to update event:", error);
             toast.error(
-              language === "ko"
-                ? "일정 수정에 실패했습니다"
-                : "Failed to update event",
+              ({ ko: "일정 수정에 실패했습니다", en: "Failed to update event", zh: "更新事件失败" } as Record<string, string>)[language] || "Failed to update event",
             );
           }
         }}
@@ -1505,9 +1449,7 @@ export function Calendar() {
             // 구글 이벤트인 경우 토큰 확인
             if (selectedEvent.isGoogleEvent && !getGoogleToken(session)) {
               toast.error(
-                language === "ko"
-                  ? "구글 캘린더 연동이 만료되었습니다. 설정에서 다시 연동해주세요."
-                  : "Google Calendar connection expired. Please reconnect in Settings.",
+                ({ ko: "구글 캘린더 연동이 만료되었습니다. 설정에서 다시 연동해주세요.", en: "Google Calendar connection expired. Please reconnect in Settings.", zh: "Google 日历连接已过期。请在设置中重新连接。" } as Record<string, string>)[language] || "Google Calendar connection expired. Please reconnect in Settings.",
                 { duration: 5000 },
               );
               return;
@@ -1517,9 +1459,7 @@ export function Calendar() {
             const deletedEvent = selectedEvent;
             setEvents((prev) => prev.filter((e) => e.id !== deletedEvent.id));
             toast.success(
-              language === "ko"
-                ? "일정이 삭제되었습니다"
-                : "Event deleted",
+              ({ ko: "일정이 삭제되었습니다", en: "Event deleted", zh: "事件已删除" } as Record<string, string>)[language] || "Event deleted",
             );
             setCreatePopoverOpen(false);
             setPopoverMode(false);
@@ -1547,17 +1487,13 @@ export function Calendar() {
                 if (!res.ok) {
                   setEvents((prev) => [...prev, deletedEvent]);
                   toast.error(
-                    language === "ko"
-                      ? "구글 캘린더 삭제 실패. 일정이 복원됩니다."
-                      : "Google delete failed. Event restored.",
+                    ({ ko: "구글 캘린더 삭제 실패. 일정이 복원됩니다.", en: "Google delete failed. Event restored.", zh: "Google 删除失败。事件已恢复。" } as Record<string, string>)[language] || "Google delete failed. Event restored.",
                   );
                 }
               }).catch(() => {
                 setEvents((prev) => [...prev, deletedEvent]);
                 toast.error(
-                  language === "ko"
-                    ? "구글 캘린더 삭제 실패. 일정이 복원됩니다."
-                    : "Google delete failed. Event restored.",
+                  ({ ko: "구글 캘린더 삭제 실패. 일정이 복원됩니다.", en: "Google delete failed. Event restored.", zh: "Google 删除失败。事件已恢复。" } as Record<string, string>)[language] || "Google delete failed. Event restored.",
                 );
               });
             } else if (!deletedEvent.isGoogleEvent) {
@@ -1570,18 +1506,14 @@ export function Calendar() {
           } catch (error) {
             console.error("Failed to delete event:", error);
             toast.error(
-              language === "ko"
-                ? "일정 삭제에 실패했습니다"
-                : "Failed to delete event",
+              ({ ko: "일정 삭제에 실패했습니다", en: "Failed to delete event", zh: "删除事件失败" } as Record<string, string>)[language] || "Failed to delete event",
             );
           }
         }}
         onAddCategory={async (categoryData) => {
           if (!session?.access_token) {
             toast.error(
-              language === "ko"
-                ? "로그인이 필요합니다"
-                : "Login required",
+              ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
             );
             return "";
           }
@@ -1620,18 +1552,14 @@ export function Calendar() {
             ]);
 
             toast.success(
-              language === "ko"
-                ? "카테고리가 생성되었습니다"
-                : "Category created",
+              ({ ko: "카테고리가 생성되었습니다", en: "Category created", zh: "分类已创建" } as Record<string, string>)[language] || "Category created",
             );
 
             return newCategory.id;
           } catch (error) {
             console.error("Failed to create category:", error);
             toast.error(
-              language === "ko"
-                ? "카테고리 생성에 실패했습니다"
-                : "Failed to create category",
+              ({ ko: "카테고리 생성에 실패했습니다", en: "Failed to create category", zh: "创建分类失败" } as Record<string, string>)[language] || "Failed to create category",
             );
             return "";
           }
@@ -1639,9 +1567,7 @@ export function Calendar() {
         onUpdateCategory={async (categoryId, categoryData) => {
           if (!session?.access_token) {
             toast.error(
-              language === "ko"
-                ? "로그인이 필요합니다"
-                : "Login required",
+              ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
             );
             return;
           }
@@ -1669,25 +1595,19 @@ export function Calendar() {
             );
 
             toast.success(
-              language === "ko"
-                ? "카테고리가 수정되었습니다"
-                : "Category updated",
+              ({ ko: "카테고리가 수정되었습니다", en: "Category updated", zh: "分类已更新" } as Record<string, string>)[language] || "Category updated",
             );
           } catch (error) {
             console.error("Failed to update category:", error);
             toast.error(
-              language === "ko"
-                ? "카테고리 수정에 실패했습니다"
-                : "Failed to update category",
+              ({ ko: "카테고리 수정에 실패했습니다", en: "Failed to update category", zh: "更新分类失败" } as Record<string, string>)[language] || "Failed to update category",
             );
           }
         }}
         onDeleteCategory={async (categoryId) => {
           if (!session?.access_token) {
             toast.error(
-              language === "ko"
-                ? "로그인이 필요합니다"
-                : "Login required",
+              ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
             );
             return;
           }
@@ -1708,25 +1628,19 @@ export function Calendar() {
             );
 
             toast.success(
-              language === "ko"
-                ? "카테고리가 삭제되었습니다"
-                : "Category deleted",
+              ({ ko: "카테고리가 삭제되었습니다", en: "Category deleted", zh: "分类已删除" } as Record<string, string>)[language] || "Category deleted",
             );
           } catch (error) {
             console.error("Failed to delete category:", error);
             toast.error(
-              language === "ko"
-                ? "카테고리 삭제에 실패했습니다"
-                : "Failed to delete category",
+              ({ ko: "카테고리 삭제에 실패했습니다", en: "Failed to delete category", zh: "删除分类失败" } as Record<string, string>)[language] || "Failed to delete category",
             );
           }
         }}
         onReorderCategories={async (categoryOrders) => {
           if (!session?.access_token) {
             toast.error(
-              language === "ko"
-                ? "로그인이 필요합니다"
-                : "Login required",
+              ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
             );
             return;
           }
@@ -1747,9 +1661,7 @@ export function Calendar() {
             setCategories(reorderedCategories);
 
             toast.success(
-              language === "ko"
-                ? "카테고리 순서가 저장되었습니다"
-                : "Category order saved",
+              ({ ko: "카테고리 순서가 저장되었습니다", en: "Category order saved", zh: "分类顺序已保存" } as Record<string, string>)[language] || "Category order saved",
             );
           } catch (error) {
             console.error(
@@ -1757,9 +1669,7 @@ export function Calendar() {
               error,
             );
             toast.error(
-              language === "ko"
-                ? "카테고리 순서 저장에 실패했습니다"
-                : "Failed to save category order",
+              ({ ko: "카테고리 순서 저장에 실패했습니다", en: "Failed to save category order", zh: "保存分类顺序失败" } as Record<string, string>)[language] || "Failed to save category order",
             );
           }
         }}
@@ -1780,25 +1690,21 @@ export function Calendar() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {language === "ko"
-                ? "카테고리 삭제"
-                : "Delete Category"}
+              {({ ko: "카테고리 삭제", en: "Delete Category", zh: "删除分类" } as Record<string, string>)[language] || "Delete Category"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {language === "ko"
-                ? "이 카테고리를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다."
-                : "Are you sure you want to delete this category? This action cannot be undone."}
+              {({ ko: "이 카테고리를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.", en: "Are you sure you want to delete this category? This action cannot be undone.", zh: "确定要删除此分类吗？此操作无法撤销。" } as Record<string, string>)[language] || "Are you sure you want to delete this category? This action cannot be undone."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>
-              {language === "ko" ? "취소" : "Cancel"}
+              {({ ko: "취소", en: "Cancel", zh: "取消" } as Record<string, string>)[language] || "Cancel"}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deletingCategoryIdInDropdown && handleDeleteCategoryInDropdown(deletingCategoryIdInDropdown)}
               className="bg-red-600 hover:bg-red-700"
             >
-              {language === "ko" ? "삭제" : "Delete"}
+              {({ ko: "삭제", en: "Delete", zh: "删除" } as Record<string, string>)[language] || "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

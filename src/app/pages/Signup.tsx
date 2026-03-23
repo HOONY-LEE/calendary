@@ -23,17 +23,17 @@ export function Signup() {
     setError('');
 
     if (!name.trim()) {
-      setError(language === 'ko' ? '이름을 입력해주세요' : 'Please enter your name');
+      setError(({ ko: '이름을 입력해주세요', en: 'Please enter your name', zh: '请输入姓名' } as Record<string, string>)[language] || 'Please enter your name');
       return;
     }
 
     if (password.length < 6) {
-      setError(language === 'ko' ? '비밀번호는 최소 6자 이상이어야 합니다' : 'Password must be at least 6 characters');
+      setError(({ ko: '비밀번호는 최소 6자 이상이어야 합니다', en: 'Password must be at least 6 characters', zh: '密码至少需要6个字符' } as Record<string, string>)[language] || 'Password must be at least 6 characters');
       return;
     }
 
     if (password !== confirmPassword) {
-      setError(language === 'ko' ? '비밀번호가 일치하지 않습니다' : 'Passwords do not match');
+      setError(({ ko: '비밀번호가 일치하지 않습니다', en: 'Passwords do not match', zh: '密码不匹配' } as Record<string, string>)[language] || 'Passwords do not match');
       return;
     }
 
@@ -56,9 +56,9 @@ export function Signup() {
     } catch (err: any) {
       console.error('Signup error:', err);
       if (err.message?.includes('User already registered') || err.message?.includes('already registered')) {
-        setError(language === 'ko' ? '이미 가입된 이메일입니다. 로그인해주세요.' : 'Email already registered. Please sign in.');
+        setError(({ ko: '이미 가입된 이메일입니다. 로그인해주세요.', en: 'Email already registered. Please sign in.', zh: '该邮箱已注册。请登录。' } as Record<string, string>)[language] || 'Email already registered. Please sign in.');
       } else {
-        setError(err.message || (language === 'ko' ? '회원가입에 실패했습니다' : 'Failed to sign up'));
+        setError(err.message || (({ ko: '회원가입에 실패했습니다', en: 'Failed to sign up', zh: '注册失败' } as Record<string, string>)[language] || 'Failed to sign up'));
       }
     } finally {
       setLoading(false);
@@ -70,7 +70,7 @@ export function Signup() {
       await signInWithGoogle();
     } catch (err: any) {
       console.error('Google signup error:', err);
-      setError(err.message || (language === 'ko' ? 'Google 로그인에 실패했습니다' : 'Failed to sign in with Google'));
+      setError(err.message || (({ ko: 'Google 로그인에 실패했습니다', en: 'Failed to sign in with Google', zh: '使用 Google 登录失败' } as Record<string, string>)[language] || 'Failed to sign in with Google'));
     }
   };
 
@@ -83,21 +83,17 @@ export function Signup() {
             <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
           <h2 className="text-3xl font-semibold mb-4">
-            {language === 'ko' ? '계정이 생성되었습니다!' : 'Account Created!'}
+            {({ ko: '계정이 생성되었습니다!', en: 'Account Created!', zh: '账户已创建！' } as Record<string, string>)[language] || 'Account Created!'}
           </h2>
           <p className="text-muted-foreground mb-2">
-            {language === 'ko' 
-              ? '회원가입이 완료되었습니다' 
-              : 'You have successfully signed up'}
+            {({ ko: '회원가입이 완료되었습니다', en: 'You have successfully signed up', zh: '注册成功' } as Record<string, string>)[language] || 'You have successfully signed up'}
           </p>
           <p className="text-foreground font-medium mb-4">{email}</p>
           
           {/* 중요 안내 */}
           <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-8">
             <p className="text-sm text-blue-900 dark:text-blue-100">
-              {language === 'ko' 
-                ? '✅ 이메일 인증이 필요합니다.\n인증 메일을 확인하여 계정을 활성화하세요.' 
-                : '✅ Email verification is required.\nPlease check your email to activate your account.'}
+              {({ ko: '✅ 이메일 인증이 필요합니다.\n인증 메일을 확인하여 계정을 활성화하세요.', en: '✅ Email verification is required.\nPlease check your email to activate your account.', zh: '✅ 需要验证邮箱。\n请检查邮件以激活您的账户。' } as Record<string, string>)[language] || '✅ Email verification is required.\nPlease check your email to activate your account.'}
             </p>
           </div>
           
@@ -105,7 +101,7 @@ export function Signup() {
             onClick={() => navigate('/login')}
             className="w-full py-4 bg-[#0C8CE9] text-white rounded-xl font-medium hover:bg-[#0C8CE9]/90 transition-all duration-200"
           >
-            {language === 'ko' ? '로그인하기' : 'Sign In'}
+            {({ ko: '로그인하기', en: 'Sign In', zh: '登录' } as Record<string, string>)[language] || 'Sign In'}
           </button>
         </div>
       </div>
@@ -121,7 +117,7 @@ export function Signup() {
             <img src={calendaryIcon} alt="Calendary" className="w-20 h-20 rounded-2xl" />
           </div>
           <h1 className="text-3xl font-semibold tracking-tight mb-2">
-            {language === 'ko' ? 'Calendary 계정 생성' : 'Create Calendary Account'}
+            {({ ko: 'Calendary 계정 생성', en: 'Create Calendary Account', zh: '创建 Calendary 账户' } as Record<string, string>)[language] || 'Create Calendary Account'}
           </h1>
         </div>
 
@@ -149,7 +145,7 @@ export function Signup() {
             />
           </svg>
           <span className="text-foreground">
-            {language === 'ko' ? 'Google로 가입' : 'Sign up with Google'}
+            {({ ko: 'Google로 가입', en: 'Sign up with Google', zh: '使用 Google 注册' } as Record<string, string>)[language] || 'Sign up with Google'}
           </span>
         </button>
 
@@ -160,7 +156,7 @@ export function Signup() {
           </div>
           <div className="relative flex justify-center text-sm">
             <span className="px-4 bg-background text-muted-foreground">
-              {language === 'ko' ? '또는' : 'or'}
+              {({ ko: '또는', en: 'or', zh: '或' } as Record<string, string>)[language] || 'or'}
             </span>
           </div>
         </div>
@@ -174,7 +170,7 @@ export function Signup() {
               onChange={(e) => setName(e.target.value)}
               onFocus={() => setError('')}
               className="w-full px-4 py-4 bg-background border-2 border-border rounded-xl focus:outline-none focus:border-[#0C8CE9] transition-all duration-200 text-base"
-              placeholder={language === 'ko' ? '이름' : 'Name'}
+              placeholder={({ ko: '이름', en: 'Name', zh: '姓名' } as Record<string, string>)[language] || 'Name'}
               required
             />
           </div>
@@ -186,7 +182,7 @@ export function Signup() {
               onChange={(e) => setEmail(e.target.value)}
               onFocus={() => setError('')}
               className="w-full px-4 py-4 bg-background border-2 border-border rounded-xl focus:outline-none focus:border-[#0C8CE9] transition-all duration-200 text-base"
-              placeholder={language === 'ko' ? '이메일' : 'Email'}
+              placeholder={({ ko: '이메일', en: 'Email', zh: '邮箱' } as Record<string, string>)[language] || 'Email'}
               required
             />
           </div>
@@ -198,7 +194,7 @@ export function Signup() {
               onChange={(e) => setPassword(e.target.value)}
               onFocus={() => setError('')}
               className="w-full px-4 py-4 bg-background border-2 border-border rounded-xl focus:outline-none focus:border-[#0C8CE9] transition-all duration-200 text-base"
-              placeholder={language === 'ko' ? '비밀번호 (최소 6자)' : 'Password (min. 6 characters)'}
+              placeholder={({ ko: '비밀번호 (최소 6자)', en: 'Password (min. 6 characters)', zh: '密码（至少6个字符）' } as Record<string, string>)[language] || 'Password (min. 6 characters)'}
               required
             />
           </div>
@@ -210,7 +206,7 @@ export function Signup() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               onFocus={() => setError('')}
               className="w-full px-4 py-4 bg-background border-2 border-border rounded-xl focus:outline-none focus:border-[#0C8CE9] transition-all duration-200 text-base"
-              placeholder={language === 'ko' ? '비밀번호 확인' : 'Confirm password'}
+              placeholder={({ ko: '비밀번호 확인', en: 'Confirm password', zh: '确认密码' } as Record<string, string>)[language] || 'Confirm password'}
               required
             />
           </div>
@@ -223,12 +219,8 @@ export function Signup() {
             className="w-full py-4 bg-[#0C8CE9] text-white rounded-xl font-medium hover:bg-[#0C8CE9]/90 transition-all duration-200 disabled:opacity-50"
           >
             {loading
-              ? language === 'ko'
-                ? '계정 생성 중...'
-                : 'Creating account...'
-              : language === 'ko'
-              ? '계정 생성'
-              : 'Create Account'}
+              ? (({ ko: '계정 생성 중...', en: 'Creating account...', zh: '创建账户中...' } as Record<string, string>)[language] || 'Creating account...')
+              : (({ ko: '계정 생성', en: 'Create Account', zh: '创建账户' } as Record<string, string>)[language] || 'Create Account')}
           </button>
         </form>
 
@@ -238,15 +230,13 @@ export function Signup() {
             onClick={() => navigate('/login')}
             className="text-[#0C8CE9] text-base hover:underline"
           >
-            {language === 'ko' ? '이미 계정이 있으신가요? 로그인' : 'Already have an account? Sign in'}
+            {({ ko: '이미 계정이 있으신가요? 로그인', en: 'Already have an account? Sign in', zh: '已有账户？登录' } as Record<string, string>)[language] || 'Already have an account? Sign in'}
           </button>
         </div>
 
         {/* Privacy Notice */}
         <p className="mt-8 text-center text-xs text-muted-foreground leading-relaxed">
-          {language === 'ko'
-            ? '계정을 생성하면 Calendary의 서비스 약관 및 개인정보 보호정책에 동의하는 것입니다.'
-            : 'By creating an account, you agree to our Terms of Service and Privacy Policy.'}
+          {({ ko: '계정을 생성하면 Calendary의 서비스 약관 및 개인정보 보호정책에 동의하는 것입니다.', en: 'By creating an account, you agree to our Terms of Service and Privacy Policy.', zh: '创建账户即表示您同意 Calendary 的服务条款和隐私政策。' } as Record<string, string>)[language] || 'By creating an account, you agree to our Terms of Service and Privacy Policy.'}
         </p>
       </div>
     </div>

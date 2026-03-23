@@ -1013,7 +1013,7 @@ export function EventCreatePopover({
             <div className="flex items-center justify-end gap-1.5">
               <Repeat className="w-3.5 h-3.5 text-muted-foreground" />
               <Label className="text-sm text-muted-foreground cursor-pointer">
-                {language === "ko" ? "반복" : "Repeat"}
+                {({ ko: "반복", en: "Repeat", zh: "重复" } as Record<string, string>)[language] || "Repeat"}
               </Label>
               <Switch
                 checked={isRecurring}
@@ -1057,9 +1057,7 @@ export function EventCreatePopover({
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
                 <Label htmlFor="start-date" className="text-sm">
-                  {language === "ko"
-                    ? "시작 날짜"
-                    : "Start Date"}
+                  {({ ko: "시작 날짜", en: "Start Date", zh: "开始日期" } as Record<string, string>)[language] || "Start Date"}
                 </Label>
                 <DatePicker
                   id="start-date"
@@ -1084,15 +1082,13 @@ export function EventCreatePopover({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="end-date" className="text-sm">
-                  {language === "ko" ? "종료 날짜" : "End Date"}
+                  {({ ko: "종료 날짜", en: "End Date", zh: "结束日期" } as Record<string, string>)[language] || "End Date"}
                 </Label>
                 {isRecurring &&
                 recurrenceEndType === "never" ? (
                   // 반복 일정이고 종료 안함일 때는 텍스트로 표시
                   <div className="h-9 px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-muted/30 flex items-center text-sm text-muted-foreground">
-                    {language === "ko"
-                      ? "종료 안함"
-                      : "No end date"}
+                    {({ ko: "종료 안함", en: "No end date", zh: "无结束日期" } as Record<string, string>)[language] || "No end date"}
                   </div>
                 ) : isRecurring &&
                   recurrenceEndType === "date" ? (
@@ -1111,9 +1107,7 @@ export function EventCreatePopover({
                   recurrenceEndType === "count" ? (
                   // 반복 일정이고 횟수 종료일 때는 비활성화
                   <div className="h-9 px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-muted/30 flex items-center text-sm text-muted-foreground">
-                    {language === "ko"
-                      ? "횟수로 제한"
-                      : "Limited by count"}
+                    {({ ko: "횟수로 제한", en: "Limited by count", zh: "按次数限制" } as Record<string, string>)[language] || "Limited by count"}
                   </div>
                 ) : (
                   // 반복이 아닐 때는 일반 종료 날짜
@@ -1135,9 +1129,7 @@ export function EventCreatePopover({
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
                 <Label htmlFor="startTime" className="text-sm">
-                  {language === "ko"
-                    ? "시작 시간"
-                    : "Start Time"}
+                  {({ ko: "시작 시간", en: "Start Time", zh: "开始时间" } as Record<string, string>)[language] || "Start Time"}
                 </Label>
                 <div className="relative">
                   <Input
@@ -1184,7 +1176,7 @@ export function EventCreatePopover({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="endTime" className="text-sm">
-                  {language === "ko" ? "종료 시간" : "End Time"}
+                  {({ ko: "종료 시간", en: "End Time", zh: "结束时间" } as Record<string, string>)[language] || "End Time"}
                 </Label>
                 <div className="relative">
                   <Input
@@ -1220,7 +1212,7 @@ export function EventCreatePopover({
               {/* 카테고리 타이틀 */}
               <div className="flex items-center justify-between mb-1.5">
                 <Label className="text-sm">
-                  {language === "ko" ? "카테고리" : "Category"}
+                  {({ ko: "카테고리", en: "Category", zh: "分类" } as Record<string, string>)[language] || "Category"}
                 </Label>
               </div>
 
@@ -1340,9 +1332,7 @@ export function EventCreatePopover({
                       }
                     }}
                     placeholder={
-                      language === "ko"
-                        ? "카테고리 이름"
-                        : "Category name"
+                      ({ ko: "카테고리 이름", en: "Category name", zh: "分类名称" } as Record<string, string>)[language] || "Category name"
                     }
                     className="h-7 text-sm flex-1 min-w-0 border-0 bg-transparent outline-none px-0 placeholder:text-muted-foreground"
                     autoFocus
@@ -1368,9 +1358,7 @@ export function EventCreatePopover({
                 >
                   <Plus className="h-3.5 w-3.5 text-muted-foreground group-hover:text-[#0C8CE9] transition-colors" />
                   <span className="text-sm text-muted-foreground group-hover:text-[#0C8CE9] transition-colors">
-                    {language === "ko"
-                      ? "새 카테고리"
-                      : "New Category"}
+                    {({ ko: "새 카테고리", en: "New Category", zh: "新分类" } as Record<string, string>)[language] || "New Category"}
                   </span>
                 </button>
               )}
@@ -1388,9 +1376,7 @@ export function EventCreatePopover({
               >
                 <Plus className="h-3.5 w-3.5 text-muted-foreground group-hover:text-[#0C8CE9] transition-colors" />
                 <span className="text-sm text-muted-foreground group-hover:text-[#0C8CE9] transition-colors">
-                  {language === "ko"
-                    ? "설명 추가"
-                    : "Add description"}
+                  {({ ko: "설명 추가", en: "Add description", zh: "添加描述" } as Record<string, string>)[language] || "Add description"}
                 </span>
               </button>
             ) : (
@@ -1400,7 +1386,7 @@ export function EventCreatePopover({
                     htmlFor="description"
                     className="text-sm"
                   >
-                    {language === "ko" ? "설명" : "Description"}
+                    {({ ko: "설명", en: "Description", zh: "描述" } as Record<string, string>)[language] || "Description"}
                   </Label>
                   <button
                     type="button"
@@ -1415,7 +1401,7 @@ export function EventCreatePopover({
                   >
                     <span>-</span>
                     <span>
-                      {language === "ko" ? "접기" : "Collapse"}
+                      {({ ko: "접기", en: "Collapse", zh: "收起" } as Record<string, string>)[language] || "Collapse"}
                     </span>
                   </button>
                 </div>
@@ -1429,9 +1415,7 @@ export function EventCreatePopover({
                     })
                   }
                   placeholder={
-                    language === "ko"
-                      ? "일정 설명 입력"
-                      : "Enter description"
+                    ({ ko: "일정 설명 입력", en: "Enter description", zh: "输入事件描述" } as Record<string, string>)[language] || "Enter description"
                   }
                   rows={2}
                   className="text-xs resize-none"
@@ -1448,7 +1432,7 @@ export function EventCreatePopover({
                   variant="outline"
                   className="flex-1 h-9 text-sm hover:bg-muted/50 rounded-sm cursor-pointer"
                 >
-                  {language === "ko" ? "취소" : "Cancel"}
+                  {({ ko: "취소", en: "Cancel", zh: "取消" } as Record<string, string>)[language] || "Cancel"}
                 </Button>
                 <Button
                   onClick={() => {
@@ -1471,12 +1455,8 @@ export function EventCreatePopover({
                   }
                 >
                   {event
-                    ? language === "ko"
-                      ? "수정"
-                      : "Update"
-                    : language === "ko"
-                      ? "추가하기"
-                      : "Add"}
+                    ? (({ ko: "수정", en: "Update", zh: "更新" } as Record<string, string>)[language] || "Update")
+                    : (({ ko: "추가하기", en: "Add", zh: "添加" } as Record<string, string>)[language] || "Add")}
                 </Button>
                 {onDelete && (
                   <Button
@@ -1501,9 +1481,7 @@ export function EventCreatePopover({
               // 삭제 옵션 선택 UI
               <div className="space-y-2 pt-2">
                 <div className="text-sm font-medium text-center pb-1 border-b">
-                  {language === "ko"
-                    ? "삭제 범위 선택"
-                    : "Select delete range"}
+                  {({ ko: "삭제 범위 선택", en: "Select delete range", zh: "选择删除范围" } as Record<string, string>)[language] || "Select delete range"}
                 </div>
                 <div className="space-y-1.5">
                   <button
@@ -1528,9 +1506,7 @@ export function EventCreatePopover({
                       )}
                     </div>
                     <span>
-                      {language === "ko"
-                        ? "이 일정만"
-                        : "This event only"}
+                      {({ ko: "이 일정만", en: "This event only", zh: "仅此事件" } as Record<string, string>)[language] || "This event only"}
                     </span>
                   </button>
                   <button
@@ -1555,9 +1531,7 @@ export function EventCreatePopover({
                       )}
                     </div>
                     <span>
-                      {language === "ko"
-                        ? "이후 모든 일정"
-                        : "This and following events"}
+                      {({ ko: "이후 모든 일정", en: "This and following events", zh: "此事件及后续事件" } as Record<string, string>)[language] || "This and following events"}
                     </span>
                   </button>
                   <button
@@ -1580,9 +1554,7 @@ export function EventCreatePopover({
                       )}
                     </div>
                     <span>
-                      {language === "ko"
-                        ? "모든 반복 일정"
-                        : "All recurring events"}
+                      {({ ko: "모든 반복 일정", en: "All recurring events", zh: "所有重复事件" } as Record<string, string>)[language] || "All recurring events"}
                     </span>
                   </button>
                 </div>
@@ -1595,13 +1567,13 @@ export function EventCreatePopover({
                     variant="outline"
                     className="flex-1 h-9 text-sm"
                   >
-                    {language === "ko" ? "취소" : "Cancel"}
+                    {({ ko: "취소", en: "Cancel", zh: "取消" } as Record<string, string>)[language] || "Cancel"}
                   </Button>
                   <Button
                     onClick={handleDelete}
                     className="flex-1 h-9 text-sm bg-red-600 hover:bg-red-700 text-white"
                   >
-                    {language === "ko" ? "삭제" : "Delete"}
+                    {({ ko: "삭제", en: "Delete", zh: "删除" } as Record<string, string>)[language] || "Delete"}
                   </Button>
                 </div>
               </div>
@@ -1620,9 +1592,7 @@ export function EventCreatePopover({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {language === "ko"
-                ? "카테고리를 정말 삭제하시겠습니까?"
-                : "Are you sure you want to delete this category?"}
+              {({ ko: "카테고리를 정말 삭제하시겠습니까?", en: "Are you sure you want to delete this category?", zh: "确定要删除此分类吗？" } as Record<string, string>)[language] || "Are you sure you want to delete this category?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {language === "ko" ? (
@@ -1633,6 +1603,14 @@ export function EventCreatePopover({
                   카테고리를 삭제하면 해당 카테고리에 포함된
                   모든 일정들도 함께 삭제됩니다. 이 작업은
                   되돌릴 수 없습니다.
+                </>
+              ) : language === "zh" ? (
+                <>
+                  删除{" "}
+                  <strong className="text-foreground">
+                    {deletingCategory?.name}
+                  </strong>{" "}
+                  分类将同时删除该分类中的所有事件。此操作无法撤销。
                 </>
               ) : (
                 <>
@@ -1650,7 +1628,7 @@ export function EventCreatePopover({
             <AlertDialogCancel
               onClick={() => setDeletingCategoryId(null)}
             >
-              {language === "ko" ? "취소" : "Cancel"}
+              {({ ko: "취소", en: "Cancel", zh: "取消" } as Record<string, string>)[language] || "Cancel"}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
@@ -1661,7 +1639,7 @@ export function EventCreatePopover({
               }}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              {language === "ko" ? "삭제" : "Delete"}
+              {({ ko: "삭제", en: "Delete", zh: "删除" } as Record<string, string>)[language] || "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

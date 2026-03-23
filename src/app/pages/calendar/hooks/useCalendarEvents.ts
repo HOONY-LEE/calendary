@@ -241,9 +241,7 @@ export function useCalendarEvents({
             "[Calendar] Session expired, signing out",
           );
           toast.error(
-            language === "ko"
-              ? "세션이 만료되었습니다. 다시 로그인해주세요."
-              : "Session expired. Please sign in again.",
+            ({ ko: "세션이 만료되었습니다. 다시 로그인해주세요.", en: "Session expired. Please sign in again.", zh: "会话已过期。请重新登录。" } as Record<string, string>)[language] || "Session expired. Please sign in again.",
           );
           await signOut();
           return;
@@ -255,18 +253,14 @@ export function useCalendarEvents({
             "[Calendar] Network error when loading events",
           );
           toast.error(
-            language === "ko"
-              ? "서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요."
-              : "Cannot connect to server. Please check your network connection.",
+            ({ ko: "서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.", en: "Cannot connect to server. Please check your network connection.", zh: "无法连接到服务器。请检查网络连接。" } as Record<string, string>)[language] || "Cannot connect to server. Please check your network connection.",
           );
           return;
         }
       }
 
       toast.error(
-        language === "ko"
-          ? "일정을 불러오는데 실패했습니다"
-          : "Failed to load events",
+        ({ ko: "일정을 불러오는데 실패했습니다", en: "Failed to load events", zh: "加载事件失败" } as Record<string, string>)[language] || "Failed to load events",
       );
       setEvents([]); // 에러 발생 시에도 빈 배열로 설정
     } finally {

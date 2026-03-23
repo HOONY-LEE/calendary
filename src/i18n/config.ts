@@ -29,4 +29,11 @@ i18n
     debug: false, // 개발 중 디버깅이 필요하면 true로 설정
   });
 
+// 언어 변경 시 <html lang> 속성 업데이트 (CSS 폰트 전환용)
+document.documentElement.lang = savedLanguage;
+i18n.on('languageChanged', (lng) => {
+  document.documentElement.lang = lng;
+  localStorage.setItem('language', lng);
+});
+
 export default i18n;

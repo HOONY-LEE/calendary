@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { ko, enUS } from "date-fns/locale";
+import { ko, enUS, zhCN } from "date-fns/locale";
 
 import { cn } from "./utils";
 import { Button } from "./button";
@@ -34,7 +34,7 @@ export function DatePicker({
   disabled,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
-  const locale = language === "ko" ? ko : enUS;
+  const locale = ({ ko, en: enUS, zh: zhCN } as Record<string, any>)[language] || enUS;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -49,7 +49,7 @@ export function DatePicker({
           {value ? (
             format(value, "PPP", { locale })
           ) : (
-            <span>{placeholder || (language === "ko" ? "날짜 선택" : "Pick a date")}</span>
+            <span>{placeholder || (({ ko: "날짜 선택", en: "Pick a date", zh: "选择日期" } as Record<string, string>)[language] || "Pick a date")}</span>
           )}
         </Button>
       </PopoverTrigger>

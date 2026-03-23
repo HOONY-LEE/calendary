@@ -69,9 +69,7 @@ export function RecurrenceSection({
       {recurrenceFreq === "WEEKLY" && (
         <div className="space-y-1.5">
           <Label className="text-sm text-muted-foreground">
-            {language === "ko"
-              ? "반복 요일"
-              : "Repeat on"}
+            {({ ko: "반복 요일", en: "Repeat on", zh: "重复日" } as Record<string, string>)[language] || "Repeat on"}
           </Label>
           <div className="grid grid-cols-7 gap-1">
             {[
@@ -121,7 +119,7 @@ export function RecurrenceSection({
       {/* Recurrence end */}
       <div className="space-y-1.5">
         <Label className="text-sm text-muted-foreground">
-          {language === "ko" ? "종료" : "Ends"}
+          {({ ko: "종료", en: "Ends", zh: "结束" } as Record<string, string>)[language] || "Ends"}
         </Label>
 
         {/* End type selector - SegmentTabs style + count input */}
@@ -203,7 +201,7 @@ export function RecurrenceSection({
                   className="h-9 w-20 text-sm"
                 />
                 <span className="text-sm text-muted-foreground">
-                  {language === "ko" ? "회" : "times"}
+                  {({ ko: "회", en: "times", zh: "次" } as Record<string, string>)[language] || "times"}
                 </span>
               </>
             )}

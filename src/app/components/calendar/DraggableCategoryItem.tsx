@@ -217,7 +217,7 @@ function PopoverDraggableCategoryItem(props: PopoverDraggableCategoryItemProps) 
               handleCancelAddCategory();
             }
           }}
-          placeholder={language === "ko" ? "카테고리 이름" : "Category name"}
+          placeholder={({ ko: "카테고리 이름", en: "Category name", zh: "分类名称" } as Record<string, string>)[language] || "Category name"}
           className="h-7 text-sm flex-1 min-w-0 border-0 bg-transparent outline-none px-0 placeholder:text-muted-foreground"
           autoFocus
         />
@@ -291,7 +291,7 @@ function PopoverDraggableCategoryItem(props: PopoverDraggableCategoryItemProps) 
               className="cursor-pointer"
             >
               <Edit2 className="h-3.5 w-3.5 mr-2" />
-              {language === "ko" ? "수정" : "Edit"}
+              {({ ko: "수정", en: "Edit", zh: "编辑" } as Record<string, string>)[language] || "Edit"}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={(e) => {
@@ -301,7 +301,7 @@ function PopoverDraggableCategoryItem(props: PopoverDraggableCategoryItemProps) 
               className="cursor-pointer text-red-600 dark:text-red-400"
             >
               <Trash2 className="h-3.5 w-3.5 mr-2" />
-              {language === "ko" ? "삭제" : "Delete"}
+              {({ ko: "삭제", en: "Delete", zh: "删除" } as Record<string, string>)[language] || "Delete"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -459,9 +459,7 @@ function SidebarDraggableCategoryItem(props: SidebarDraggableCategoryItemProps) 
             }
           }}
           placeholder={
-            language === "ko"
-              ? "카테고리 이름"
-              : "Category name"
+            ({ ko: "카테고리 이름", en: "Category name", zh: "分类名称" } as Record<string, string>)[language] || "Category name"
           }
           className="h-7 text-sm flex-1 min-w-0 border-0 bg-transparent outline-none px-0 placeholder:text-muted-foreground"
           autoFocus
@@ -475,7 +473,7 @@ function SidebarDraggableCategoryItem(props: SidebarDraggableCategoryItemProps) 
             disabled={!newCategoryName.trim()}
             className="px-2.5 py-1.5 font-medium text-white bg-[#0C8CE9] rounded-sm hover:bg-[#0A7BC9] transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-[12px]"
           >
-            {language === "ko" ? "저장" : "Save"}
+            {({ ko: "저장", en: "Save", zh: "保存" } as Record<string, string>)[language] || "Save"}
           </button>
         </div>
       </div>

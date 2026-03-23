@@ -167,7 +167,7 @@ export function DraggableTaskItem({
               e.stopPropagation();
               onEdit();
             }}
-            title={language === 'ko' ? '편집' : 'Edit'}
+            title={({ ko: '편집', en: 'Edit', zh: '编辑' } as Record<string, string>)[language] || 'Edit'}
           >
             <Edit2 className="h-4 w-4 text-muted-foreground hover:text-foreground" />
           </button>
@@ -177,7 +177,7 @@ export function DraggableTaskItem({
               e.stopPropagation();
               onDelete();
             }}
-            title={language === 'ko' ? '삭제' : 'Delete'}
+            title={({ ko: '삭제', en: 'Delete', zh: '删除' } as Record<string, string>)[language] || 'Delete'}
           >
             <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
           </button>

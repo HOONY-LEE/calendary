@@ -325,9 +325,7 @@ export function WeekView({
                     )}
                     <span className="truncate">
                       {displayData.title ||
-                        (language === "ko"
-                          ? "(제목 없음)"
-                          : "(No title)")}
+                        (({ ko: "(제목 없음)", en: "(No title)", zh: "(无标题)" } as Record<string, string>)[language] || "(No title)")}
                     </span>
                   </div>
                 </div>

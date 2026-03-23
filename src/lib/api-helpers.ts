@@ -68,22 +68,16 @@ export function isAuthError(error: unknown): boolean {
  */
 export function getErrorMessage(error: unknown, language: string = 'ko'): string {
   if (isNetworkError(error)) {
-    return language === 'ko'
-      ? '서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.'
-      : 'Cannot connect to server. Please check your network connection.';
+    return ({ ko: '서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.', en: 'Cannot connect to server. Please check your network connection.', zh: '无法连接到服务器。请检查网络连接。' } as Record<string, string>)[language] || 'Cannot connect to server. Please check your network connection.';
   }
   
   if (isAuthError(error)) {
-    return language === 'ko'
-      ? '세션이 만료되었습니다. 다시 로그인해주세요.'
-      : 'Session expired. Please sign in again.';
+    return ({ ko: '세션이 만료되었습니다. 다시 로그인해주세요.', en: 'Session expired. Please sign in again.', zh: '会话已过期。请重新登录。' } as Record<string, string>)[language] || 'Session expired. Please sign in again.';
   }
   
   if (error instanceof Error) {
     return error.message;
   }
   
-  return language === 'ko'
-    ? '알 수 없는 오류가 발생했습니다.'
-    : 'An unknown error occurred.';
+  return ({ ko: '알 수 없는 오류가 발생했습니다.', en: 'An unknown error occurred.', zh: '发生了未知错误。' } as Record<string, string>)[language] || 'An unknown error occurred.';
 }

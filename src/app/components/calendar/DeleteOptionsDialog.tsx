@@ -19,9 +19,7 @@ export function DeleteOptionsDialog({
   return (
     <div className="space-y-2 pt-2">
       <div className="text-sm font-medium text-center pb-1 border-b">
-        {language === "ko"
-          ? "삭제 범위 선택"
-          : "Select delete range"}
+        {({ ko: "삭제 범위 선택", en: "Select delete range", zh: "选择删除范围" } as Record<string, string>)[language] || "Select delete range"}
       </div>
       <div className="space-y-1.5">
         <button
@@ -46,9 +44,7 @@ export function DeleteOptionsDialog({
             )}
           </div>
           <span>
-            {language === "ko"
-              ? "이 일정만"
-              : "This event only"}
+            {({ ko: "이 일정만", en: "This event only", zh: "仅此事件" } as Record<string, string>)[language] || "This event only"}
           </span>
         </button>
         <button
@@ -73,9 +69,7 @@ export function DeleteOptionsDialog({
             )}
           </div>
           <span>
-            {language === "ko"
-              ? "이후 모든 일정"
-              : "This and following events"}
+            {({ ko: "이후 모든 일정", en: "This and following events", zh: "此事件及后续事件" } as Record<string, string>)[language] || "This and following events"}
           </span>
         </button>
         <button
@@ -98,9 +92,7 @@ export function DeleteOptionsDialog({
             )}
           </div>
           <span>
-            {language === "ko"
-              ? "모든 반복 일정"
-              : "All recurring events"}
+            {({ ko: "모든 반복 일정", en: "All recurring events", zh: "所有重复事件" } as Record<string, string>)[language] || "All recurring events"}
           </span>
         </button>
       </div>
@@ -110,13 +102,13 @@ export function DeleteOptionsDialog({
           variant="outline"
           className="flex-1 h-9 text-sm"
         >
-          {language === "ko" ? "취소" : "Cancel"}
+          {({ ko: "취소", en: "Cancel", zh: "取消" } as Record<string, string>)[language] || "Cancel"}
         </Button>
         <Button
           onClick={onDelete}
           className="flex-1 h-9 text-sm bg-red-600 hover:bg-red-700 text-white"
         >
-          {language === "ko" ? "삭제" : "Delete"}
+          {({ ko: "삭제", en: "Delete", zh: "删除" } as Record<string, string>)[language] || "Delete"}
         </Button>
       </div>
     </div>

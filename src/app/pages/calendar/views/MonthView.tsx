@@ -791,9 +791,7 @@ export function MonthView({
                             style={{ color: displayColor }}
                           >
                             {displayData.title ||
-                              (language === "ko"
-                                ? "(제목 없음)"
-                                : "(No title)")}
+                              (({ ko: "(제목 없음)", en: "(No title)", zh: "(无标题)" } as Record<string, string>)[language] || "(No title)")}
                           </span>
                         )}
                       </div>
@@ -907,9 +905,7 @@ export function MonthView({
                               style={{ color: previewColor }}
                             >
                               {previewEvent.title ||
-                                (language === "ko"
-                                  ? "(제목 없음)"
-                                  : "(No title)")}
+                                (({ ko: "(제목 없음)", en: "(No title)", zh: "(无标题)" } as Record<string, string>)[language] || "(No title)")}
                             </span>
                           )}
                         </div>
@@ -924,13 +920,7 @@ export function MonthView({
                       const [hour, minute] = time.split(":");
                       const hourNum = parseInt(hour);
                       const period =
-                        language === "ko"
-                          ? hourNum < 12
-                            ? "오전"
-                            : "오후"
-                          : hourNum < 12
-                            ? "AM"
-                            : "PM";
+                        (({ ko: hourNum < 12 ? "오전" : "오후", en: hourNum < 12 ? "AM" : "PM", zh: hourNum < 12 ? "上午" : "下午" } as Record<string, string>)[language] || (hourNum < 12 ? "AM" : "PM"));
                       const displayHour =
                         hourNum === 0
                           ? 12
@@ -1007,9 +997,7 @@ export function MonthView({
                           className={`truncate flex-1 text-[13px] text-foreground ${isBeingEdited ? "italic" : ""}`}
                         >
                           {displayData.title ||
-                            (language === "ko"
-                              ? "(제목 없음)"
-                              : "(No title)")}
+                            (({ ko: "(제목 없음)", en: "(No title)", zh: "(无标题)" } as Record<string, string>)[language] || "(No title)")}
                         </span>
 
                         {/* 반복 아이콘 */}
@@ -1071,9 +1059,7 @@ export function MonthView({
                         {/* 제목 */}
                         <span className="truncate flex-1 text-[13px] text-foreground italic">
                           {previewEvent.title ||
-                            (language === "ko"
-                              ? "(제목 없음)"
-                              : "(No title)")}
+                            (({ ko: "(제목 없음)", en: "(No title)", zh: "(无标题)" } as Record<string, string>)[language] || "(No title)")}
                         </span>
 
                         {/* 시간 */}
@@ -1086,13 +1072,7 @@ export function MonthView({
                                 );
                               const hourNum = parseInt(hour);
                               const period =
-                                language === "ko"
-                                  ? hourNum < 12
-                                    ? "오전"
-                                    : "오후"
-                                  : hourNum < 12
-                                    ? "AM"
-                                    : "PM";
+                                (({ ko: hourNum < 12 ? "오전" : "오후", en: hourNum < 12 ? "AM" : "PM", zh: hourNum < 12 ? "上午" : "下午" } as Record<string, string>)[language] || (hourNum < 12 ? "AM" : "PM"));
                               const displayHour =
                                 hourNum === 0
                                   ? 12
@@ -1135,9 +1115,7 @@ export function MonthView({
                       }}
                     >
                       <span className="text-[13px] text-muted-foreground group-hover:text-[#0C8CE9]">
-                        {language === "ko"
-                          ? `+ ${remainingCount}개 일정`
-                          : `+${remainingCount} more`}
+                        {({ ko: `+ ${remainingCount}개 일정`, en: `+${remainingCount} more`, zh: `+${remainingCount} 更多` } as Record<string, string>)[language] || `+${remainingCount} more`}
                       </span>
                     </div>
                   )}
@@ -1311,18 +1289,14 @@ export function MonthView({
 
                       if (!session?.access_token) {
                         toast.error(
-                          language === "ko"
-                            ? "로그인이 필요합니다"
-                            : "Login required",
+                          ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
                         );
                         return;
                       }
 
                       if (!eventData.title.trim()) {
                         toast.error(
-                          language === "ko"
-                            ? "제목을 입력해주세요"
-                            : "Please enter a title",
+                          ({ ko: "제목을 입력해주세요", en: "Please enter a title", zh: "请输入标题" } as Record<string, string>)[language] || "Please enter a title",
                         );
                         return;
                       }
@@ -1487,9 +1461,7 @@ export function MonthView({
                                 errorData,
                               );
                               toast.error(
-                                language === "ko"
-                                  ? "🚨 구글 캘린더 생성 권한이 없습니다. Settings에서 재연결하세요."
-                                  : "🚨 No permission to create Google Calendar event. Reconnect in Settings.",
+                                ({ ko: "🚨 구글 캘린더 생성 권한이 없습니다. Settings에서 재연결하세요.", en: "🚨 No permission to create Google Calendar event. Reconnect in Settings.", zh: "🚨 没有创建 Google 日历事件的权限。请在设置中重新连接。" } as Record<string, string>)[language] || "🚨 No permission to create Google Calendar event. Reconnect in Settings.",
                                 {
                                   duration: 8000,
                                   action: {
@@ -1542,9 +1514,7 @@ export function MonthView({
                           setDragEndDate(null);
                           setIsDragging(false);
                           toast.success(
-                            language === "ko"
-                              ? "구글 캘린더에 일정이 생성되었습니다"
-                              : "Event created in Google Calendar",
+                            ({ ko: "구글 캘린더에 일정이 생성되었습니다", en: "Event created in Google Calendar", zh: "已在 Google 日历中创建事件" } as Record<string, string>)[language] || "Event created in Google Calendar",
                           );
                         } else {
                           // 일반 카테고리는 Supabase DB에 생성
@@ -1611,9 +1581,7 @@ export function MonthView({
                           setIsDragging(false);
 
                           toast.success(
-                            language === "ko"
-                              ? "일정이 생성되었습니다"
-                              : "Event created",
+                            ({ ko: "일정이 생성되었습니다", en: "Event created", zh: "事件已创建" } as Record<string, string>)[language] || "Event created",
                           );
                         }
                       } catch (error) {
@@ -1622,9 +1590,7 @@ export function MonthView({
                           error,
                         );
                         toast.error(
-                          language === "ko"
-                            ? "일정 생성에 실패했습니다"
-                            : "Failed to create event",
+                          ({ ko: "일정 생성에 실패했습니다", en: "Failed to create event", zh: "创建事件失败" } as Record<string, string>)[language] || "Failed to create event",
                         );
                       }
                     }}
@@ -1633,9 +1599,7 @@ export function MonthView({
                       try {
                         if (!session?.access_token) {
                           toast.error(
-                            language === "ko"
-                              ? "로그인이 필요합니다"
-                              : "Login required",
+                            ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
                           );
                           return "";
                         }
@@ -1691,9 +1655,7 @@ export function MonthView({
                         ]);
 
                         toast.success(
-                          language === "ko"
-                            ? "카테고리가 생성되었습니다"
-                            : "Category created",
+                          ({ ko: "카테고리가 생성되었습니다", en: "Category created", zh: "分类已创建" } as Record<string, string>)[language] || "Category created",
                         );
 
                         // 새로 생성된 카테고리 ID 반환
@@ -1704,9 +1666,7 @@ export function MonthView({
                           error,
                         );
                         toast.error(
-                          language === "ko"
-                            ? "카테고리 생성에 실패했습니다"
-                            : "Failed to create category",
+                          ({ ko: "카테고리 생성에 실패했습니다", en: "Failed to create category", zh: "创建分类失败" } as Record<string, string>)[language] || "Failed to create category",
                         );
                         return "";
                       }
@@ -1719,9 +1679,7 @@ export function MonthView({
                       try {
                         if (!session?.access_token) {
                           toast.error(
-                            language === "ko"
-                              ? "로그인이 필요합니다"
-                              : "Login required",
+                            ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
                           );
                           return;
                         }
@@ -1758,9 +1716,7 @@ export function MonthView({
                         );
 
                         toast.success(
-                          language === "ko"
-                            ? "카테고리가 수정되었습니다"
-                            : "Category updated",
+                          ({ ko: "카테고리가 수정되었습니다", en: "Category updated", zh: "分类已更新" } as Record<string, string>)[language] || "Category updated",
                         );
                       } catch (error) {
                         console.error(
@@ -1768,9 +1724,7 @@ export function MonthView({
                           error,
                         );
                         toast.error(
-                          language === "ko"
-                            ? "카테고리 수정에 실패했습니다"
-                            : "Failed to update category",
+                          ({ ko: "카테고리 수정에 실패했습니다", en: "Failed to update category", zh: "更新分类失败" } as Record<string, string>)[language] || "Failed to update category",
                         );
                       }
                     }}
@@ -1778,9 +1732,7 @@ export function MonthView({
                       // 최소 1개 카테고리 검증
                       if (categories.length <= 1) {
                         toast.error(
-                          language === "ko"
-                            ? "최소 한 개의 카테고리는 남아있어야 합니다"
-                            : "At least one category must remain",
+                          ({ ko: "최소 한 개의 카테고리는 남아있어야 합니다", en: "At least one category must remain", zh: "至少需要保留一个分类" } as Record<string, string>)[language] || "At least one category must remain",
                         );
                         return;
                       }
@@ -1789,9 +1741,7 @@ export function MonthView({
                       try {
                         if (!session?.access_token) {
                           toast.error(
-                            language === "ko"
-                              ? "로그인이 필요합니다"
-                              : "Login required",
+                            ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
                           );
                           return;
                         }
@@ -1836,9 +1786,7 @@ export function MonthView({
                         );
 
                         toast.success(
-                          language === "ko"
-                            ? "카테고리가 삭제되었습니다"
-                            : "Category deleted",
+                          ({ ko: "카테고리가 삭제되었습니다", en: "Category deleted", zh: "分类已删除" } as Record<string, string>)[language] || "Category deleted",
                         );
                       } catch (error) {
                         console.error(
@@ -1846,9 +1794,7 @@ export function MonthView({
                           error,
                         );
                         toast.error(
-                          language === "ko"
-                            ? "카테고리 삭제에 실패했습니다"
-                            : "Failed to delete category",
+                          ({ ko: "카테고리 삭제에 실패했습니다", en: "Failed to delete category", zh: "删除分类失败" } as Record<string, string>)[language] || "Failed to delete category",
                         );
                       }
                     }}

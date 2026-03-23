@@ -54,13 +54,9 @@ export function Analytics() {
     }
   });
 
-  const months = i18n.language === 'ko'
-    ? ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
-    : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = ({ ko: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'], en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], zh: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'] } as Record<string, string[]>)[i18n.language] || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   
-  const weekDays = i18n.language === 'ko' 
-    ? ['월', '화', '수', '목', '금', '토', '일']
-    : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const weekDays = ({ ko: ['월', '화', '수', '목', '금', '토', '일'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], zh: ['一', '二', '三', '四', '五', '六', '日'] } as Record<string, string[]>)[i18n.language] || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   return (
     <div className="p-3 lg:px-4 lg:py-6 max-w-7xl mx-auto">
@@ -76,10 +72,10 @@ export function Analytics() {
           value={timePeriod}
           onValueChange={setTimePeriod}
           options={[
-            { value: 'daily', label: i18n.language === 'ko' ? '일간' : 'Daily' },
-            { value: 'weekly', label: i18n.language === 'ko' ? '주간' : 'Weekly' },
-            { value: 'monthly', label: i18n.language === 'ko' ? '월간' : 'Monthly' },
-            { value: 'yearly', label: i18n.language === 'ko' ? '연간' : 'Yearly' },
+            { value: 'daily', label: ({ ko: '일간', en: 'Daily', zh: '每天' } as Record<string, string>)[i18n.language] || 'Daily' },
+            { value: 'weekly', label: ({ ko: '주간', en: 'Weekly', zh: '每周' } as Record<string, string>)[i18n.language] || 'Weekly' },
+            { value: 'monthly', label: ({ ko: '월간', en: 'Monthly', zh: '每月' } as Record<string, string>)[i18n.language] || 'Monthly' },
+            { value: 'yearly', label: ({ ko: '연간', en: 'Yearly', zh: '每年' } as Record<string, string>)[i18n.language] || 'Yearly' },
           ]}
         />
       </div>

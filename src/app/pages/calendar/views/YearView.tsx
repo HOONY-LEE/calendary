@@ -87,6 +87,8 @@ export function YearView({
           <h3 className="font-medium text-[20px] font-bold">
             {language === "ko"
               ? `${monthIndex + 1}월`
+              : language === "zh"
+              ? `${monthIndex + 1}月`
               : new Date(year, monthIndex).toLocaleDateString(
                   "en-US",
                   {
@@ -96,15 +98,13 @@ export function YearView({
           </h3>
           <span className="text-xs text-muted-foreground">
             {getEventsCountForMonth(monthIndex)}{" "}
-            {language === "ko" ? "개" : ""}
+            {({ ko: "개", en: "", zh: "个" } as Record<string, string>)[language] ?? ""}
           </span>
         </div>
 
         {/* 요일 헤더 */}
         <div className="grid grid-cols-7 gap-px">
-          {(language === "ko"
-            ? ["일", "월", "화", "수", "목", "금", "토"]
-            : ["S", "M", "T", "W", "T", "F", "S"]
+          {(({ ko: ["일", "월", "화", "수", "목", "금", "토"], en: ["S", "M", "T", "W", "T", "F", "S"], zh: ["日", "一", "二", "三", "四", "五", "六"] } as Record<string, string[]>)[language] || ["S", "M", "T", "W", "T", "F", "S"]
           ).map((day, i) => {
             return (
               <div

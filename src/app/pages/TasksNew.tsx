@@ -329,23 +329,17 @@ export function Tasks() {
             </div>
             <div className="flex-1">
               <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-500 mb-1">
-                {language === "ko"
-                  ? "구글 Tasks 권한 필요"
-                  : "Google Tasks Permission Required"}
+                {({ ko: "구글 Tasks 권한 필요", en: "Google Tasks Permission Required", zh: "Google Tasks 权限需要" } as Record<string, string>)[language] || "Google Tasks Permission Required"}
               </h3>
               <p className="text-sm text-amber-700 dark:text-amber-400 mb-3">
-                {language === "ko"
-                  ? "구글 Tasks를 사용하려면 권한을 다시 승인해야 합니다."
-                  : "To use Google Tasks, you need to re-authorize the app."}
+                {({ ko: "구글 Tasks를 사용하려면 권한을 다시 승인해야 합니다.", en: "To use Google Tasks, you need to re-authorize the app.", zh: "要使用 Google Tasks，需要重新授权应用。" } as Record<string, string>)[language] || "To use Google Tasks, you need to re-authorize the app."}
               </p>
               <Button
                 onClick={reauthorizeWithTasks}
                 size="sm"
                 className="bg-amber-600 hover:bg-amber-700 text-white"
               >
-                {language === "ko"
-                  ? "구글로 다시 로그인"
-                  : "Re-authorize with Google"}
+                {({ ko: "구글로 다시 로그인", en: "Re-authorize with Google", zh: "使用 Google 重新登录" } as Record<string, string>)[language] || "Re-authorize with Google"}
               </Button>
             </div>
             <button
@@ -377,14 +371,10 @@ export function Tasks() {
             </div>
             <div className="flex-1">
               <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-500 mb-1">
-                {language === "ko"
-                  ? "구글 Tasks API 활성화 필요"
-                  : "Google Tasks API Activation Required"}
+                {({ ko: "구글 Tasks API 활성화 필요", en: "Google Tasks API Activation Required", zh: "Google Tasks API 需要激活" } as Record<string, string>)[language] || "Google Tasks API Activation Required"}
               </h3>
               <p className="text-sm text-amber-700 dark:text-amber-400">
-                {language === "ko"
-                  ? "구글 Tasks API가 활성화되지 않았습니다."
-                  : "Google Tasks API is not enabled."}
+                {({ ko: "구글 Tasks API가 활성화되지 않았습니다.", en: "Google Tasks API is not enabled.", zh: "Google Tasks API 未启用。" } as Record<string, string>)[language] || "Google Tasks API is not enabled."}
               </p>
             </div>
             <button
@@ -409,7 +399,7 @@ export function Tasks() {
                 onClick={handlePrevDay}
                 className="h-8 w-8 p-0"
                 title={
-                  language === "ko" ? "이전 날" : "Previous day"
+                  ({ ko: "이전 날", en: "Previous day", zh: "前一天" } as Record<string, string>)[language] || "Previous day"
                 }
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -417,7 +407,7 @@ export function Tasks() {
 
               <button className="text-sm text-gray-500 dark:text-gray-400 transition-colors px-2">
                 {currentDate.toLocaleDateString(
-                  language === "ko" ? "ko-KR" : "en-US",
+                  ({ ko: "ko-KR", en: "en-US", zh: "zh-CN" } as Record<string, string>)[language] || "en-US",
                   {
                     year: "numeric",
                     month: "long",
@@ -433,7 +423,7 @@ export function Tasks() {
                 onClick={handleNextDay}
                 className="h-8 w-8 p-0"
                 title={
-                  language === "ko" ? "다음 날" : "Next day"
+                  ({ ko: "다음 날", en: "Next day", zh: "后一天" } as Record<string, string>)[language] || "Next day"
                 }
               >
                 <ChevronRight className="h-4 w-4" />
@@ -447,16 +437,14 @@ export function Tasks() {
                   variant="outline"
                   size="sm"
                 >
-                  {language === "ko" ? "오늘" : "Today"}
+                  {({ ko: "오늘", en: "Today", zh: "今天" } as Record<string, string>)[language] || "Today"}
                 </Button>
               )}
             </div>
 
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold">
-                {language === "ko"
-                  ? "오늘 할 일"
-                  : "Today's Tasks"}
+                {({ ko: "오늘 할 일", en: "Today's Tasks", zh: "今日任务" } as Record<string, string>)[language] || "Today's Tasks"}
               </h2>
               <Button
                 variant="ghost"
@@ -465,7 +453,7 @@ export function Tasks() {
                 disabled={isLoading || isRefreshing}
                 className="h-9 w-9 p-0"
                 title={
-                  language === "ko" ? "새로고침" : "Refresh"
+                  ({ ko: "새로고침", en: "Refresh", zh: "刷新" } as Record<string, string>)[language] || "Refresh"
                 }
               >
                 {isLoading || isRefreshing ? (
@@ -476,9 +464,7 @@ export function Tasks() {
               </Button>
               {isLoading && (
                 <span className="text-sm text-muted-foreground">
-                  {language === "ko"
-                    ? "로딩 중..."
-                    : "Loading..."}
+                  {({ ko: "로딩 중...", en: "Loading...", zh: "加载中..." } as Record<string, string>)[language] || "Loading..."}
                 </span>
               )}
             </div>
@@ -491,19 +477,17 @@ export function Tasks() {
               options={[
                 {
                   value: "all",
-                  label: language === "ko" ? "전체" : "All",
+                  label: ({ ko: "전체", en: "All", zh: "全部" } as Record<string, string>)[language] || "All",
                 },
                 {
                   value: "inProgress",
                   label:
-                    language === "ko"
-                      ? "진행중"
-                      : "In Progress",
+                    ({ ko: "진행중", en: "In Progress", zh: "进行中" } as Record<string, string>)[language] || "In Progress",
                 },
                 {
                   value: "completed",
                   label:
-                    language === "ko" ? "완료됨" : "Completed",
+                    ({ ko: "완료됨", en: "Completed", zh: "已完成" } as Record<string, string>)[language] || "Completed",
                 },
               ]}
             />
@@ -573,19 +557,13 @@ export function Tasks() {
                   htmlFor="sync-google"
                   className="text-sm font-medium cursor-pointer"
                 >
-                  {language === "ko"
-                    ? "구글 Tasks에 동기화"
-                    : "Sync to Google Tasks"}
+                  {({ ko: "구글 Tasks에 동기화", en: "Sync to Google Tasks", zh: "同步到 Google Tasks" } as Record<string, string>)[language] || "Sync to Google Tasks"}
                 </Label>
                 <span className="text-xs text-muted-foreground">
                   (
                   {syncToGoogle
-                    ? language === "ko"
-                      ? "구글에 저장됨"
-                      : "Saved to Google"
-                    : language === "ko"
-                      ? "로컬에만 저장됨"
-                      : "Local only"}
+                    ? ({ ko: "구글에 저장됨", en: "Saved to Google", zh: "已保存到 Google" } as Record<string, string>)[language] || "Saved to Google"
+                    : ({ ko: "로컬에만 저장됨", en: "Local only", zh: "仅本地" } as Record<string, string>)[language] || "Local only"}
                   )
                 </span>
               </div>
@@ -604,9 +582,7 @@ export function Tasks() {
               onChange={(e) => setNewTaskTitle(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder={
-                language === "ko"
-                  ? "새 작업 추가..."
-                  : "Add new task..."
+                ({ ko: "새 작업 추가...", en: "Add new task...", zh: "添加新任务..." } as Record<string, string>)[language] || "Add new task..."
               }
               className="flex-1 h-9"
             />
@@ -636,14 +612,10 @@ export function Tasks() {
             {/* 헤더 */}
             <div className="px-6 py-4 border-b border-border">
               <h3 className="text-lg font-semibold">
-                {language === "ko"
-                  ? "완료하지 못한 작업이 있습니다"
-                  : "You have incomplete tasks"}
+                {({ ko: "완료하지 못한 작업이 있습니다", en: "You have incomplete tasks", zh: "您有未完成的任务" } as Record<string, string>)[language] || "You have incomplete tasks"}
               </h3>
               <p className="text-sm text-muted-foreground mt-1">
-                {language === "ko"
-                  ? "이전 날짜의 미완료 작업을 오늘로 이동하시겠습니까?"
-                  : "Would you like to move incomplete tasks to today?"}
+                {({ ko: "이전 날짜의 미완료 작업을 오늘로 이동하시겠습니까?", en: "Would you like to move incomplete tasks to today?", zh: "是否将未完成的任务移至今天？" } as Record<string, string>)[language] || "Would you like to move incomplete tasks to today?"}
               </p>
             </div>
 
@@ -688,7 +660,7 @@ export function Tasks() {
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {new Date(task.date).toLocaleDateString(
-                          language === "ko" ? "ko-KR" : "en-US",
+                          ({ ko: "ko-KR", en: "en-US", zh: "zh-CN" } as Record<string, string>)[language] || "en-US",
                           {
                             month: "short",
                             day: "numeric",
@@ -713,16 +685,14 @@ export function Tasks() {
                 }}
                 className="flex-1"
               >
-                {language === "ko" ? "건너뛰기" : "Skip"}
+                {({ ko: "건너뛰기", en: "Skip", zh: "跳过" } as Record<string, string>)[language] || "Skip"}
               </Button>
               <Button
                 onClick={movePendingTasksToToday}
                 disabled={selectedPendingTasks.size === 0}
                 className="flex-1 bg-[#0C8CE9] hover:bg-[#0C8CE9]/90"
               >
-                {language === "ko"
-                  ? `오늘로 이동 (${selectedPendingTasks.size})`
-                  : `Move to Today (${selectedPendingTasks.size})`}
+                {({ ko: `오늘로 이동 (${selectedPendingTasks.size})`, en: `Move to Today (${selectedPendingTasks.size})`, zh: `移至今天 (${selectedPendingTasks.size})` } as Record<string, string>)[language] || `Move to Today (${selectedPendingTasks.size})`}
               </Button>
             </div>
           </div>

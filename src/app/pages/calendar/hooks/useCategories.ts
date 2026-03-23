@@ -114,9 +114,7 @@ export function useCategories({
             "[Calendar] ✅ Category order saved successfully",
           );
           toast.success(
-            language === "ko"
-              ? "카테고리 순서가 저장되었습니다"
-              : "Category order saved",
+            ({ ko: "카테고리 순서가 저장되었습니다", en: "Category order saved", zh: "分类顺序已保存" } as Record<string, string>)[language] || "Category order saved",
           );
         }
       } catch (error) {
@@ -125,9 +123,7 @@ export function useCategories({
           error,
         );
         toast.error(
-          language === "ko"
-            ? "카테고리 순서 저장에 실패했습니다"
-            : "Failed to save category order",
+          ({ ko: "카테고리 순서 저장에 실패했습니다", en: "Failed to save category order", zh: "保存分类顺序失败" } as Record<string, string>)[language] || "Failed to save category order",
         );
       }
     },
@@ -141,9 +137,7 @@ export function useCategories({
     try {
       if (!session?.access_token) {
         toast.error(
-          language === "ko"
-            ? "로그인이 필요합니다"
-            : "Login required",
+          ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
         );
         return;
       }
@@ -181,9 +175,7 @@ export function useCategories({
       ]);
 
       toast.success(
-        language === "ko"
-          ? "카테고리가 생성되었습니다"
-          : "Category created",
+        ({ ko: "카테고리가 생성되었습니다", en: "Category created", zh: "分类已创建" } as Record<string, string>)[language] || "Category created",
       );
 
       // 초기화
@@ -193,9 +185,7 @@ export function useCategories({
     } catch (error) {
       console.error("Failed to create category:", error);
       toast.error(
-        language === "ko"
-          ? "카테고리 생성에 실패했습니다"
-          : "Failed to create category",
+        ({ ko: "카테고리 생성에 실패했습니다", en: "Failed to create category", zh: "创建分类失败" } as Record<string, string>)[language] || "Failed to create category",
       );
     }
   };
@@ -218,9 +208,7 @@ export function useCategories({
     try {
       if (!session?.access_token) {
         toast.error(
-          language === "ko"
-            ? "로그인이 필요합니다"
-            : "Login required",
+          ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
         );
         return;
       }
@@ -248,9 +236,7 @@ export function useCategories({
       );
 
       toast.success(
-        language === "ko"
-          ? "카테고리가 수정되었습니다"
-          : "Category updated",
+        ({ ko: "카테고리가 수정되었습니다", en: "Category updated", zh: "分类已更新" } as Record<string, string>)[language] || "Category updated",
       );
 
       // 초기화
@@ -261,9 +247,7 @@ export function useCategories({
     } catch (error) {
       console.error("Failed to update category:", error);
       toast.error(
-        language === "ko"
-          ? "카테고리 수정에 실패했습니다"
-          : "Failed to update category",
+        ({ ko: "카테고리 수정에 실패했습니다", en: "Failed to update category", zh: "更新分类失败" } as Record<string, string>)[language] || "Failed to update category",
       );
     }
   };
@@ -275,9 +259,7 @@ export function useCategories({
     try {
       if (!session?.access_token) {
         toast.error(
-          language === "ko"
-            ? "로그인이 필요합니다"
-            : "Login required",
+          ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
         );
         return;
       }
@@ -296,18 +278,14 @@ export function useCategories({
       );
 
       toast.success(
-        language === "ko"
-          ? "카테고리가 삭제되었습니다"
-          : "Category deleted",
+        ({ ko: "카테고리가 삭제되었습니다", en: "Category deleted", zh: "分类已删除" } as Record<string, string>)[language] || "Category deleted",
       );
 
       setDeletingCategoryIdInDropdown(null);
     } catch (error) {
       console.error("Failed to delete category:", error);
       toast.error(
-        language === "ko"
-          ? "카테고리 삭제에 실패했습니다"
-          : "Failed to delete category",
+        ({ ko: "카테고리 삭제에 실패했습니다", en: "Failed to delete category", zh: "删除分类失败" } as Record<string, string>)[language] || "Failed to delete category",
       );
     }
   };
@@ -503,9 +481,7 @@ export function useCategories({
               "[Calendar] Session expired, signing out",
             );
             toast.error(
-              language === "ko"
-                ? "세션이 만료되었습니다. 다시 로그인해주세요."
-                : "Session expired. Please sign in again.",
+              ({ ko: "세션이 만료되었습니다. 다시 로그인해주세요.", en: "Session expired. Please sign in again.", zh: "会话已过期。请重新登录。" } as Record<string, string>)[language] || "Session expired. Please sign in again.",
             );
             await signOut();
             return;
@@ -517,9 +493,7 @@ export function useCategories({
               "[Calendar] Network error when loading categories",
             );
             toast.error(
-              language === "ko"
-                ? "서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요."
-                : "Cannot connect to server. Please check your network connection.",
+              ({ ko: "서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.", en: "Cannot connect to server. Please check your network connection.", zh: "无法连接到服务器。请检查网络连接。" } as Record<string, string>)[language] || "Cannot connect to server. Please check your network connection.",
             );
             setCategories([]);
             setIsLoading(false);
@@ -528,9 +502,7 @@ export function useCategories({
         }
 
         toast.error(
-          language === "ko"
-            ? "카테고리를 불러오는데 실패했습니다"
-            : "Failed to load categories",
+          ({ ko: "카테고리를 불러오는데 실패했습니다", en: "Failed to load categories", zh: "加载分类失败" } as Record<string, string>)[language] || "Failed to load categories",
         );
         setCategories([]);
         setIsLoading(false);

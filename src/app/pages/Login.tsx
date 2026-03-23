@@ -98,24 +98,18 @@ export function Login() {
         error.message?.includes("Invalid login credentials")
       ) {
         setError(
-          language === "ko"
-            ? "이메일 또는 비밀번호가 올바르지 않습니다.\n\n아직 계정이 없다면 회원가입을 진행해주세요.\n회원가입 후 이메일 인증을 완료해야 로그인할 수 있습니다."
-            : "Invalid email or password.\n\nIf you don't have an account, please sign up first.\nYou must verify your email after signing up to log in.",
+          ({ ko: "이메일 또는 비밀번호가 올바르지 않습니다.\n\n아직 계정이 없다면 회원가입을 진행해주세요.\n회원가입 후 이메일 인증을 완료해야 로그인할 수 있습니다.", en: "Invalid email or password.\n\nIf you don't have an account, please sign up first.\nYou must verify your email after signing up to log in.", zh: "邮箱或密码不正确。\n\n如果您还没有账户，请先注册。\n注册后需要验证邮箱才能登录。" } as Record<string, string>)[language] || "Invalid email or password.\n\nIf you don't have an account, please sign up first.\nYou must verify your email after signing up to log in.",
         );
       } else if (
         error.message?.includes("Email not confirmed")
       ) {
         setError(
-          language === "ko"
-            ? "이메일 인증이 완료되지 않았습니다.\n받은 메일함을 확인하여 인증 링크를 클릭해주세요."
-            : "Email not confirmed.\nPlease check your inbox and click the verification link.",
+          ({ ko: "이메일 인증이 완료되지 않았습니다.\n받은 메일함을 확인하여 인증 링크를 클릭해주세요.", en: "Email not confirmed.\nPlease check your inbox and click the verification link.", zh: "邮箱尚未验证。\n请检查收件箱并点击验证链接。" } as Record<string, string>)[language] || "Email not confirmed.\nPlease check your inbox and click the verification link.",
         );
       } else {
         setError(
           error.message ||
-            (language === "ko"
-              ? "로그인에 실패했습니다"
-              : "Failed to sign in"),
+            (({ ko: "로그인에 실패했습니다", en: "Failed to sign in", zh: "登录失败" } as Record<string, string>)[language] || "Failed to sign in"),
         );
       }
     } finally {
@@ -147,9 +141,7 @@ export function Login() {
             />
           </div>
           <h1 className="text-3xl font-semibold tracking-tight mb-2">
-            {language === "ko"
-              ? "Calendary 계정으로 로그인"
-              : "Sign in to Calendary"}
+            {({ ko: "Calendary 계정으로 로그인", en: "Sign in to Calendary", zh: "登录 Calendary" } as Record<string, string>)[language] || "Sign in to Calendary"}
           </h1>
         </div>
 
@@ -169,9 +161,7 @@ export function Login() {
                 onFocus={() => setError("")}
                 className="w-full pl-12 pr-14 py-4 bg-background border-2 border-gray-200 dark:border-gray-700 rounded-md focus:outline-none focus:border-[#0C8CE9] transition-all duration-200 text-base"
                 placeholder={
-                  language === "ko"
-                    ? "이메일 또는 전화번호"
-                    : "Email or phone number"
+                  ({ ko: "이메일 또는 전화번호", en: "Email or phone number", zh: "邮箱或电话号码" } as Record<string, string>)[language] || "Email or phone number"
                 }
               />
               {isValidEmail(email) && (
@@ -206,7 +196,7 @@ export function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-12 py-4 bg-background border-2 border-gray-200 dark:border-gray-700 rounded-md focus:outline-none focus:border-[#0C8CE9] transition-all duration-200 text-base"
                   placeholder={
-                    language === "ko" ? "비밀번호" : "Password"
+                    ({ ko: "비밀번호", en: "Password", zh: "密码" } as Record<string, string>)[language] || "Password"
                   }
                   required
                   autoFocus
@@ -221,9 +211,7 @@ export function Login() {
                 }}
                 className="text-[#0C8CE9] text-sm hover:underline"
               >
-                {language === "ko"
-                  ? "이메일 변경"
-                  : "Change email"}
+                {({ ko: "이메일 변경", en: "Change email", zh: "更改邮箱" } as Record<string, string>)[language] || "Change email"}
               </button>
             </div>
           )}
@@ -243,12 +231,8 @@ export function Login() {
               font-medium hover:bg-[#0C8CE9]/90 transition-all duration-200 disabled:opacity-50"
             >
               {isLoading
-                ? language === "ko"
-                  ? "로그인 중..."
-                  : "Signing in..."
-                : language === "ko"
-                  ? "로그인"
-                  : "Sign In"}
+                ? (({ ko: "로그인 중...", en: "Signing in...", zh: "登录中..." } as Record<string, string>)[language] || "Signing in...")
+                : (({ ko: "로그인", en: "Sign In", zh: "登录" } as Record<string, string>)[language] || "Sign In")}
             </button>
           )}
         </form>
@@ -259,9 +243,7 @@ export function Login() {
             onClick={() => navigate("/signup")}
             className="text-[#0C8CE9] text-base hover:underline"
           >
-            {language === "ko"
-              ? "Calendary 계정 생성"
-              : "Create Calendary Account"}
+            {({ ko: "Calendary 계정 생성", en: "Create Calendary Account", zh: "创建 Calendary 账户" } as Record<string, string>)[language] || "Create Calendary Account"}
           </button>
         </div>
 
@@ -272,7 +254,7 @@ export function Login() {
           </div>
           <div className="relative flex justify-center text-sm">
             <span className="px-4 bg-background text-muted-foreground">
-              {language === "ko" ? "또는" : "or"}
+              {({ ko: "또는", en: "or", zh: "或" } as Record<string, string>)[language] || "or"}
             </span>
           </div>
         </div>
@@ -301,17 +283,13 @@ export function Login() {
             />
           </svg>
           <span className="text-foreground">
-            {language === "ko"
-              ? "Google로 로그인"
-              : "Sign in with Google"}
+            {({ ko: "Google로 로그인", en: "Sign in with Google", zh: "使用 Google 登录" } as Record<string, string>)[language] || "Sign in with Google"}
           </span>
         </button>
 
         {/* Privacy Notice */}
         <p className="mt-8 text-center text-xs text-muted-foreground leading-relaxed">
-          {language === "ko"
-            ? "Calendary 계정은 사용자가 안전하게 로그인하여 자신의 데이터에 접근할 수 있도록 하기 위해 사용됩니다."
-            : "Your Calendary account is used to securely sign in and access your data."}
+          {({ ko: "Calendary 계정은 사용자가 안전하게 로그인하여 자신의 데이터에 접근할 수 있도록 하기 위해 사용됩니다.", en: "Your Calendary account is used to securely sign in and access your data.", zh: "您的 Calendary 账户用于安全登录和访问您的数据。" } as Record<string, string>)[language] || "Your Calendary account is used to securely sign in and access your data."}
         </p>
       </div>
     </div>
