@@ -426,7 +426,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             </nav>
 
             {/* Right content */}
-            <div className="flex-1 px-6 pt-14 pb-6 overflow-y-auto">
+            <div className="flex-1 px-6 pt-12 pb-4 overflow-y-auto">
               {activeTab === "google" && (
                 <div className="space-y-6">
                   {/* 1. 공휴일 표시 */}
