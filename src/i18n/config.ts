@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import koTranslation from '../locales/ko/translation.json';
 import enTranslation from '../locales/en/translation.json';
+import zhTranslation from '../locales/zh/translation.json';
 
 // 브라우저에서 저장된 언어 또는 기본값(한국어)
 const savedLanguage = localStorage.getItem('language') || 'ko';
@@ -15,6 +16,9 @@ i18n
       },
       en: {
         translation: enTranslation,
+      },
+      zh: {
+        translation: zhTranslation,
       },
     },
     lng: savedLanguage, // 기본 언어

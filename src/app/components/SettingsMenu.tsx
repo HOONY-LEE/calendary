@@ -16,7 +16,7 @@ export function SettingsMenu({ isCollapsed }: SettingsMenuProps) {
   const { theme, setTheme } = useTheme();
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const currentLanguage = i18n.language as 'ko' | 'en';
+  const currentLanguage = i18n.language as 'ko' | 'en' | 'zh';
 
   // 외부 클릭 감지
   useEffect(() => {
@@ -35,7 +35,7 @@ export function SettingsMenu({ isCollapsed }: SettingsMenuProps) {
     };
   }, [isOpen]);
 
-  const changeLanguage = (lang: 'ko' | 'en') => {
+  const changeLanguage = (lang: 'ko' | 'en' | 'zh') => {
     i18n.changeLanguage(lang);
   };
 
@@ -143,6 +143,18 @@ export function SettingsMenu({ isCollapsed }: SettingsMenuProps) {
                   <span className="text-sm text-foreground/80">English</span>
                 </div>
                 {currentLanguage === 'en' && (
+                  <Check className="w-4 h-4 text-primary" />
+                )}
+              </button>
+              <button
+                onClick={() => changeLanguage('zh')}
+                className="w-full flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-[#F9FAFB] dark:hover:bg-accent transition-colors text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <Languages className="w-4 h-4 text-foreground/60" />
+                  <span className="text-sm text-foreground/80">中文</span>
+                </div>
+                {currentLanguage === 'zh' && (
                   <Check className="w-4 h-4 text-primary" />
                 )}
               </button>

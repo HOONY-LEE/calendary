@@ -400,6 +400,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     {([
                       { value: "ko", label: "한국어" },
                       { value: "en", label: "English" },
+                      { value: "zh", label: "中文" },
                     ]).map((item) => (
                       <button
                         key={item.value}
