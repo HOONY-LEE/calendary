@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Calendar as CalendarIcon,
@@ -16,6 +16,7 @@ import {
   Globe,
   User,
   Clock,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -61,7 +62,22 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   });
   const [availableCountries, setAvailableCountries] = useState<{ countryCode: string; name: string }[]>([]);
   const [countrySearch, setCountrySearch] = useState("");
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [loadingCountries, setLoadingCountries] = useState(false);
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
+
+  // 국가 드롭다운 외부 클릭 감지
+  useEffect(() => {
+    if (!countryDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(e.target as Node)) {
+        setCountryDropdownOpen(false);
+        setCountrySearch("");
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [countryDropdownOpen]);
 
   // 국가 목록 로드
   useEffect(() => {
@@ -122,6 +138,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   const handleCountryChange = (code: string) => {
     setHolidayCountry(code);
+    setCountryDropdownOpen(false);
+    setCountrySearch("");
     localStorage.setItem("holiday_country", code);
     if (holidayEnabled) {
       window.dispatchEvent(new CustomEvent("holiday-settings-changed"));
@@ -442,38 +460,60 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         </button>
                       </div>
 
-                      {/* 국가 선택 */}
+                      {/* 국가 선택 드롭다운 */}
                       {holidayEnabled && (
-                        <div className="space-y-2">
-                          <Input
-                            type="text"
-                            value={countrySearch}
-                            onChange={(e) => setCountrySearch(e.target.value)}
-                            placeholder={t("settings.holiday.searchPlaceholder")}
-                            className="h-8"
-                          />
-                          <div className="max-h-[140px] overflow-y-auto space-y-0.5">
-                            {loadingCountries ? (
-                              <p className="text-xs text-muted-foreground text-center py-2">{t("settings.holiday.loading")}</p>
-                            ) : (
-                              filteredCountries.map((country) => (
-                                <button
-                                  key={country.countryCode}
-                                  onClick={() => handleCountryChange(country.countryCode)}
-                                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-sm transition-colors ${
-                                    holidayCountry === country.countryCode
-                                      ? "bg-[#FBFBFC] dark:bg-accent font-medium"
-                                      : "hover:bg-[#FBFBFC] dark:hover:bg-accent"
-                                  }`}
-                                >
-                                  <span>{getLocalizedCountryName(country.countryCode, country.name)}</span>
-                                  {holidayCountry === country.countryCode && (
-                                    <Check className="w-3.5 h-3.5 text-primary" />
-                                  )}
-                                </button>
-                              ))
-                            )}
-                          </div>
+                        <div className="relative" ref={countryDropdownRef}>
+                          <button
+                            type="button"
+                            onClick={() => setCountryDropdownOpen(!countryDropdownOpen)}
+                            className="w-full flex items-center justify-between h-9 px-3 rounded-md border border-border bg-transparent text-sm transition-colors hover:bg-[#FBFBFC] dark:hover:bg-accent"
+                          >
+                            <span>
+                              {availableCountries.find((c) => c.countryCode === holidayCountry)
+                                ? getLocalizedCountryName(holidayCountry, availableCountries.find((c) => c.countryCode === holidayCountry)!.name)
+                                : holidayCountry}
+                            </span>
+                            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${countryDropdownOpen ? "rotate-180" : ""}`} />
+                          </button>
+
+                          {countryDropdownOpen && (
+                            <div className="absolute z-50 mt-1 w-full bg-background border border-border rounded-md shadow-lg">
+                              <div className="p-2">
+                                <Input
+                                  type="text"
+                                  value={countrySearch}
+                                  onChange={(e) => setCountrySearch(e.target.value)}
+                                  placeholder={t("settings.holiday.searchPlaceholder")}
+                                  className="h-8"
+                                  autoFocus
+                                />
+                              </div>
+                              <div className="max-h-[180px] overflow-y-auto px-1 pb-1">
+                                {loadingCountries ? (
+                                  <p className="text-xs text-muted-foreground text-center py-3">{t("settings.holiday.loading")}</p>
+                                ) : filteredCountries.length === 0 ? (
+                                  <p className="text-xs text-muted-foreground text-center py-3">{t("settings.timezone.noResults")}</p>
+                                ) : (
+                                  filteredCountries.map((country) => (
+                                    <button
+                                      key={country.countryCode}
+                                      onClick={() => handleCountryChange(country.countryCode)}
+                                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-sm transition-colors ${
+                                        holidayCountry === country.countryCode
+                                          ? "bg-[#FBFBFC] dark:bg-accent font-medium"
+                                          : "hover:bg-[#FBFBFC] dark:hover:bg-accent"
+                                      }`}
+                                    >
+                                      <span>{getLocalizedCountryName(country.countryCode, country.name)}</span>
+                                      {holidayCountry === country.countryCode && (
+                                        <Check className="w-3.5 h-3.5 text-primary" />
+                                      )}
+                                    </button>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
