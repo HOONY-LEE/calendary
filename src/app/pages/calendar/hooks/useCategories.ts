@@ -431,19 +431,16 @@ export function useCategories({
         if (savedSelection) {
           try {
             const savedIds = JSON.parse(savedSelection) as string[];
-            // 존재하는 카테고리만 필터링 (삭제된 카테고리 제외)
+            // 저장된 ID 중 현재 존재하는 카테고리만 복원
             const validIds = savedIds.filter((id) =>
               allCategories.some((c) => c.id === id)
             );
-            // 새로 추가된 카테고리는 기본 선택
-            const newCategoryIds = allCategories
-              .filter((c) => !savedIds.includes(c.id))
-              .map((c) => c.id);
-            setSelectedCategoryIds([...validIds, ...newCategoryIds]);
+            setSelectedCategoryIds(validIds);
           } catch {
             setSelectedCategoryIds(allCategories.map((c) => c.id));
           }
         } else {
+          // 저장된 선택이 없으면 전체 선택 (최초 사용)
           setSelectedCategoryIds(allCategories.map((c) => c.id));
         }
 
@@ -567,10 +564,7 @@ export function useCategories({
                   const validIds = savedIds.filter((id) =>
                     reloadedCategories.some((c) => c.id === id)
                   );
-                  const newIds = reloadedCategories
-                    .filter((c) => !savedIds.includes(c.id))
-                    .map((c) => c.id);
-                  setSelectedCategoryIds([...validIds, ...newIds]);
+                  setSelectedCategoryIds(validIds);
                 } catch {
                   setSelectedCategoryIds(reloadedCategories.map((c) => c.id));
                 }
@@ -789,18 +783,20 @@ export function useCategories({
     };
   }, [session]);
 
-  // selectedCategoryIds 변경 시 localStorage에 자동 저장
-  useEffect(() => {
-    if (selectedCategoryIds.length > 0) {
-      localStorage.setItem("selected_category_ids", JSON.stringify(selectedCategoryIds));
-    }
-  }, [selectedCategoryIds]);
+  // 외부(유저 토글)에서 호출할 때만 localStorage에 저장하는 래핑 setter
+  const setSelectedCategoryIdsAndSave = useCallback((updater: React.SetStateAction<string[]>) => {
+    setSelectedCategoryIds((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      localStorage.setItem("selected_category_ids", JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
   return {
     categories,
     setCategories,
     selectedCategoryIds,
-    setSelectedCategoryIds,
+    setSelectedCategoryIds: setSelectedCategoryIdsAndSave,
     showAddCategoryInDropdown,
     setShowAddCategoryInDropdown,
     newCategoryNameInDropdown,
