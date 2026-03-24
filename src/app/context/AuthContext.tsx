@@ -217,22 +217,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
-    // 🔥 API 연동이 활성화되어 있으면 calendar scope도 함께 요청
-    const { isGoogleCalendarApiEnabled } = await import('../../lib/google-token');
-    const needsCalendarScope = isGoogleCalendarApiEnabled();
-
-    const scopes = needsCalendarScope
-      ? 'openid email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks'
-      : 'openid email profile';
-
+    // 🔥 refresh token이 보존되어 있으면 기본 로그인만 (consent 불필요)
+    // calendar 접근 시 저장된 refresh token으로 자동 갱신
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/calendar`,
-        scopes,
+        scopes: 'openid email profile',
         queryParams: {
           access_type: 'offline',
-          prompt: needsCalendarScope ? 'consent' : 'select_account',
+          prompt: 'select_account',
         },
       },
     });
