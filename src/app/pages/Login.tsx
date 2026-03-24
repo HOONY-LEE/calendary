@@ -295,6 +295,10 @@ export function Login() {
           <a href="/privacy" className="text-[#0C8CE9] hover:underline">
             {({ ko: "개인정보처리방침", en: "Privacy Policy", zh: "隐私政策" } as Record<string, string>)[language] || "Privacy Policy"}
           </a>
+          <span className="mx-2">·</span>
+          <a href="/terms" className="text-[#0C8CE9] hover:underline">
+            {({ ko: "이용약관", en: "Terms of Service", zh: "服务条款" } as Record<string, string>)[language] || "Terms of Service"}
+          </a>
         </p>
       </div>
     </div>

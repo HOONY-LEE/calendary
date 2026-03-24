@@ -10,11 +10,16 @@ import { Tasks } from './pages/TasksNew'; // 🔥 캐싱 최적화 버전
 // import { Analytics } from './pages/Analytics';
 import { NotFound } from './pages/NotFound';
 import { Privacy } from './pages/Privacy';
+import { Terms } from './pages/Terms';
 
 export const router = createBrowserRouter([
   {
     path: '/privacy',
     Component: Privacy,
+  },
+  {
+    path: '/terms',
+    Component: Terms,
   },
   {
     path: '/',
