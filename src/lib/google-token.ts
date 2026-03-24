@@ -34,7 +34,7 @@ export function setGoogleCalendarApiEnabled(enabled: boolean) {
 }
 
 // Google OAuth Client ID
-const GOOGLE_CLIENT_ID = '140623008481-6ut0fehsct4mcupi2cioem44us17u41j.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '140623008481-6ut0fehsct4mcupi2cieem44us17u41j.apps.googleusercontent.com';
 
 /**
  * 토큰에 Calendar scope가 있는지 빠르게 확인
