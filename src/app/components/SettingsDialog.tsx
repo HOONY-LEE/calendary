@@ -25,7 +25,7 @@ import { toast } from "sonner";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { projectId, publicAnonKey } from "../../lib/supabase-info";
-import { getGoogleToken } from "../../lib/google-token";
+import { getGoogleToken, getGoogleTokenAsync, isGoogleCalendarApiEnabled, setGoogleCalendarApiEnabled } from "../../lib/google-token";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +34,78 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
+
+const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json";
+
+// 경도 → SVG x 변환 (equirectangular, center=140°E, scale=75, svgWidth=540)
+const MAP_CENTER = 140;
+const MAP_SCALE_FACTOR = 90 * Math.PI / 180; // ~1.571
+const MAP_SVG_CX = 270;
+const lonToSvgX = (lon: number): number => {
+  let rotated = lon - MAP_CENTER;
+  if (rotated < -180) rotated += 360;
+  if (rotated > 180) rotated -= 360;
+  return MAP_SVG_CX + rotated * MAP_SCALE_FACTOR;
+};
+const svgXToOffset = (svgX: number): number => {
+  const lon = (svgX - MAP_SVG_CX) / MAP_SCALE_FACTOR + MAP_CENTER;
+  let norm = ((lon + 180) % 360 + 360) % 360 - 180;
+  return Math.max(-12, Math.min(12, Math.round(norm / 15)));
+};
+
+// 세계 주요 도시 (세계시계 스타일)
+const WORLD_CLOCK_CITIES: {
+  tz: string;
+  coords: [number, number];
+  names: Record<string, string>;
+  dx: number;
+  dy: number;
+  anchor: "start" | "end";
+}[] = [
+  { tz: "Europe/London", coords: [-0.1, 51.5], names: { ko: "런던", en: "London", zh: "伦敦" }, dx: 5, dy: -6, anchor: "start" },
+  { tz: "Europe/Paris", coords: [2.3, 48.9], names: { ko: "파리", en: "Paris", zh: "巴黎" }, dx: -5, dy: 10, anchor: "end" },
+  { tz: "Europe/Moscow", coords: [37.6, 55.8], names: { ko: "모스크바", en: "Moscow", zh: "莫斯科" }, dx: 5, dy: -4, anchor: "start" },
+  { tz: "Asia/Dubai", coords: [55.3, 25.3], names: { ko: "두바이", en: "Dubai", zh: "迪拜" }, dx: 5, dy: 4, anchor: "start" },
+  { tz: "Asia/Jakarta", coords: [106.8, -6.2], names: { ko: "자카르타", en: "Jakarta", zh: "雅加达" }, dx: 5, dy: 4, anchor: "start" },
+  { tz: "Asia/Shanghai", coords: [116.4, 39.9], names: { ko: "베이징", en: "Beijing", zh: "北京" }, dx: -5, dy: -8, anchor: "end" },
+  { tz: "Asia/Seoul", coords: [127.0, 37.5], names: { ko: "서울", en: "Seoul", zh: "首尔" }, dx: 5, dy: -4, anchor: "start" },
+  { tz: "Asia/Tokyo", coords: [139.7, 35.7], names: { ko: "도쿄", en: "Tokyo", zh: "东京" }, dx: 5, dy: 12, anchor: "start" },
+  { tz: "Australia/Sydney", coords: [151.2, -33.9], names: { ko: "시드니", en: "Sydney", zh: "悉尼" }, dx: 5, dy: 0, anchor: "start" },
+  { tz: "America/Vancouver", coords: [-123.1, 49.3], names: { ko: "밴쿠버", en: "Vancouver", zh: "温哥华" }, dx: 5, dy: -6, anchor: "start" },
+  { tz: "America/Los_Angeles", coords: [-118.2, 34.1], names: { ko: "LA", en: "Los Angeles", zh: "洛杉矶" }, dx: 5, dy: 4, anchor: "start" },
+  { tz: "America/Mexico_City", coords: [-99.1, 19.4], names: { ko: "멕시코시티", en: "Mexico City", zh: "墨西哥城" }, dx: 5, dy: 4, anchor: "start" },
+  { tz: "America/New_York", coords: [-74.0, 40.7], names: { ko: "뉴욕", en: "New York", zh: "纽约" }, dx: 5, dy: -6, anchor: "start" },
+  { tz: "America/Sao_Paulo", coords: [-46.6, -23.6], names: { ko: "상파울루", en: "São Paulo", zh: "圣保罗" }, dx: 5, dy: 4, anchor: "start" },
+  { tz: "Africa/Johannesburg", coords: [18.4, -33.9], names: { ko: "케이프타운", en: "Cape Town", zh: "开普敦" }, dx: -5, dy: 4, anchor: "end" },
+];
+
+// GMT offset 계산
+const getGmtOffsetNum = (tz: string): number => {
+  try {
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "shortOffset" }).formatToParts(now);
+    const offset = parts.find((p) => p.type === "timeZoneName")?.value || "";
+    if (offset === "GMT") return 0;
+    const m = offset.match(/GMT([+-])(\d+)(?::(\d+))?/);
+    if (m) return (m[1] === "+" ? 1 : -1) * (parseInt(m[2]) + parseInt(m[3] || "0") / 60);
+    return 0;
+  } catch { return 0; }
+};
+
+// 텍스트 폭 추정 (AM/PM 배지 위치용)
+const estimateTextWidth = (text: string, fontSize: number): number => {
+  let w = 0;
+  for (const c of text) {
+    if (/[\u3000-\u9FFF\uAC00-\uD7AF]/.test(c)) w += fontSize * 0.95;
+    else if (/[A-Z]/.test(c)) w += fontSize * 0.65;
+    else if (/[a-z0-9]/.test(c)) w += fontSize * 0.52;
+    else if (c === ":") w += fontSize * 0.3;
+    else if (c === " ") w += fontSize * 0.28;
+    else w += fontSize * 0.5;
+  }
+  return w;
+};
 
 type SettingsTab = "google" | "timezone" | "theme" | "language" | "account";
 
@@ -152,31 +224,47 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     return localStorage.getItem("app_timezone") || browserTimezone;
   });
   const [timezoneSearch, setTimezoneSearch] = useState("");
+  const [hoveredOffset, setHoveredOffset] = useState<number | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
-  // 주요 시간대 목록
-  const timezones = Intl.supportedValuesOf("timeZone");
-  const popularTimezones = [
-    "Asia/Seoul",
-    "Asia/Tokyo",
-    "Asia/Shanghai",
-    "Asia/Hong_Kong",
-    "Asia/Singapore",
-    "America/New_York",
-    "America/Chicago",
-    "America/Denver",
-    "America/Los_Angeles",
-    "Europe/London",
-    "Europe/Paris",
-    "Europe/Berlin",
-    "Australia/Sydney",
-    "Pacific/Auckland",
-  ];
+  // 지도 마우스 호버 → 시간대 계산
+  const handleMapMouseMove = useCallback((e: React.MouseEvent) => {
+    const rect = mapContainerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const svgX = ((e.clientX - rect.left) / rect.width) * 540;
+    setHoveredOffset(svgXToOffset(svgX));
+  }, []);
+
+  // 도시 시간 포맷
+  const formatCityTime = useCallback((tz: string) => {
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }).formatToParts(now);
+    const hour = parts.find((p) => p.type === "hour")?.value || "";
+    const minute = parts.find((p) => p.type === "minute")?.value || "";
+    const period = parts.find((p) => p.type === "dayPeriod")?.value || "";
+    return { time: `${hour}:${minute}`, period };
+  }, []);
+
+  // 지도에 표시된 도시들로 시간대 목록 구성
+  const mapTimezones = WORLD_CLOCK_CITIES.map((city) => ({
+    tz: city.tz,
+    names: city.names,
+  }));
 
   const filteredTimezones = timezoneSearch
-    ? timezones.filter((tz) =>
-        tz.toLowerCase().includes(timezoneSearch.toLowerCase())
-      )
-    : popularTimezones;
+    ? mapTimezones.filter((item) => {
+        const q = timezoneSearch.toLowerCase();
+        return (
+          item.tz.toLowerCase().includes(q) ||
+          Object.values(item.names).some((n) => n.toLowerCase().includes(q))
+        );
+      })
+    : mapTimezones;
 
   const handleTimezoneChange = (tz: string) => {
     setTimezone(tz);
@@ -245,9 +333,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        const token = getGoogleToken(session);
+        // getGoogleTokenAsync: 만료 시 refresh_token으로 자동 갱신
+        const token = await getGoogleTokenAsync(session);
         if (token) {
-          // 토큰이 있으면 실제로 유효한지 확인
           const isValid = await checkTokenScopes(token);
           if (isValid) {
             setIsGoogleConnected(true);
@@ -255,7 +343,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             return;
           }
         }
-        // 토큰이 없거나 만료됨
+        // 플래그가 켜져있지만 토큰이 없으면 → 재연결 필요 상태 표시
+        if (isGoogleCalendarApiEnabled()) {
+          console.warn("[Settings] Google Calendar API enabled but token unavailable");
+        }
         setIsGoogleConnected(false);
         setGoogleAccessToken(null);
         setTokenScopes([]);
@@ -351,16 +442,34 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const handleConnectGoogleAPI = async () => {
     setLoading(true);
     try {
+      // 이미 연결된 상태에서 토글 → 연동 해제
+      if (isGoogleConnected) {
+        setGoogleCalendarApiEnabled(false);
+        setIsGoogleConnected(false);
+        setGoogleAccessToken(null);
+        setTokenScopes([]);
+        toast.success(
+          ({ ko: "구글 캘린더 API 연동이 해제되었습니다.", en: "Google Calendar API disconnected.", zh: "Google日历API已断开连接。" } as Record<string, string>)[i18n.language] || "Google Calendar API disconnected."
+        );
+        setLoading(false);
+        return;
+      }
+
       if (googleAccessToken) {
         const hasCalendarScope = tokenScopes.some(
           (scope) => scope === "https://www.googleapis.com/auth/calendar"
         );
         if (hasCalendarScope) {
+          setGoogleCalendarApiEnabled(true);
           toast.success("구글 캘린더 API 연동 완료! 캘린더 페이지에서 구글 일정이 실시간으로 표시됩니다.", { duration: 5000 });
           setLoading(false);
           return;
         }
       }
+
+      // 연동 플래그 먼저 설정 (OAuth 리다이렉트 후에도 기억하기 위해)
+      setGoogleCalendarApiEnabled(true);
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -369,9 +478,14 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           queryParams: { access_type: "offline", prompt: "consent" },
         },
       });
-      if (error) toast.error("구글 연동에 실패했습니다.");
-      else toast.info("구글 로그인 페이지로 이동합니다...");
+      if (error) {
+        setGoogleCalendarApiEnabled(false);
+        toast.error("구글 연동에 실패했습니다.");
+      } else {
+        toast.info("구글 로그인 페이지로 이동합니다...");
+      }
     } catch (error) {
+      setGoogleCalendarApiEnabled(false);
       toast.error("구글 연동에 실패했습니다.");
     } finally {
       setLoading(false);
@@ -391,7 +505,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/10 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
-          className="fixed top-[50%] left-[50%] z-50 translate-x-[-50%] translate-y-[-50%] bg-background border rounded-xl shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200 w-[90vw] max-w-[680px]"
+          className="fixed top-[50%] left-[50%] z-50 translate-x-[-50%] translate-y-[-50%] bg-background border rounded-xl shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200 w-[90vw] max-w-[880px]"
         >
           {/* Close button */}
           <DialogPrimitive.Close className="absolute top-3.5 left-3.5 rounded-sm opacity-70 hover:opacity-100 transition-opacity z-10">
@@ -414,7 +528,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[15px] transition-colors ${
+                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[15px] transition-colors ${
                       isActive
                         ? "bg-primary font-medium text-white"
                         : "text-muted-foreground hover:bg-[#FBFBFC] dark:hover:bg-accent hover:text-foreground"
@@ -633,35 +747,147 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               )}
 
               {activeTab === "timezone" && (
-                <div>
-                  <h2 className="text-base font-semibold mb-1">
-                    {t("settings.timezone.title")}
-                  </h2>
-                  <p className="text-xs text-muted-foreground mb-4">
-                    {t("settings.timezone.description")}
-                  </p>
-
+                <div className="flex flex-col gap-2">
                   {/* 현재 시간대 */}
-                  <div className="bg-muted/50 rounded-lg px-3 py-2.5 mb-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-muted-foreground">{t("settings.timezone.current")}</p>
-                        <p className="text-sm font-medium">{timezone.replace(/_/g, " ")} ({formatTimezoneOffset(timezone)})</p>
-                      </div>
-                      {timezone !== browserTimezone && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleResetTimezone}
-                          className="text-xs h-7"
-                        >
-                          {t("settings.timezone.reset")}
-                        </Button>
-                      )}
+                  <div className="bg-muted/50 rounded-lg px-3 py-2 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t("settings.timezone.current")}</p>
+                      <p className="text-sm font-medium">
+                        {WORLD_CLOCK_CITIES.find((c) => c.tz === timezone)?.names[i18n.language] || timezone.replace(/_/g, " ")} ({formatTimezoneOffset(timezone)})
+                      </p>
                     </div>
-                    {timezone === browserTimezone && (
-                      <p className="text-xs text-muted-foreground mt-1">{t("settings.timezone.browserDefault")}</p>
+                    {timezone !== browserTimezone && (
+                      <Button variant="ghost" size="sm" onClick={handleResetTimezone} className="text-xs h-7">
+                        {t("settings.timezone.reset")}
+                      </Button>
                     )}
+                  </div>
+
+                  {/* 세계시계 지도 (Apple style) */}
+                  <div
+                    ref={mapContainerRef}
+                    className="rounded-lg overflow-hidden border border-border bg-white dark:bg-[#1a1a1e] cursor-crosshair"
+                    onMouseMove={handleMapMouseMove}
+                    onMouseLeave={() => setHoveredOffset(null)}
+                    onClick={() => {
+                      if (hoveredOffset !== null) {
+                        // 호버된 시간대에서 가장 가까운 대표 도시의 timezone 선택
+                        const match = WORLD_CLOCK_CITIES.find((c) => Math.round(getGmtOffsetNum(c.tz)) === Math.round(hoveredOffset));
+                        if (match) handleTimezoneChange(match.tz);
+                      }
+                    }}
+                  >
+                    <ComposableMap
+                      projection="geoEquirectangular"
+                      projectionConfig={{ rotate: [-140, -10, 0], scale: 90 }}
+                      width={540}
+                      height={280}
+                      style={{ width: "100%", height: "auto", display: "block" }}
+                    >
+                      {/* 대륙 (추상화 - 국경선 없음) */}
+                      <Geographies geography={GEO_URL}>
+                        {({ geographies }) =>
+                          geographies.map((geo) => (
+                            <Geography
+                              key={geo.rsmKey}
+                              geography={geo}
+                              style={{
+                                default: { fill: "#DCDCDC", stroke: "none", outline: "none" },
+                                hover: { fill: "#DCDCDC", stroke: "none", outline: "none" },
+                                pressed: { fill: "#DCDCDC", outline: "none" },
+                              }}
+                            />
+                          ))
+                        }
+                      </Geographies>
+
+                      {/* 호버된 시간대 밴드 하이라이트 (지도 위에 표시) */}
+                      {hoveredOffset !== null && (() => {
+                        const bandX = lonToSvgX(hoveredOffset * 15);
+                        const bandW = 15 * MAP_SCALE_FACTOR;
+                        return (
+                          <rect
+                            x={bandX - bandW / 2}
+                            y={-20}
+                            width={bandW}
+                            height={300}
+                            fill="rgba(227, 0, 0, 0.10)"
+                            pointerEvents="none"
+                          />
+                        );
+                      })()}
+
+                      {/* 도시 마커 */}
+                      {WORLD_CLOCK_CITIES.map((city) => {
+                        const { time, period } = formatCityTime(city.tz);
+                        const displayName = city.names[i18n.language] || city.names.en;
+                        const cityOffset = getGmtOffsetNum(city.tz);
+                        const isHighlighted = hoveredOffset !== null && Math.round(cityOffset) === Math.round(hoveredOffset);
+                        const isCurrentTz = timezone === city.tz;
+                        const active = isHighlighted || isCurrentTz;
+                        const FS = 9.5;
+
+                        return (
+                          <Marker key={city.tz} coordinates={city.coords}>
+                            <circle
+                              r={active ? 3 : 2}
+                              fill={isCurrentTz ? "var(--primary)" : active ? "#E30000" : "#aaa"}
+                              style={{ transition: "all 0.15s" }}
+                            />
+                            <g
+                              transform={`translate(${city.dx}, ${city.dy})`}
+                              style={{ cursor: "pointer", opacity: hoveredOffset !== null && !active ? 0.2 : 1, transition: "opacity 0.15s" }}
+                              onClick={() => handleTimezoneChange(city.tz)}
+                              onMouseEnter={() => setHoveredOffset(Math.round(cityOffset))}
+                            >
+                              {/* 도시명 */}
+                              <text
+                                fontSize={FS}
+                                fill={active ? "#111" : "#777"}
+                                textAnchor={city.anchor}
+                                dominantBaseline="auto"
+                                fontWeight={active ? "600" : "400"}
+                                style={{ fontFamily: "var(--font-family)" }}
+                              >
+                                {displayName}
+                              </text>
+                              {/* 시간 */}
+                              <text
+                                fontSize={FS}
+                                fill={active ? "#111" : "#999"}
+                                textAnchor={city.anchor}
+                                dominantBaseline="auto"
+                                y={12}
+                                fontWeight="600"
+                                style={{ fontFamily: "var(--font-family)" }}
+                              >
+                                {time}
+                                <tspan fontSize={FS * 0.7} fontWeight="700" dx="1">{period}</tspan>
+                              </text>
+                            </g>
+                          </Marker>
+                        );
+                      })}
+                    </ComposableMap>
+
+                    {/* GMT offset 바 - 지도 x좌표에 맞춰 배치 */}
+                    <div className="relative h-5 border-t border-border/50 bg-muted/20 overflow-hidden">
+                      {[-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,-11,-10,-9,-8,-7,-6,-5,-4,-3].map((offset) => {
+                        const isActive = hoveredOffset !== null && Math.round(hoveredOffset) === offset;
+                        const xPct = (lonToSvgX(offset * 15) / 540) * 100;
+                        return (
+                          <span
+                            key={offset}
+                            className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 text-[7px] leading-none transition-colors ${
+                              isActive ? "text-primary font-bold" : "text-muted-foreground/50"
+                            }`}
+                            style={{ left: `${xPct}%` }}
+                          >
+                            {offset === 0 ? "GMT" : offset > 0 ? `+${offset}` : `${offset}`}
+                          </span>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* 검색 */}
@@ -670,25 +896,23 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     value={timezoneSearch}
                     onChange={(e) => setTimezoneSearch(e.target.value)}
                     placeholder={t("settings.timezone.searchPlaceholder")}
-                    className="mb-3"
+                    className="h-8 text-sm"
                   />
 
                   {/* 시간대 목록 */}
-                  <div className="space-y-0.5 max-h-[280px] overflow-y-auto">
-                    {filteredTimezones.map((tz) => (
+                  <div className="space-y-0.5 overflow-y-auto max-h-[120px]">
+                    {filteredTimezones.map((item) => (
                       <button
-                        key={tz}
-                        onClick={() => handleTimezoneChange(tz)}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                          timezone === tz
-                            ? "bg-muted font-medium"
-                            : "hover:bg-muted/50"
+                        key={item.tz}
+                        onClick={() => handleTimezoneChange(item.tz)}
+                        className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                          timezone === item.tz ? "bg-muted font-medium" : "hover:bg-muted/50"
                         }`}
                       >
-                        <span>{tz.replace(/_/g, " ")}</span>
+                        <span>{item.names[i18n.language] || item.names.en}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">{formatTimezoneOffset(tz)}</span>
-                          {timezone === tz && <Check className="w-4 h-4 text-primary" />}
+                          <span className="text-xs text-muted-foreground">{formatTimezoneOffset(item.tz)}</span>
+                          {timezone === item.tz && <Check className="w-4 h-4 text-primary" />}
                         </div>
                       </button>
                     ))}

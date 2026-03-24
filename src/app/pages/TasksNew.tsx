@@ -23,6 +23,8 @@ import { useAuth } from "../context/AuthContext";
 import { useTasks } from "../context/TasksContext";
 import { projectId, publicAnonKey } from "../../lib/supabase-info";
 import { getGoogleToken } from "../../lib/google-token";
+import { nowInTimezone, getTodayInTimezone, toISOStringInTimezone } from "../../lib/timezone";
+import { formatDate } from "./calendar/utils/dateUtils";
 
 export function Tasks() {
   const { t, i18n } = useTranslation();
@@ -49,7 +51,7 @@ export function Tasks() {
     setCurrentDate: setContextDate,
   } = useTasks();
 
-  const [currentDate, setCurrentDate] = useState(new Date()); // 🔥 UI용 Date 객체
+  const [currentDate, setCurrentDate] = useState(() => nowInTimezone()); // 🔥 UI용 Date 객체
   const [filter, setFilter] = useState<
     "all" | "inProgress" | "completed"
   >("all");
@@ -74,7 +76,7 @@ export function Tasks() {
     const lastVisitDate = localStorage.getItem(
       "calendary-last-visit-date",
     );
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayInTimezone();
 
     // 첫 방문이 아니고, 마지막 방문일이 오늘이 아닐 때
     if (
@@ -103,7 +105,7 @@ export function Tasks() {
 
   // 🔥 선택한 미완료 태스크를 오늘로 이동
   const movePendingTasksToToday = async () => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayInTimezone();
 
     for (const taskId of selectedPendingTasks) {
       await updateTask(taskId, { date: today });
@@ -133,25 +135,25 @@ export function Tasks() {
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() - 1);
     setCurrentDate(newDate);
-    setContextDate(newDate.toISOString().split("T")[0]);
+    setContextDate(formatDate(newDate));
   };
 
   const handleNextDay = () => {
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + 1);
     setCurrentDate(newDate);
-    setContextDate(newDate.toISOString().split("T")[0]);
+    setContextDate(formatDate(newDate));
   };
 
   const handleToday = () => {
-    const today = new Date();
+    const today = nowInTimezone();
     setCurrentDate(today);
-    setContextDate(today.toISOString().split("T")[0]);
+    setContextDate(getTodayInTimezone());
   };
 
   // 🔥 날짜가 변경되면 context의 날짜도 동기화
   useEffect(() => {
-    setContextDate(currentDate.toISOString().split("T")[0]);
+    setContextDate(formatDate(currentDate));
   }, [currentDate]);
 
   const handleRefresh = async () => {
@@ -202,7 +204,7 @@ export function Tasks() {
           await contextAddTask({
             title: newTaskTitle,
             completed: false,
-            date: currentDate.toISOString().split("T")[0],
+            date: formatDate(currentDate),
             type: "single", // 🔥 필수 필드 추가
             category: "기타", // 🔥 필수 필드 추가
           });
@@ -227,7 +229,7 @@ export function Tasks() {
             body: JSON.stringify({
               title: newTaskTitle,
               status: "needsAction",
-              due: currentDate.toISOString(),
+              due: toISOStringInTimezone(currentDate),
             }),
           },
         );
@@ -242,7 +244,7 @@ export function Tasks() {
           await contextAddTask({
             title: newTaskTitle,
             completed: false,
-            date: currentDate.toISOString().split("T")[0],
+            date: formatDate(currentDate),
             type: "single", // 🔥 필수 필드 추가
             category: "기타", // 🔥 필수 필드 추가
           });
@@ -261,7 +263,7 @@ export function Tasks() {
         await contextAddTask({
           title: newTaskTitle,
           completed: false,
-          date: currentDate.toISOString().split("T")[0],
+          date: formatDate(currentDate),
           type: "single", // 🔥 필수 필드 추가
           category: "기타", // 🔥 필수 필드 추가
         });
@@ -286,13 +288,11 @@ export function Tasks() {
   };
 
   // 🔥 선택된 날짜의 태스크만 필터링
-  const currentDateString = currentDate
-    .toISOString()
-    .split("T")[0];
+  const currentDateString = formatDate(currentDate);
   const todayTasks = tasks.filter((task) => {
     // task.date가 없으면 오늘 날짜로 간주
     const taskDate =
-      task.date || new Date().toISOString().split("T")[0];
+      task.date || getTodayInTimezone();
     return taskDate === currentDateString;
   });
 
@@ -430,8 +430,8 @@ export function Tasks() {
               </Button>
 
               {/* 🔥 오늘 버튼 */}
-              {currentDate.toISOString().split("T")[0] !==
-                new Date().toISOString().split("T")[0] && (
+              {formatDate(currentDate) !==
+                getTodayInTimezone() && (
                 <Button
                   onClick={handleToday}
                   variant="outline"
@@ -440,6 +440,29 @@ export function Tasks() {
                   {({ ko: "오늘", en: "Today", zh: "今天" } as Record<string, string>)[language] || "Today"}
                 </Button>
               )}
+
+              {/* 🧪 임시 디버그: 미완료 태스크 모달 테스트 */}
+              <Button
+                onClick={() => {
+                  const today = getTodayInTimezone();
+                  const incompletePastTasks = tasks.filter((task) => {
+                    const taskDate = task.date || "";
+                    return taskDate < today && !task.completed;
+                  });
+                  if (incompletePastTasks.length > 0) {
+                    setPendingTasks(incompletePastTasks);
+                    setSelectedPendingTasks(new Set(incompletePastTasks.map((t) => t.id)));
+                    setShowPendingTasksModal(true);
+                  } else {
+                    alert("미완료 과거 태스크가 없습니다.");
+                  }
+                }}
+                variant="outline"
+                size="sm"
+                className="text-xs border-dashed border-orange-400 text-orange-500"
+              >
+                🧪 날짜변경 모달 테스트
+              </Button>
             </div>
 
             <div className="flex items-center gap-3">

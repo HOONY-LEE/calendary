@@ -3,9 +3,10 @@ import { useTranslation } from "react-i18next";
 import type { Session, User } from "@supabase/supabase-js";
 import type { CalendarEvent, Category, ViewType } from "../types";
 import { eventsAPI, DBEvent } from "../../../../lib/api";
+import { nowInTimezone } from "../../../../lib/timezone";
 import { projectId, publicAnonKey } from "../../../../lib/supabase-info";
 import { toast } from "sonner";
-import { getGoogleToken, getGoogleTokenAsync } from "../../../../lib/google-token";
+import { getGoogleToken, getGoogleTokenAsync, isGoogleCalendarApiEnabled } from "../../../../lib/google-token";
 import { getCachedEvents, setCachedEvents, isCacheStale } from "../../../../lib/events-cache";
 
 interface UseCalendarEventsParams {
@@ -137,7 +138,7 @@ export function useCalendarEvents({
 
       if (googleToken) {
         try {
-          const now = new Date();
+          const now = nowInTimezone();
           const timeMin = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
           const timeMax = new Date(now.getFullYear(), now.getMonth() + 2, 0).toISOString();
 
@@ -206,7 +207,11 @@ export function useCalendarEvents({
           console.warn("[Calendar] ⚠️ Google Calendar sync failed, showing local events only:", error);
         }
       } else {
-        console.log("[Calendar] ⏭️ No provider_token - skipping Google Calendar sync");
+        if (isGoogleCalendarApiEnabled()) {
+          console.warn("[Calendar] ⚠️ Google Calendar API enabled but no valid token available - refresh may have failed");
+        } else {
+          console.log("[Calendar] ⏭️ Google Calendar API not enabled - skipping sync");
+        }
       }
 
       // 공휴일 fetch
@@ -216,14 +221,14 @@ export function useCalendarEvents({
 
       if (holidayEnabled && holidayCountry) {
         try {
-          const currentYear = new Date().getFullYear();
+          const currentYear = nowInTimezone().getFullYear();
           const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${currentYear}/${holidayCountry}`);
           if (res.ok) {
             const holidays = await res.json();
             holidayEvents = holidays.map((h: any) => ({
               id: `holiday-${h.countryCode}-${h.date}`,
               title: h.localName || h.name,
-              date: new Date(h.date + "T00:00:00"),
+              date: new Date(h.date + "T12:00:00"),
               isHoliday: true,
               description: h.name !== h.localName ? h.name : undefined,
             }));

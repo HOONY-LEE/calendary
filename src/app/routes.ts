@@ -9,8 +9,13 @@ import { Tasks } from './pages/TasksNew'; // 🔥 캐싱 최적화 버전
 // 🚧 통계 페이지 임시 숨김
 // import { Analytics } from './pages/Analytics';
 import { NotFound } from './pages/NotFound';
+import { Privacy } from './pages/Privacy';
 
 export const router = createBrowserRouter([
+  {
+    path: '/privacy',
+    Component: Privacy,
+  },
   {
     path: '/',
     Component: Root,

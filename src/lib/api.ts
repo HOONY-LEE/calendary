@@ -2,6 +2,7 @@
 import { projectId, publicAnonKey } from './supabase-info';
 import { retryFetch, isNetworkError, isAuthError } from './api-helpers';
 import { supabase } from './supabase';
+import { getAppTimezone } from './timezone';
 
 const API_BASE_URL = `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1`;
 
@@ -341,8 +342,8 @@ export const eventsAPI = {
       location: eventData.location,
       color_id: eventData.color_id,
       background_color: eventData.background_color,
-      start_timezone: 'Asia/Seoul',
-      end_timezone: 'Asia/Seoul',
+      start_timezone: getAppTimezone(),
+      end_timezone: getAppTimezone(),
     };
 
     // 종일 일정 vs 시간 지정 일정
@@ -411,6 +412,8 @@ export const eventsAPI = {
       location: eventData.location,
       color_id: eventData.color_id,
       background_color: eventData.background_color,
+      start_timezone: getAppTimezone(),
+      end_timezone: getAppTimezone(),
     };
 
     // 종일 일정 vs 시간 지정 일정

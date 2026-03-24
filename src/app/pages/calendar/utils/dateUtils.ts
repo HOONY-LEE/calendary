@@ -1,4 +1,5 @@
 import type { ViewType } from "../types";
+import { nowInTimezone } from "../../../../lib/timezone";
 
 export const monthNames: Record<string, string[]> = {
   ko: [
@@ -105,7 +106,7 @@ export const getWeekDays = (date: Date): Date[] => {
 
 export const isToday = (date: Date | null): boolean => {
   if (!date) return false;
-  const today = new Date();
+  const today = nowInTimezone();
   return (
     date.getDate() === today.getDate() &&
     date.getMonth() === today.getMonth() &&

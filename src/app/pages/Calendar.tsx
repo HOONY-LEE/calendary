@@ -118,6 +118,7 @@ import { DayView } from "./calendar/views/DayView";
 import { useCalendarEvents } from "./calendar/hooks/useCalendarEvents";
 import { useCategories } from "./calendar/hooks/useCategories";
 import { useDragSelection } from "./calendar/hooks/useDragSelection";
+import { nowInTimezone, toISOStringInTimezone } from "../../lib/timezone";
 
 
 export function Calendar() {
@@ -125,7 +126,7 @@ export function Calendar() {
   const language = i18n.language;
   const { session, user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(() => nowInTimezone());
   const [viewType, setViewType] = useState<ViewType>("month");
   const [selectedEvent, setSelectedEvent] =
     useState<CalendarEvent | null>(null);
@@ -491,10 +492,10 @@ export function Calendar() {
                 ? formatDate(dbEndDate)
                 : undefined,
               start_datetime: !isAllDay
-                ? startDate.toISOString()
+                ? toISOStringInTimezone(startDate)
                 : undefined,
               end_datetime: !isAllDay
-                ? endDate.toISOString()
+                ? toISOStringInTimezone(endDate)
                 : undefined,
               category_id: formData.categoryId || undefined,
               user_id: user?.id,
@@ -686,10 +687,10 @@ export function Calendar() {
                 ? formatDate(dbEndDate)
                 : undefined,
               start_datetime: !isAllDay
-                ? startDate.toISOString()
+                ? toISOStringInTimezone(startDate)
                 : undefined,
               end_datetime: !isAllDay
-                ? endDate.toISOString()
+                ? toISOStringInTimezone(endDate)
                 : undefined,
               category_id: formData.categoryId || undefined,
             },

@@ -13,9 +13,25 @@
 const CALENDAR_TOKEN_KEY = 'google_calendar_token';
 const REFRESH_KEY = 'google_refresh_token';
 const EXPIRY_KEY = 'google_token_expiry';
+const API_ENABLED_KEY = 'google_calendar_api_enabled';
 
 // 하위 호환: 기존 키도 정리
 const LEGACY_TOKEN_KEY = 'google_provider_token';
+
+/**
+ * 사용자가 구글 캘린더 API 연동을 활성화했는지 여부
+ */
+export function isGoogleCalendarApiEnabled(): boolean {
+  return localStorage.getItem(API_ENABLED_KEY) === 'true';
+}
+
+export function setGoogleCalendarApiEnabled(enabled: boolean) {
+  if (enabled) {
+    localStorage.setItem(API_ENABLED_KEY, 'true');
+  } else {
+    localStorage.removeItem(API_ENABLED_KEY);
+  }
+}
 
 // Google OAuth Client ID
 const GOOGLE_CLIENT_ID = '140623008481-6ut0fehsct4mcupi2cioem44us17u41j.apps.googleusercontent.com';
@@ -161,5 +177,6 @@ export function clearGoogleTokens() {
   localStorage.removeItem(LEGACY_TOKEN_KEY);
   localStorage.removeItem(REFRESH_KEY);
   localStorage.removeItem(EXPIRY_KEY);
+  localStorage.removeItem(API_ENABLED_KEY);
   console.log('[GoogleToken] 🗑️ All tokens cleared');
 }
