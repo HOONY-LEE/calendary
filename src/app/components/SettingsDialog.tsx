@@ -25,7 +25,7 @@ import { toast } from "sonner";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { projectId, publicAnonKey } from "../../lib/supabase-info";
-import { getGoogleToken, getGoogleTokenAsync, isGoogleCalendarApiEnabled, setGoogleCalendarApiEnabled } from "../../lib/google-token";
+import { getGoogleToken, getGoogleTokenAsync, isGoogleCalendarApiEnabled, setGoogleCalendarApiEnabled, clearAllGoogleData } from "../../lib/google-token";
 import {
   Dialog,
   DialogContent,
@@ -331,9 +331,14 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   const checkGoogleConnection = async () => {
     try {
+      // 1. 먼저 플래그 기반으로 연결 상태 표시 (빠른 UI 반영)
+      if (isGoogleCalendarApiEnabled()) {
+        setIsGoogleConnected(true);
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // getGoogleTokenAsync: 만료 시 refresh_token으로 자동 갱신
+        // 2. 실제 토큰 확인 (refresh token으로 자동 갱신 포함)
         const token = await getGoogleTokenAsync(session);
         if (token) {
           const isValid = await checkTokenScopes(token);
@@ -343,9 +348,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             return;
           }
         }
-        // 플래그가 켜져있지만 토큰이 없으면 → 재연결 필요 상태 표시
+        // 3. 토큰 갱신 실패했지만 플래그가 켜져있으면 → 연결 상태 유지 (재시도 가능)
         if (isGoogleCalendarApiEnabled()) {
-          console.warn("[Settings] Google Calendar API enabled but token unavailable");
+          console.warn("[Settings] Google Calendar API enabled but token temporarily unavailable");
+          setIsGoogleConnected(true); // 플래그 기반으로 연결 상태 유지
+          return;
         }
         setIsGoogleConnected(false);
         setGoogleAccessToken(null);
@@ -353,7 +360,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       }
     } catch (error) {
       console.error("[Settings] Failed to check Google connection:", error);
-      setIsGoogleConnected(false);
+      // 플래그가 켜져있으면 연결 상태 유지
+      setIsGoogleConnected(isGoogleCalendarApiEnabled());
     }
   };
 
@@ -442,9 +450,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const handleConnectGoogleAPI = async () => {
     setLoading(true);
     try {
-      // 이미 연결된 상태에서 토글 → 연동 해제
+      // 이미 연결된 상태에서 토글 → 연동 해제 (완전 초기화)
       if (isGoogleConnected) {
-        setGoogleCalendarApiEnabled(false);
+        clearAllGoogleData();
         setIsGoogleConnected(false);
         setGoogleAccessToken(null);
         setTokenScopes([]);

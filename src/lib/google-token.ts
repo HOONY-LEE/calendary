@@ -149,7 +149,8 @@ async function refreshAccessToken(refreshToken: string): Promise<string | null> 
       const error = await response.json();
       console.error('[GoogleToken] ❌ Refresh failed:', error);
       if (error.error === 'invalid_grant') {
-        clearGoogleTokens();
+        // refresh token 자체가 무효 → 모든 데이터 완전 초기화
+        clearAllGoogleData();
       }
       return null;
     }
@@ -170,12 +171,23 @@ async function refreshAccessToken(refreshToken: string): Promise<string | null> 
 }
 
 /**
- * 토큰 전체 정리 (로그아웃 시)
+ * 로그아웃 시 - access token만 정리 (refresh token + API flag 유지)
  */
 export function clearGoogleTokens() {
   localStorage.removeItem(CALENDAR_TOKEN_KEY);
   localStorage.removeItem(LEGACY_TOKEN_KEY);
   localStorage.removeItem(EXPIRY_KEY);
-  // REFRESH_KEY, API_ENABLED_KEY 유지 → 재로그인 시 refresh token으로 자동 갱신
   console.log('[GoogleToken] 🗑️ Access tokens cleared (refresh token & API flag preserved)');
+}
+
+/**
+ * 완전 초기화 - 명시적 연동 해제 또는 refresh token 무효 시
+ */
+export function clearAllGoogleData() {
+  localStorage.removeItem(CALENDAR_TOKEN_KEY);
+  localStorage.removeItem(LEGACY_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_KEY);
+  localStorage.removeItem(EXPIRY_KEY);
+  localStorage.removeItem(API_ENABLED_KEY);
+  console.log('[GoogleToken] 🗑️ All Google data cleared (full reset)');
 }
