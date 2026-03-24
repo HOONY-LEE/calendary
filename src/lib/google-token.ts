@@ -177,6 +177,6 @@ export function clearGoogleTokens() {
   localStorage.removeItem(LEGACY_TOKEN_KEY);
   localStorage.removeItem(REFRESH_KEY);
   localStorage.removeItem(EXPIRY_KEY);
-  localStorage.removeItem(API_ENABLED_KEY);
-  console.log('[GoogleToken] 🗑️ All tokens cleared');
+  // API_ENABLED_KEY는 유지 → 재로그인 시 calendar scope 자동 요청
+  console.log('[GoogleToken] 🗑️ Tokens cleared (API enabled flag preserved)');
 }
