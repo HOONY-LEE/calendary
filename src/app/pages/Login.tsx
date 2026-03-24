@@ -291,6 +291,11 @@ export function Login() {
         <p className="mt-8 text-center text-xs text-muted-foreground leading-relaxed">
           {({ ko: "Calendary 계정은 사용자가 안전하게 로그인하여 자신의 데이터에 접근할 수 있도록 하기 위해 사용됩니다.", en: "Your Calendary account is used to securely sign in and access your data.", zh: "您的 Calendary 账户用于安全登录和访问您的数据。" } as Record<string, string>)[language] || "Your Calendary account is used to securely sign in and access your data."}
         </p>
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          <a href="/privacy" className="text-[#0C8CE9] hover:underline">
+            {({ ko: "개인정보처리방침", en: "Privacy Policy", zh: "隐私政策" } as Record<string, string>)[language] || "Privacy Policy"}
+          </a>
+        </p>
       </div>
     </div>
   );
