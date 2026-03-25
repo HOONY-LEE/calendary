@@ -143,19 +143,19 @@ export function Login() {
           />
 
           {/* Title */}
-          <h1 className="text-4xl font-bold tracking-tight mb-4">
+          <h1 className="text-6xl font-bold tracking-tight mb-5">
             {({ ko: "Calendary 캘린더", en: "Calendary Calendar", zh: "Calendary 日历" } as Record<string, string>)[language] || "Calendary Calendar"}
           </h1>
 
           {/* Subtitle */}
-          <p className="text-base text-muted-foreground mb-10 leading-relaxed">
+          <p className="text-lg font-semibold text-foreground mb-10 leading-relaxed whitespace-pre-line">
             {({ ko: "Calendary 캘린더로 시간과 업무를 관리하세요.\n당신의 생산성 향상을 위한 최고의 앱입니다.", en: "Manage your time and tasks with Calendary.\nThe best app for boosting your productivity.", zh: "用 Calendary 管理您的时间和任务。\n提升生产力的最佳应用。" } as Record<string, string>)[language] || "Manage your time and tasks with Calendary.\nThe best app for boosting your productivity."}
           </p>
 
           {/* Login Button */}
           <button
             onClick={() => setShowLoginForm(true)}
-            className="w-full py-3.5 bg-foreground text-background rounded-full text-base font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+            className="px-14 py-3.5 bg-foreground text-background rounded-full text-base font-semibold hover:opacity-90 transition-opacity cursor-pointer"
           >
             {({ ko: "로그인", en: "Sign In", zh: "登录" } as Record<string, string>)[language] || "Sign In"}
           </button>
