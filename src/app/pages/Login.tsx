@@ -128,28 +128,84 @@ export function Login() {
     }
   };
 
+  const [showLoginForm, setShowLoginForm] = useState(false);
+
+  // ── 랜딩 화면 ──────────────────────────────────────────────
+  if (!showLoginForm) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        <div className="flex flex-col items-center text-center max-w-sm w-full">
+          {/* App Icon */}
+          <img
+            src="/icon.png"
+            alt="Calendary"
+            className="w-28 h-28 rounded-[28px] mb-8 shadow-sm"
+          />
+
+          {/* Title */}
+          <h1 className="text-4xl font-bold tracking-tight mb-4">
+            {({ ko: "Calendary 캘린더", en: "Calendary Calendar", zh: "Calendary 日历" } as Record<string, string>)[language] || "Calendary Calendar"}
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-base text-muted-foreground mb-10 leading-relaxed">
+            {({ ko: "Calendary 캘린더로 시간과 업무를 관리하세요.\n당신의 생산성 향상을 위한 최고의 앱입니다.", en: "Manage your time and tasks with Calendary.\nThe best app for boosting your productivity.", zh: "用 Calendary 管理您的时间和任务。\n提升生产力的最佳应用。" } as Record<string, string>)[language] || "Manage your time and tasks with Calendary.\nThe best app for boosting your productivity."}
+          </p>
+
+          {/* Login Button */}
+          <button
+            onClick={() => setShowLoginForm(true)}
+            className="w-full py-3.5 bg-foreground text-background rounded-full text-base font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+          >
+            {({ ko: "로그인", en: "Sign In", zh: "登录" } as Record<string, string>)[language] || "Sign In"}
+          </button>
+
+          {/* Create Account */}
+          <button
+            onClick={() => navigate("/signup")}
+            className="mt-4 text-[#0C8CE9] text-sm hover:underline cursor-pointer"
+          >
+            {({ ko: "Calendary 계정 생성", en: "Create Account", zh: "创建账户" } as Record<string, string>)[language] || "Create Account"}
+          </button>
+
+          {/* Privacy */}
+          <p className="mt-12 text-xs text-muted-foreground">
+            <a href="/privacy" className="hover:underline">
+              {({ ko: "개인정보처리방침", en: "Privacy Policy", zh: "隐私政策" } as Record<string, string>)[language] || "Privacy Policy"}
+            </a>
+            <span className="mx-2">·</span>
+            <a href="/terms" className="hover:underline">
+              {({ ko: "이용약관", en: "Terms of Service", zh: "服务条款" } as Record<string, string>)[language] || "Terms of Service"}
+            </a>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── 로그인 폼 화면 ─────────────────────────────────────────
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="max-w-md w-full">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="flex justify-center items-center mb-8">
+          <div className="flex justify-center items-center mb-6">
             <img
-              src={calendaryIcon}
+              src="/icon.png"
               alt="Calendary"
-              className="w-24 h-24 rounded-2xl"
+              className="w-20 h-20 rounded-[20px] shadow-sm"
             />
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight mb-2">
-            {({ ko: "Calendary 계정으로 로그인", en: "Sign in to Calendary", zh: "登录 Calendary" } as Record<string, string>)[language] || "Sign in to Calendary"}
+          <h1 className="text-2xl font-bold tracking-tight mb-1">
+            {({ ko: "Calendary 캘린더", en: "Calendary Calendar", zh: "Calendary 日历" } as Record<string, string>)[language] || "Calendary Calendar"}
           </h1>
+          <p className="text-sm text-muted-foreground">
+            {({ ko: "계정으로 로그인", en: "Sign in to your account", zh: "登录您的账户" } as Record<string, string>)[language] || "Sign in to your account"}
+          </p>
         </div>
 
         {/* Email/Password Form */}
-        <form
-          onSubmit={handleEmailSignIn}
-          className="space-y-4"
-        >
+        <form onSubmit={handleEmailSignIn} className="space-y-4">
           {/* Email Input */}
           {!showPassword && (
             <div className="relative">
@@ -160,9 +216,8 @@ export function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 onFocus={() => setError("")}
                 className="w-full pl-12 pr-14 py-4 bg-background border-2 border-gray-200 dark:border-gray-700 rounded-md focus:outline-none focus:border-[#0C8CE9] transition-all duration-200 text-base"
-                placeholder={
-                  ({ ko: "이메일 또는 전화번호", en: "Email or phone number", zh: "邮箱或电话号码" } as Record<string, string>)[language] || "Email or phone number"
-                }
+                placeholder={({ ko: "이메일 또는 전화번호", en: "Email or phone number", zh: "邮箱或电话号码" } as Record<string, string>)[language] || "Email or phone number"}
+                autoFocus
               />
               {isValidEmail(email) && (
                 <button
@@ -176,7 +231,7 @@ export function Login() {
             </div>
           )}
 
-          {/* Password Input - Only show when email is entered */}
+          {/* Password Input */}
           {showPassword && (
             <div className="space-y-4">
               <div className="relative">
@@ -184,7 +239,7 @@ export function Login() {
                 <input
                   type="email"
                   value={email}
-                  className="w-full pl-12 py-4 bg-background border-2 border-gray-200 dark:border-gray-700 rounded-md text-base"
+                  className="w-full pl-12 py-4 bg-background border-2 border-gray-200 dark:border-gray-700 rounded-md text-base opacity-60"
                   disabled
                 />
               </div>
@@ -195,20 +250,14 @@ export function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-12 py-4 bg-background border-2 border-gray-200 dark:border-gray-700 rounded-md focus:outline-none focus:border-[#0C8CE9] transition-all duration-200 text-base"
-                  placeholder={
-                    ({ ko: "비밀번호", en: "Password", zh: "密码" } as Record<string, string>)[language] || "Password"
-                  }
+                  placeholder={({ ko: "비밀번호", en: "Password", zh: "密码" } as Record<string, string>)[language] || "Password"}
                   required
                   autoFocus
                 />
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  setShowPassword(false);
-                  setPassword("");
-                  setError("");
-                }}
+                onClick={() => { setShowPassword(false); setPassword(""); setError(""); }}
                 className="text-[#0C8CE9] text-sm hover:underline cursor-pointer"
               >
                 {({ ko: "이메일 변경", en: "Change email", zh: "更改邮箱" } as Record<string, string>)[language] || "Change email"}
@@ -217,18 +266,14 @@ export function Login() {
           )}
 
           {error && (
-            <div className="text-sm text-red-500 whitespace-pre-line">
-              {error}
-            </div>
+            <div className="text-sm text-red-500 whitespace-pre-line">{error}</div>
           )}
 
-          {/* Login Button - Only show when password field is visible */}
           {showPassword && (
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-4 bg-[#0C8CE9] text-white rounded-md
-              font-medium hover:bg-[#0C8CE9]/90 transition-all duration-200 disabled:opacity-50 cursor-pointer"
+              className="w-full py-4 bg-foreground text-background rounded-md font-semibold hover:opacity-90 transition-all duration-200 disabled:opacity-50 cursor-pointer"
             >
               {isLoading
                 ? (({ ko: "로그인 중...", en: "Signing in...", zh: "登录中..." } as Record<string, string>)[language] || "Signing in...")
@@ -237,12 +282,9 @@ export function Login() {
           )}
         </form>
 
-        {/* Create Account Link */}
+        {/* Create Account */}
         <div className="mt-6 text-center">
-          <button
-            onClick={() => navigate("/signup")}
-            className="text-[#0C8CE9] text-base hover:underline cursor-pointer"
-          >
+          <button onClick={() => navigate("/signup")} className="text-[#0C8CE9] text-base hover:underline cursor-pointer">
             {({ ko: "Calendary 계정 생성", en: "Create Calendary Account", zh: "创建 Calendary 账户" } as Record<string, string>)[language] || "Create Calendary Account"}
           </button>
         </div>
@@ -262,43 +304,29 @@ export function Login() {
         {/* Google Sign In */}
         <button
           onClick={handleGoogleSignIn}
-          className="w-full flex items-center justify-center gap-3 bg-background border-1 border-border rounded-md px-6 py-4 font-medium hover:bg-accent transition-colors cursor-pointer"
+          className="w-full flex items-center justify-center gap-3 bg-background border border-border rounded-md px-6 py-4 font-medium hover:bg-accent transition-colors cursor-pointer"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
-            <path
-              fill="#4285F4"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-            />
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
           <span className="text-foreground">
             {({ ko: "Google로 로그인", en: "Sign in with Google", zh: "使用 Google 登录" } as Record<string, string>)[language] || "Sign in with Google"}
           </span>
         </button>
 
-        {/* Privacy Notice */}
-        <p className="mt-8 text-center text-xs text-muted-foreground leading-relaxed">
-          {({ ko: "Calendary 계정은 사용자가 안전하게 로그인하여 자신의 데이터에 접근할 수 있도록 하기 위해 사용됩니다.", en: "Your Calendary account is used to securely sign in and access your data.", zh: "您的 Calendary 账户用于安全登录和访问您的数据。" } as Record<string, string>)[language] || "Your Calendary account is used to securely sign in and access your data."}
-        </p>
-        <p className="mt-2 text-center text-xs text-muted-foreground">
-          <a href="/privacy" className="text-[#0C8CE9] hover:underline">
-            {({ ko: "개인정보처리방침", en: "Privacy Policy", zh: "隐私政策" } as Record<string, string>)[language] || "Privacy Policy"}
-          </a>
+        {/* Back + Privacy */}
+        <div className="mt-6 text-center">
+          <button onClick={() => { setShowLoginForm(false); setEmail(""); setPassword(""); setShowPassword(false); setError(""); }} className="text-muted-foreground text-sm hover:underline cursor-pointer">
+            ← {({ ko: "뒤로", en: "Back", zh: "返回" } as Record<string, string>)[language] || "Back"}
+          </button>
+        </div>
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          <a href="/privacy" className="hover:underline">{({ ko: "개인정보처리방침", en: "Privacy Policy", zh: "隐私政策" } as Record<string, string>)[language] || "Privacy Policy"}</a>
           <span className="mx-2">·</span>
-          <a href="/terms" className="text-[#0C8CE9] hover:underline">
-            {({ ko: "이용약관", en: "Terms of Service", zh: "服务条款" } as Record<string, string>)[language] || "Terms of Service"}
-          </a>
+          <a href="/terms" className="hover:underline">{({ ko: "이용약관", en: "Terms of Service", zh: "服务条款" } as Record<string, string>)[language] || "Terms of Service"}</a>
         </p>
       </div>
     </div>
