@@ -143,12 +143,12 @@ export function Login() {
           />
 
           {/* Title */}
-          <h1 className="text-6xl font-bold tracking-tight mb-5">
+          <h1 className="text-6xl font-bold tracking-tight mb-5 whitespace-nowrap">
             {({ ko: "Calendary 캘린더", en: "Calendary Calendar", zh: "Calendary 日历" } as Record<string, string>)[language] || "Calendary Calendar"}
           </h1>
 
           {/* Subtitle */}
-          <p className="text-lg font-semibold text-foreground mb-10 leading-relaxed whitespace-pre-line">
+          <p className="text-xl font-semibold text-foreground mb-10 leading-relaxed whitespace-pre-line">
             {({ ko: "Calendary 캘린더로 시간과 업무를 관리하세요.\n당신의 생산성 향상을 위한 최고의 앱입니다.", en: "Manage your time and tasks with Calendary.\nThe best app for boosting your productivity.", zh: "用 Calendary 管理您的时间和任务。\n提升生产力的最佳应用。" } as Record<string, string>)[language] || "Manage your time and tasks with Calendary.\nThe best app for boosting your productivity."}
           </p>
 
@@ -163,9 +163,10 @@ export function Login() {
           {/* Create Account */}
           <button
             onClick={() => navigate("/signup")}
-            className="mt-4 text-[#0C8CE9] text-sm hover:underline cursor-pointer"
+            className="mt-4 text-[#0C8CE9] text-sm hover:underline cursor-pointer inline-flex items-center gap-1"
           >
             {({ ko: "Calendary 계정 생성", en: "Create Account", zh: "创建账户" } as Record<string, string>)[language] || "Create Account"}
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
           </button>
 
           {/* Privacy */}
