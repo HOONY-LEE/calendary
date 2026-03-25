@@ -538,7 +538,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[15px] transition-colors ${
+                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[15px] transition-colors cursor-pointer ${
                       isActive
                         ? "bg-primary font-medium text-white"
                         : "text-muted-foreground hover:bg-[#FBFBFC] dark:hover:bg-accent hover:text-foreground"
@@ -575,7 +575,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         </div>
                         <button
                           onClick={handleHolidayToggle}
-                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${
                             holidayEnabled ? "bg-[#0C8CE9]" : "bg-muted-foreground/30"
                           }`}
                         >
@@ -593,7 +593,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           <button
                             type="button"
                             onClick={() => setCountryDropdownOpen(!countryDropdownOpen)}
-                            className="w-full flex items-center justify-between h-9 px-3 rounded-md border border-border bg-transparent text-sm transition-colors hover:bg-[#FBFBFC] dark:hover:bg-accent"
+                            className="w-full flex items-center justify-between h-9 px-3 rounded-md border border-border bg-transparent text-sm transition-colors hover:bg-[#FBFBFC] dark:hover:bg-accent cursor-pointer"
                           >
                             <span>
                               {availableCountries.find((c) => c.countryCode === holidayCountry)
@@ -625,7 +625,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                     <button
                                       key={country.countryCode}
                                       onClick={() => handleCountryChange(country.countryCode)}
-                                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-sm transition-colors ${
+                                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-sm transition-colors cursor-pointer ${
                                         holidayCountry === country.countryCode
                                           ? "bg-[#FBFBFC] dark:bg-accent font-medium"
                                           : "hover:bg-[#FBFBFC] dark:hover:bg-accent"
@@ -682,7 +682,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           <button
                             onClick={handleMigrateGoogleCalendar}
                             disabled={isMigrating}
-                            className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors bg-muted-foreground/30 hover:bg-muted-foreground/40 flex-shrink-0 ml-3"
+                            className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors bg-muted-foreground/30 hover:bg-muted-foreground/40 flex-shrink-0 ml-3 cursor-pointer"
                           >
                             <span className="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform translate-x-0.5" />
                           </button>
@@ -708,7 +708,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           <button
                             onClick={handleConnectGoogleAPI}
                             disabled={loading}
-                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ml-3 ${
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ml-3 cursor-pointer ${
                               isGoogleConnected ? "bg-[#0C8CE9]" : "bg-muted-foreground/30 hover:bg-muted-foreground/40"
                             }`}
                           >
@@ -739,7 +739,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       <button
                         key={item.value}
                         onClick={() => setTheme(item.value)}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors cursor-pointer ${
                           theme === item.value
                             ? "bg-muted font-medium"
                             : "hover:bg-muted/50"
@@ -943,7 +943,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                   setTimezoneDropdownOpen(false);
                                   setTimezoneSearch("");
                                 }}
-                                className={`w-full flex items-center justify-between px-3 py-1.5 rounded-md text-sm transition-colors ${
+                                className={`w-full flex items-center justify-between px-3 py-1.5 rounded-md text-sm transition-colors cursor-pointer ${
                                   timezone === item.tz ? "bg-muted font-medium" : "hover:bg-muted/50"
                                 }`}
                               >
@@ -981,7 +981,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       <button
                         key={item.value}
                         onClick={() => i18n.changeLanguage(item.value)}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors cursor-pointer ${
                           i18n.language === item.value
                             ? "bg-muted font-medium"
                             : "hover:bg-muted/50"

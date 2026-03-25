@@ -1289,7 +1289,7 @@ export function EventCreatePopover({
                     <PopoverTrigger asChild>
                       <button
                         type="button"
-                        className="w-4 h-4 rounded flex-shrink-0 border-2 transition-all hover:scale-110"
+                        className="w-4 h-4 rounded flex-shrink-0 border-2 transition-all hover:scale-110 cursor-pointer"
                         style={{
                           backgroundColor: newCategoryColor,
                           borderColor: newCategoryColor,
@@ -1309,7 +1309,7 @@ export function EventCreatePopover({
                               setNewCategoryColor(color);
                               setShowColorPicker(false);
                             }}
-                            className={`w-8 h-8 rounded-md transition-all ${
+                            className={`w-8 h-8 rounded-md transition-all cursor-pointer ${
                               newCategoryColor === color
                                 ? "ring-2 ring-offset-2 ring-[#0C8CE9] scale-110"
                                 : "hover:scale-105"
@@ -1348,7 +1348,7 @@ export function EventCreatePopover({
                       type="button"
                       onClick={handleCreateCategory}
                       disabled={!newCategoryName.trim()}
-                      className="px-3 py-1.5 text-sm font-medium text-white bg-[#0C8CE9] rounded-md hover:bg-[#0A7BC9] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="px-3 py-1.5 text-sm font-medium text-white bg-[#0C8CE9] rounded-md hover:bg-[#0A7BC9] transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                     >
                       {t("common.save", "저장")}
                     </button>
@@ -1358,7 +1358,7 @@ export function EventCreatePopover({
                 <button
                   type="button"
                   onClick={() => setShowAddCategory(true)}
-                  className="w-full group relative flex items-center gap-3 rounded-md px-3 h-[40px] hover:bg-muted/30 transition-colors"
+                  className="w-full group relative flex items-center gap-3 rounded-md px-3 h-[40px] hover:bg-muted/30 transition-colors cursor-pointer"
                 >
                   <Plus className="h-3.5 w-3.5 text-muted-foreground group-hover:text-[#0C8CE9] transition-colors" />
                   <span className="text-sm text-muted-foreground group-hover:text-[#0C8CE9] transition-colors">
@@ -1376,7 +1376,7 @@ export function EventCreatePopover({
               <button
                 type="button"
                 onClick={() => setShowDescription(true)}
-                className="w-full group relative flex items-center gap-3 rounded-md px-3 h-[40px] hover:bg-muted/30 transition-colors"
+                className="w-full group relative flex items-center gap-3 rounded-md px-3 h-[40px] hover:bg-muted/30 transition-colors cursor-pointer"
               >
                 <Plus className="h-3.5 w-3.5 text-muted-foreground group-hover:text-[#0C8CE9] transition-colors" />
                 <span className="text-sm text-muted-foreground group-hover:text-[#0C8CE9] transition-colors">
@@ -1401,7 +1401,7 @@ export function EventCreatePopover({
                         description: "",
                       });
                     }}
-                    className="flex items-center gap-1 text-sm text-muted-foreground hover:text-[#0C8CE9] transition-colors"
+                    className="flex items-center gap-1 text-sm text-muted-foreground hover:text-[#0C8CE9] transition-colors cursor-pointer"
                   >
                     <span>-</span>
                     <span>
@@ -1489,7 +1489,7 @@ export function EventCreatePopover({
                 </div>
                 <div className="space-y-1.5">
                   <button
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors cursor-pointer ${
                       selectedDeleteType === "this"
                         ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
                         : "hover:bg-muted"
@@ -1514,7 +1514,7 @@ export function EventCreatePopover({
                     </span>
                   </button>
                   <button
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors cursor-pointer ${
                       selectedDeleteType === "following"
                         ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
                         : "hover:bg-muted"
@@ -1539,7 +1539,7 @@ export function EventCreatePopover({
                     </span>
                   </button>
                   <button
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors cursor-pointer ${
                       selectedDeleteType === "all"
                         ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
                         : "hover:bg-muted"

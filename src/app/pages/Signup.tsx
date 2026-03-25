@@ -99,7 +99,7 @@ export function Signup() {
           
           <button
             onClick={() => navigate('/login')}
-            className="w-full py-4 bg-[#0C8CE9] text-white rounded-xl font-medium hover:bg-[#0C8CE9]/90 transition-all duration-200"
+            className="w-full py-4 bg-[#0C8CE9] text-white rounded-xl font-medium hover:bg-[#0C8CE9]/90 transition-all duration-200 cursor-pointer"
           >
             {({ ko: '로그인하기', en: 'Sign In', zh: '登录' } as Record<string, string>)[language] || 'Sign In'}
           </button>
@@ -124,7 +124,7 @@ export function Signup() {
         {/* Google Sign Up */}
         <button
           onClick={handleGoogleSignup}
-          className="w-full flex items-center justify-center gap-3 bg-background border-2 border-border rounded-xl px-6 py-4 font-medium hover:bg-accent transition-colors mb-6"
+          className="w-full flex items-center justify-center gap-3 bg-background border-2 border-border rounded-xl px-6 py-4 font-medium hover:bg-accent transition-colors mb-6 cursor-pointer"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -216,7 +216,7 @@ export function Signup() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-[#0C8CE9] text-white rounded-xl font-medium hover:bg-[#0C8CE9]/90 transition-all duration-200 disabled:opacity-50"
+            className="w-full py-4 bg-[#0C8CE9] text-white rounded-xl font-medium hover:bg-[#0C8CE9]/90 transition-all duration-200 disabled:opacity-50 cursor-pointer"
           >
             {loading
               ? (({ ko: '계정 생성 중...', en: 'Creating account...', zh: '创建账户中...' } as Record<string, string>)[language] || 'Creating account...')
@@ -228,7 +228,7 @@ export function Signup() {
         <div className="mt-6 text-center">
           <button
             onClick={() => navigate('/login')}
-            className="text-[#0C8CE9] text-base hover:underline"
+            className="text-[#0C8CE9] text-base hover:underline cursor-pointer"
           >
             {({ ko: '이미 계정이 있으신가요? 로그인', en: 'Already have an account? Sign in', zh: '已有账户？登录' } as Record<string, string>)[language] || 'Already have an account? Sign in'}
           </button>

@@ -38,7 +38,7 @@ export function Sidebar() {
         )}
         <button
           onClick={toggleSidebar}
-          className={`w-10 h-10 flex items-center justify-center rounded-md hover:bg-[#F9FAFB] dark:hover:bg-accent transition-colors ${isCollapsed ? "mx-auto" : ""}`}
+          className={`w-10 h-10 flex items-center justify-center rounded-md hover:bg-[#F9FAFB] dark:hover:bg-accent transition-colors cursor-pointer ${isCollapsed ? "mx-auto" : ""}`}
         >
           <PanelLeft className="w-5 h-5 text-foreground" />
         </button>

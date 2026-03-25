@@ -168,7 +168,7 @@ export function Login() {
                 <button
                   type="button"
                   onClick={handleEmailContinue}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#0C8CE9] hover:bg-[#0C8CE9]/90 rounded-lg flex items-center justify-center transition-all"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#0C8CE9] hover:bg-[#0C8CE9]/90 rounded-lg flex items-center justify-center transition-all cursor-pointer"
                 >
                   <ArrowRight className="w-5 h-5 text-white" />
                 </button>
@@ -209,7 +209,7 @@ export function Login() {
                   setPassword("");
                   setError("");
                 }}
-                className="text-[#0C8CE9] text-sm hover:underline"
+                className="text-[#0C8CE9] text-sm hover:underline cursor-pointer"
               >
                 {({ ko: "이메일 변경", en: "Change email", zh: "更改邮箱" } as Record<string, string>)[language] || "Change email"}
               </button>
@@ -228,7 +228,7 @@ export function Login() {
               type="submit"
               disabled={isLoading}
               className="w-full py-4 bg-[#0C8CE9] text-white rounded-md
-              font-medium hover:bg-[#0C8CE9]/90 transition-all duration-200 disabled:opacity-50"
+              font-medium hover:bg-[#0C8CE9]/90 transition-all duration-200 disabled:opacity-50 cursor-pointer"
             >
               {isLoading
                 ? (({ ko: "로그인 중...", en: "Signing in...", zh: "登录中..." } as Record<string, string>)[language] || "Signing in...")
@@ -241,7 +241,7 @@ export function Login() {
         <div className="mt-6 text-center">
           <button
             onClick={() => navigate("/signup")}
-            className="text-[#0C8CE9] text-base hover:underline"
+            className="text-[#0C8CE9] text-base hover:underline cursor-pointer"
           >
             {({ ko: "Calendary 계정 생성", en: "Create Calendary Account", zh: "创建 Calendary 账户" } as Record<string, string>)[language] || "Create Calendary Account"}
           </button>
@@ -262,7 +262,7 @@ export function Login() {
         {/* Google Sign In */}
         <button
           onClick={handleGoogleSignIn}
-          className="w-full flex items-center justify-center gap-3 bg-background border-1 border-border rounded-md px-6 py-4 font-medium hover:bg-accent transition-colors"
+          className="w-full flex items-center justify-center gap-3 bg-background border-1 border-border rounded-md px-6 py-4 font-medium hover:bg-accent transition-colors cursor-pointer"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path

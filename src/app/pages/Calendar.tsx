@@ -930,7 +930,7 @@ export function Calendar() {
             }}
           >
             <PopoverTrigger asChild>
-              <button className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-[240px] justify-between">
+              <button className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-[240px] justify-between cursor-pointer">
                 <span className="text-sm">
                   {selectedCategoryIds.length === categories.length
                     ? ({ ko: "전체 카테고리", en: "All Categories", zh: "全部分类" } as Record<string, string>)[language] || "All Categories"
@@ -1021,7 +1021,7 @@ export function Calendar() {
                     <PopoverTrigger asChild>
                       <button
                         type="button"
-                        className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-transform hover:scale-110"
+                        className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-transform hover:scale-110 cursor-pointer"
                         style={{
                           backgroundColor:
                             newCategoryColorInDropdown,
@@ -1046,7 +1046,7 @@ export function Calendar() {
                                 false,
                               );
                             }}
-                            className={`w-8 h-8 rounded-md transition-all ${
+                            className={`w-8 h-8 rounded-md transition-all cursor-pointer ${
                               newCategoryColorInDropdown ===
                               color
                                 ? "ring-2 ring-offset-2 ring-[#0C8CE9] scale-110"
@@ -1092,7 +1092,7 @@ export function Calendar() {
                       disabled={
                         !newCategoryNameInDropdown.trim()
                       }
-                      className="px-3 py-1.5 text-sm font-medium text-white bg-[#0C8CE9] rounded-md hover:bg-[#0A7BC9] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="px-3 py-1.5 text-sm font-medium text-white bg-[#0C8CE9] rounded-md hover:bg-[#0A7BC9] transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                     >
                       {({ ko: "저장", en: "Save", zh: "保存" } as Record<string, string>)[language] || "Save"}
                     </button>
@@ -1103,7 +1103,7 @@ export function Calendar() {
                   onClick={() =>
                     setShowAddCategoryInDropdown(true)
                   }
-                  className="w-full group relative flex items-center gap-3 rounded-md px-3 h-[40px] hover:bg-muted/30 transition-colors"
+                  className="w-full group relative flex items-center gap-3 rounded-md px-3 h-[40px] hover:bg-muted/30 transition-colors cursor-pointer"
                 >
                   <Plus className="h-3.5 w-3.5 text-muted-foreground group-hover:text-[#0C8CE9] transition-colors" />
                   <span className="text-sm text-muted-foreground group-hover:text-[#0C8CE9] transition-colors">

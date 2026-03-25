@@ -72,7 +72,7 @@ export function UserMenu({ isCollapsed }: UserMenuProps) {
     <button
       ref={buttonRef}
       onClick={() => setIsOpen(!isOpen)}
-      className={`flex items-center gap-3 rounded-md transition-colors ${
+      className={`flex items-center gap-3 rounded-md transition-colors cursor-pointer ${
         isCollapsed
           ? 'w-10 h-10 justify-center p-0'
           : 'w-full px-[10px] py-[6px] h-10'
@@ -149,7 +149,7 @@ export function UserMenu({ isCollapsed }: UserMenuProps) {
           <div className="px-2 py-2">
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent transition-colors text-foreground/60 hover:text-foreground"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent transition-colors text-foreground/60 hover:text-foreground cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               <span className="text-sm">

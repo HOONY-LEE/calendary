@@ -176,7 +176,7 @@ function PopoverDraggableCategoryItem(props: PopoverDraggableCategoryItemProps) 
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="w-4 h-4 rounded flex-shrink-0 border-2 transition-all hover:scale-110"
+              className="w-4 h-4 rounded flex-shrink-0 border-2 transition-all hover:scale-110 cursor-pointer"
               style={{
                 backgroundColor: newCategoryColor,
                 borderColor: newCategoryColor,
@@ -193,7 +193,7 @@ function PopoverDraggableCategoryItem(props: PopoverDraggableCategoryItemProps) 
                     setNewCategoryColor(color);
                     setShowColorPicker(false);
                   }}
-                  className={`w-8 h-8 rounded-md transition-all ${
+                  className={`w-8 h-8 rounded-md transition-all cursor-pointer ${
                     newCategoryColor === color
                       ? "ring-2 ring-offset-2 ring-[#0C8CE9] scale-110"
                       : "hover:scale-105"
@@ -228,7 +228,7 @@ function PopoverDraggableCategoryItem(props: PopoverDraggableCategoryItemProps) 
             type="button"
             onClick={handleCreateCategory}
             disabled={!newCategoryName.trim()}
-            className="px-3 py-1.5 text-sm font-medium text-white bg-[#0C8CE9] rounded-md hover:bg-[#0A7BC9] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 text-sm font-medium text-white bg-[#0C8CE9] rounded-md hover:bg-[#0A7BC9] transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
           >
             {t("common.save", "저장")}
           </button>
@@ -274,7 +274,7 @@ function PopoverDraggableCategoryItem(props: PopoverDraggableCategoryItemProps) 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-muted transition-opacity flex-shrink-0"
+              className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-muted transition-opacity flex-shrink-0 cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
               }}
@@ -399,7 +399,7 @@ function SidebarDraggableCategoryItem(props: SidebarDraggableCategoryItemProps) 
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-transform hover:scale-110"
+              className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-transform hover:scale-110 cursor-pointer"
               style={{
                 backgroundColor: newCategoryColor,
               }}
@@ -411,7 +411,7 @@ function SidebarDraggableCategoryItem(props: SidebarDraggableCategoryItemProps) 
                 <button
                   key={color}
                   type="button"
-                  className="w-6 h-6 rounded transition-transform hover:scale-110"
+                  className="w-6 h-6 rounded transition-transform hover:scale-110 cursor-pointer"
                   style={{ backgroundColor: color }}
                   onClick={() => {
                     setNewCategoryColor(color);
@@ -450,7 +450,7 @@ function SidebarDraggableCategoryItem(props: SidebarDraggableCategoryItemProps) 
             type="button"
             onClick={handleSaveCategory}
             disabled={!newCategoryName.trim()}
-            className="px-2.5 py-1.5 font-medium text-white bg-[#0C8CE9] rounded-sm hover:bg-[#0A7BC9] transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-[12px]"
+            className="px-2.5 py-1.5 font-medium text-white bg-[#0C8CE9] rounded-sm hover:bg-[#0A7BC9] transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-[12px] cursor-pointer"
           >
             {({ ko: "저장", en: "Save", zh: "保存" } as Record<string, string>)[language] || "Save"}
           </button>
@@ -500,7 +500,7 @@ function SidebarDraggableCategoryItem(props: SidebarDraggableCategoryItemProps) 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-muted transition-opacity flex-shrink-0"
+            className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-muted transition-opacity flex-shrink-0 cursor-pointer"
             onClick={(e) => e.stopPropagation()}
           >
             <MoreVertical className="h-4 w-4 text-muted-foreground" />

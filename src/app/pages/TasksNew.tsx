@@ -378,7 +378,7 @@ export function Tasks() {
             </div>
             <button
               onClick={() => setNeedsReauth(false)}
-              className="flex-shrink-0 text-amber-600 dark:text-amber-500 hover:text-amber-800 dark:hover:text-amber-400"
+              className="flex-shrink-0 text-amber-600 dark:text-amber-500 hover:text-amber-800 dark:hover:text-amber-400 cursor-pointer"
             >
               <X className="h-5 w-5" />
             </button>
@@ -413,7 +413,7 @@ export function Tasks() {
             </div>
             <button
               onClick={() => setApiNotEnabled(false)}
-              className="flex-shrink-0 text-amber-600 dark:text-amber-500"
+              className="flex-shrink-0 text-amber-600 dark:text-amber-500 cursor-pointer"
             >
               <X className="h-5 w-5" />
             </button>
@@ -749,7 +749,7 @@ export function Tasks() {
                           {!isCompleted && (
                             <button
                               onClick={(e) => { e.stopPropagation(); toggleMoveToToday(task.id); }}
-                              className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
+                              className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
                                 isMoved
                                   ? "bg-[#0C8CE9] text-white"
                                   : "text-muted-foreground/40 hover:text-[#0C8CE9] hover:bg-[#0C8CE9]/10"
@@ -784,7 +784,7 @@ export function Tasks() {
                           <span className="text-sm flex-1 min-w-0 truncate text-foreground">{task.title}</span>
                           <button
                             onClick={() => toggleMoveToToday(task.id)}
-                            className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-transparent group-hover:text-muted-foreground hover:!text-red-400 transition-all"
+                            className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-transparent group-hover:text-muted-foreground hover:!text-red-400 transition-all cursor-pointer"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
