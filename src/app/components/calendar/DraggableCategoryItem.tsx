@@ -337,74 +337,52 @@ function SidebarDraggableCategoryItem(props: SidebarDraggableCategoryItemProps) 
 
   const ref = useRef<HTMLDivElement>(null);
 
+  // react-dnd: drop target
   const [{ handlerId }, drop] = useDrop({
-    accept: "CATEGORY",
+    accept: "CATEGORY_SIDEBAR",
     collect(monitor) {
-      return {
-        handlerId: monitor.getHandlerId(),
-      };
+      return { handlerId: monitor.getHandlerId() };
     },
     hover(item: { index: number }, monitor) {
-      if (!ref.current) {
-        return;
-      }
+      if (!ref.current) return;
       const dragIndex = item.index;
       const hoverIndex = index;
+      if (dragIndex === hoverIndex) return;
 
-      if (dragIndex === hoverIndex) {
-        return;
-      }
-
-      const hoverBoundingRect =
-        ref.current?.getBoundingClientRect();
-      const hoverMiddleY =
-        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+      const hoverBoundingRect = ref.current.getBoundingClientRect();
+      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       const clientOffset = monitor.getClientOffset();
-      const hoverClientY =
-        clientOffset!.y - hoverBoundingRect.top;
+      const hoverClientY = clientOffset!.y - hoverBoundingRect.top;
 
-      if (
-        dragIndex < hoverIndex &&
-        hoverClientY < hoverMiddleY
-      ) {
-        return;
-      }
-      if (
-        dragIndex > hoverIndex &&
-        hoverClientY > hoverMiddleY
-      ) {
-        return;
-      }
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
 
       onMove(dragIndex, hoverIndex);
       item.index = hoverIndex;
     },
   });
 
-  const [{ isDragging }, drag, preview] = useDrag({
-    type: "CATEGORY",
-    item: () => {
-      return { id: cat.id, index };
-    },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-    end: (item, monitor) => {
-      if (monitor.didDrop() && onDragEnd) {
-        onDragEnd();
-      }
-    },
+  // react-dnd: drag source
+  const [{ isDragging }, drag] = useDrag({
+    type: "CATEGORY_SIDEBAR",
+    item: () => ({ id: cat.id, index }),
+    collect: (monitor) => ({ isDragging: monitor.isDragging() }),
+    end: () => { if (onDragEnd) onDragEnd(); },
   });
 
-  // Only apply drag to non-Google calendars
-  if (!cat.isGoogleCalendar) {
-    drag(drop(ref));
-  } else {
-    drop(ref);
-  }
+  drag(drop(ref));
 
-  const googleIcon =
-    "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMTcuNiA5LjJsLS4xLTEuOEg5djMuNGg0LjhDMTMuNiAxMiAxMyAxMyAxMiAxMy42djIuMmgzYTguOCA4LjggMCAwIDAgMi42LTYuNnoiIGZpbGw9IiM0Mjg1RjQiIGZpbGwtcnVsZT0ibm9uemVybyIvPjxwYXRoIGQ9Ik05IDE4YzIuNCAwIDQuNS0uOCA2LTIuMmwtMy0yLjJhNS40IDUuNCAwIDAgMS04LTIuOUgxVjEzYTkgOSAwIDAgMCA4IDV6IiBmaWxsPSIjMzRBODUzIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48cGF0aCBkPSJNNCAxMC43YTUuNCA1LjQgMCAwIDEgMC0zLjRWNUgxYTkgOSAwIDAgMCAwIDhsMy0yLjN6IiBmaWxsPSIjRkJCQzA1IiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48cGF0aCBkPSJNOSAzLjZjMS4zIDAgMi41LjQgMy40IDEuM0wxNSAyLjNBOSA5IDAgMCAwIDEgNWwzIDIuNGE1LjQgNS40IDAgMCAxIDUtMy43eiIgZmlsbD0iI0VBNDMzNSIgZmlsbC1ydWxlPSJub256ZXJvIi8+PHBhdGggZD0iTTAgMGgxOHYxOEgweiIvPjwvZz48L3N2Zz4=";
+  // 구글 캘린더 아이콘 (인라인 SVG)
+  const GoogleCalendarIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
+      <rect width="18" height="18" rx="3" fill="#4285F4"/>
+      <rect x="0" y="9" width="9" height="9" fill="#34A853"/>
+      <rect x="9" y="0" width="9" height="9" fill="#FBBC04"/>
+      <path d="M9 9h9v5l-4 4H9z" fill="#EA4335"/>
+      <rect x="2.5" y="2.5" width="13" height="13" fill="white"/>
+      <text x="9" y="13.5" fontFamily="Arial,sans-serif" fontSize="7" fontWeight="bold" fill="#4285F4" textAnchor="middle">31</text>
+    </svg>
+  );
 
   // Edit mode
   if (isEditing) {
@@ -481,17 +459,16 @@ function SidebarDraggableCategoryItem(props: SidebarDraggableCategoryItemProps) 
     );
   }
 
-  // Normal mode (draggable)
+  // Normal mode (draggable via react-dnd)
   return (
     <div
       ref={ref}
-      className={`group relative flex w-full items-center rounded-sm px-2 h-[40px] text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground ${
-        isDragging ? "opacity-50" : ""
-      } ${!cat.isGoogleCalendar ? "cursor-grab active:cursor-grabbing" : ""}`}
       data-handler-id={handlerId}
+      className="group relative flex w-full items-center rounded-sm px-2 h-[40px] text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground cursor-grab active:cursor-grabbing select-none"
+      style={{ opacity: isDragging ? 0.4 : 1 }}
     >
-      <button
-        className="flex items-center gap-3 w-full cursor-pointer"
+      <div
+        className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
         onClick={onToggleSelect}
       >
         <div
@@ -507,17 +484,17 @@ function SidebarDraggableCategoryItem(props: SidebarDraggableCategoryItemProps) 
             <Check className="h-3.5 w-3.5 text-white" />
           )}
         </div>
-        <span className="flex-1 text-left text-[14px]">
+        <span className="flex-1 text-left text-[14px] truncate">
           {cat.name}
         </span>
-        {cat.isGoogleCalendar && (
-          <img
-            src={googleIcon}
-            alt="Google"
-            className="h-3.5 w-3.5 flex-shrink-0"
-          />
-        )}
-      </button>
+      </div>
+
+      {/* 구글 캘린더 아이콘 */}
+      {cat.isGoogleCalendar && (
+        <span className="mx-1.5 flex-shrink-0">
+          <GoogleCalendarIcon />
+        </span>
+      )}
 
       {/* More menu */}
       <DropdownMenu>
@@ -540,18 +517,16 @@ function SidebarDraggableCategoryItem(props: SidebarDraggableCategoryItemProps) 
             <Edit2 className="h-4 w-4" />
             {({ ko: "수정", en: "Edit", zh: "编辑" } as Record<string, string>)[language] || "Edit"}
           </DropdownMenuItem>
-          {!cat.isGoogleCalendar && (
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onDeleteStart();
-              }}
-              className="gap-2 text-sm text-red-600 focus:text-red-600"
-            >
-              <Trash2 className="h-4 w-4" />
-              {({ ko: "삭제", en: "Delete", zh: "删除" } as Record<string, string>)[language] || "Delete"}
-            </DropdownMenuItem>
-          )}
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteStart();
+            }}
+            className="gap-2 text-sm text-red-600 focus:text-red-600"
+          >
+            <Trash2 className="h-4 w-4" />
+            {({ ko: "삭제", en: "Delete", zh: "删除" } as Record<string, string>)[language] || "Delete"}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

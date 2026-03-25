@@ -25,7 +25,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`hidden lg:flex flex-col bg-background border-r border-border h-screen fixed left-0 top-0 z-40 transition-all duration-300 ${isCollapsed ? "w-14" : "w-52"}`}
+      className={`hidden lg:flex flex-col bg-background border-r border-border h-screen fixed left-0 top-0 z-40 transition-all duration-300 ${isCollapsed ? "w-14" : "w-44"}`}
     >
       <div className="h-16 border-b border-border px-[10px] py-[10px] flex items-center justify-between">
         {!isCollapsed && (

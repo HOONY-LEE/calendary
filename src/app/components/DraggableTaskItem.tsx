@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
-import { Check, Edit2, Trash2 } from 'lucide-react';
+import { Check, Edit2, Trash2, CornerDownLeft } from 'lucide-react';
 
 interface Task {
   id: number | string;
@@ -16,7 +16,7 @@ interface DraggableTaskItemProps {
   editingTaskTitle: string;
   isHovered: boolean;
   language: string;
-  onMove: (dragIndex: number, hoverIndex: number) => void;
+  onMove: (dragIndex: number, hoverIndex: number, dragId?: string | number, hoverId?: string | number) => void;
   onDragEnd: () => void;
   onToggle: () => void;
   onEdit: () => void;
@@ -68,7 +68,7 @@ export function DraggableTaskItem({
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
 
-      onMove(dragIndex, hoverIndex);
+      onMove(dragIndex, hoverIndex, item.id, task.id);
       item.index = hoverIndex;
     },
   });
@@ -94,7 +94,11 @@ export function DraggableTaskItem({
   return (
     <div
       ref={ref}
-      className={`rounded-md border border-border transition-all duration-200 hover:border-[#0C8CE9]/30 ${
+      className={`rounded-md border transition-all duration-200 ${
+        isEditing
+          ? 'border-[#0C8CE9] ring-1 ring-[#0C8CE9]/30'
+          : 'border-border hover:border-[#0C8CE9]/30'
+      } ${
         task.completed ? 'bg-muted/30 dark:bg-muted/10' : 'bg-card'
       } px-[12px] py-[10px] ${isDragging ? 'opacity-40' : ''} ${
         !task.isGoogleTask ? 'cursor-grab active:cursor-grabbing' : ''
@@ -154,34 +158,39 @@ export function DraggableTaskItem({
           </div>
         )}
 
-        {/* Edit / Delete buttons */}
-        <div
-          className={`flex items-center gap-1 transition-opacity duration-200 ${
-            isHovered ? 'opacity-100' : 'opacity-0'
-          }`}
-          onClick={(e) => e.stopPropagation()}
-        >
+        {/* Edit / Delete buttons or Enter button */}
+        {isEditing ? (
           <button
-            className="p-1.5 rounded hover:bg-muted/80 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit();
-            }}
-            title={({ ko: '편집', en: 'Edit', zh: '编辑' } as Record<string, string>)[language] || 'Edit'}
+            className="bg-[#0C8CE9] hover:bg-[#0C8CE9]/90 h-7 px-2.5 flex items-center gap-1 rounded-sm transition-colors flex-shrink-0"
+            onClick={(e) => { e.stopPropagation(); onEditSave(); }}
+            title={({ ko: '저장', en: 'Save', zh: '保存' } as Record<string, string>)[language] || 'Save'}
           >
-            <Edit2 className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+            <CornerDownLeft className="h-3.5 w-3.5 text-white" />
+            <span className="text-xs font-medium text-white">Enter</span>
           </button>
-          <button
-            className="p-1.5 rounded hover:bg-muted/80 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            title={({ ko: '삭제', en: 'Delete', zh: '删除' } as Record<string, string>)[language] || 'Delete'}
+        ) : (
+          <div
+            className={`flex items-center gap-1 transition-opacity duration-200 ${
+              isHovered ? 'opacity-100' : 'opacity-0'
+            }`}
+            onClick={(e) => e.stopPropagation()}
           >
-            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-          </button>
-        </div>
+            <button
+              className="p-1.5 rounded hover:bg-muted/80 transition-colors"
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
+              title={({ ko: '편집', en: 'Edit', zh: '编辑' } as Record<string, string>)[language] || 'Edit'}
+            >
+              <Edit2 className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+            </button>
+            <button
+              className="p-1.5 rounded hover:bg-muted/80 transition-colors"
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              title={({ ko: '삭제', en: 'Delete', zh: '删除' } as Record<string, string>)[language] || 'Delete'}
+            >
+              <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

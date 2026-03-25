@@ -2,6 +2,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
 } from "react";
 import { useNavigate } from "react-router";
 import { DndProvider } from "react-dnd";
@@ -173,6 +174,11 @@ export function Calendar() {
   const { events, setEvents, loadEvents, isLoading, setIsLoading } = useCalendarEvents({ session, user, signOut, language });
   const { categories, setCategories, selectedCategoryIds, setSelectedCategoryIds, showAddCategoryInDropdown, setShowAddCategoryInDropdown, newCategoryNameInDropdown, setNewCategoryNameInDropdown, newCategoryColorInDropdown, setNewCategoryColorInDropdown, showColorPickerInDropdown, setShowColorPickerInDropdown, editingCategoryIdInDropdown, setEditingCategoryIdInDropdown, deletingCategoryIdInDropdown, setDeletingCategoryIdInDropdown, handleCreateCategoryInDropdown, handleCancelAddCategoryInDropdown, handleUpdateCategoryInDropdown, handleDeleteCategoryInDropdown, moveCategory, saveCategoryOrder } = useCategories({ session, user, signOut, language, setIsLoading, formData, setFormData });
   const { isDragging, setIsDragging, dragStartDate, setDragStartDate, dragEndDate, setDragEndDate, isDateInDragRange, handleMouseDown, handleMouseEnter, handleMouseUp } = useDragSelection({ events, categories, setSelectedDate, setSelectedEvent, setFormData, setPreviewEvent, setMonthViewPopoverDate, setMonthViewPopoverOpen });
+
+  // 네이티브 드래그용 ref (항상 최신 categories 참조)
+  const categoriesRef = useRef(categories);
+  useEffect(() => { categoriesRef.current = categories; }, [categories]);
+  // nativeDragIndexRef 제거됨 - react-dnd 사용
 
 
 
@@ -911,11 +917,10 @@ export function Calendar() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Category Filter */}
-          <DropdownMenu
+          {/* Category Filter - Popover로 변경 (드래그 호환) */}
+          <Popover
             onOpenChange={(open) => {
               if (!open) {
-                // 드롭다운이 닫힐 때 상태 초기화
                 setShowAddCategoryInDropdown(false);
                 setNewCategoryNameInDropdown("");
                 setNewCategoryColorInDropdown("#E30000");
@@ -924,15 +929,29 @@ export function Calendar() {
               }
             }}
           >
-            <DropdownMenuTrigger className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 border border-border bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-[240px] justify-between">
-              <span className="text-sm">
-                {selectedCategoryIds.length === 6
-                  ? ({ ko: "전체 카테고리", en: "All Categories", zh: "全部分类" } as Record<string, string>)[language] || "All Categories"
-                  : ({ ko: `${selectedCategoryIds.length}개 선택됨`, en: `${selectedCategoryIds.length} selected`, zh: `${selectedCategoryIds.length}个已选` } as Record<string, string>)[language] || `${selectedCategoryIds.length} selected`}
-              </span>
-              <ChevronDown className="h-4 w-4 opacity-50" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[240px]">
+            <PopoverTrigger asChild>
+              <button className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-[240px] justify-between">
+                <span className="text-sm">
+                  {selectedCategoryIds.length === categories.length
+                    ? ({ ko: "전체 카테고리", en: "All Categories", zh: "全部分类" } as Record<string, string>)[language] || "All Categories"
+                    : ({ ko: `${selectedCategoryIds.length}개 선택됨`, en: `${selectedCategoryIds.length} selected`, zh: `${selectedCategoryIds.length}个已选` } as Record<string, string>)[language] || `${selectedCategoryIds.length} selected`}
+                </span>
+                <ChevronDown className="h-4 w-4 opacity-50" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-[240px] p-1"
+              align="end"
+              sideOffset={4}
+              onPointerDownOutside={(e) => {
+                // 드래그 중 팝오버 닫힘 방지
+                const target = e.target as HTMLElement;
+                if (target.closest?.('[data-handler-id]')) {
+                  e.preventDefault();
+                }
+              }}
+            >
+              {/* react-dnd 기반 드래그 정렬 */}
               <DndProvider backend={HTML5Backend}>
                 {categories.map((cat, index) => {
                   const isChecked =
@@ -969,7 +988,7 @@ export function Calendar() {
                         }
                       }}
                       onMove={moveCategory}
-                      onDragEnd={() => saveCategoryOrder(categories)}
+                      onDragEnd={() => saveCategoryOrder(categoriesRef.current)}
                       onEditStart={() => {
                         setNewCategoryNameInDropdown(cat.name);
                         setNewCategoryColorInDropdown(cat.color);
@@ -1092,8 +1111,8 @@ export function Calendar() {
                   </span>
                 </button>
               )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </PopoverContent>
+          </Popover>
 
           {/* View Type Tabs */}
           <SegmentTabs
@@ -1647,8 +1666,15 @@ export function Calendar() {
           }
 
           try {
+            // Google 캘린더(gcal- 접두사)는 Supabase에 저장 불가 → 제외
+            const localCategoryOrders = categoryOrders.filter(
+              (o) => !String(o.id).startsWith("gcal-"),
+            );
+
+            if (localCategoryOrders.length === 0) return;
+
             await categoriesAPI.reorder(
-              categoryOrders,
+              localCategoryOrders,
               session.access_token,
             );
 

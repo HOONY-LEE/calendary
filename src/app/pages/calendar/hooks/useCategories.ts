@@ -5,7 +5,7 @@ import { categoriesAPI, DBCategory } from "../../../../lib/api";
 import { supabase } from "../../../../lib/supabase";
 import { projectId, publicAnonKey } from "../../../../lib/supabase-info";
 import { toast } from "sonner";
-import { GOOGLE_CALENDAR_COLOR_MAP } from "../utils/colorUtils";
+import { GOOGLE_CALENDAR_COLOR_MAP, findClosestPresetColor } from "../utils/colorUtils";
 import { getGoogleToken } from "../../../../lib/google-token";
 
 interface UseCategoriesParams {
@@ -84,14 +84,22 @@ export function useCategories({
     [categories],
   );
 
-  // 🔥 드래그 완료 후 서버에 순서 저장
+  // 🔥 드래그 완료 후 순서 저장 (DB + localStorage)
   const saveCategoryOrder = useCallback(
     async (reorderedCategories: Category[]) => {
       try {
         console.log("[Calendar] Saving category order...");
 
-        const categoryOrders = reorderedCategories
-          .filter((cat) => !(cat as any).isGoogleCalendar) // Google 캘린더 제외
+        // localStorage에 전체 카테고리 순서 저장 (Google Calendar 포함)
+        const orderMap = reorderedCategories.map((cat, idx) => ({
+          id: cat.id,
+          order_index: idx + 1,
+        }));
+        localStorage.setItem("category_order", JSON.stringify(orderMap));
+
+        // DB 카테고리만 서버에 저장
+        const dbCategoryOrders = reorderedCategories
+          .filter((cat) => !(cat as any).isGoogleCalendar && !String(cat.id).startsWith("gcal-"))
           .map((cat, idx) => ({
             id: cat.id,
             order_index: idx + 1,
@@ -99,15 +107,15 @@ export function useCategories({
 
         console.log(
           "[Calendar] Category orders to send:",
-          categoryOrders,
+          dbCategoryOrders,
         );
 
         if (
           session?.access_token &&
-          categoryOrders.length > 0
+          dbCategoryOrders.length > 0
         ) {
           await categoriesAPI.reorder(
-            categoryOrders,
+            dbCategoryOrders,
             session.access_token,
           );
           console.log(
@@ -210,7 +218,55 @@ export function useCategories({
       const isGoogleCategory = editingCategoryIdInDropdown.startsWith("gcal-");
 
       if (isGoogleCategory) {
-        // Google 카테고리: localStorage에 커스텀 이름/색상 저장
+        // Google 카테고리: Google Calendar API PATCH로 실제 이름+색상 변경
+        const googleCalendarId = editingCategoryIdInDropdown.replace("gcal-", "");
+        const googleToken = getGoogleToken(session);
+
+        if (googleToken) {
+          // 1. 이름 변경: /calendars/{id} PATCH
+          const namePatchRes = await fetch(
+            `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(googleCalendarId)}`,
+            {
+              method: "PATCH",
+              headers: {
+                Authorization: `Bearer ${googleToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ summary: newCategoryNameInDropdown }),
+            },
+          );
+          if (!namePatchRes.ok) {
+            const err = await namePatchRes.json();
+            console.error("[GoogleCalendar] name PATCH failed:", err);
+            throw new Error("Google Calendar 이름 변경 실패");
+          }
+
+          // 2. 색상 변경: /users/me/calendarList/{id} PATCH (backgroundColor 사용)
+          const colorPatchRes = await fetch(
+            `https://www.googleapis.com/calendar/v3/users/me/calendarList/${encodeURIComponent(googleCalendarId)}`,
+            {
+              method: "PATCH",
+              headers: {
+                Authorization: `Bearer ${googleToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                backgroundColor: newCategoryColorInDropdown,
+                foregroundColor: "#ffffff",
+              }),
+            },
+          );
+          if (!colorPatchRes.ok) {
+            const err = await colorPatchRes.json();
+            console.error("[GoogleCalendar] color PATCH failed:", err);
+            // 색상 실패는 경고만 (이름은 이미 변경됨)
+            toast.warning(
+              ({ ko: "이름은 변경됐지만 색상 동기화에 실패했습니다", en: "Name updated but color sync failed", zh: "名称已更新但颜色同步失败" } as Record<string, string>)[language] || "Name updated but color sync failed",
+            );
+          }
+        }
+
+        // localStorage override도 동기화
         const overrides = JSON.parse(localStorage.getItem("gcal_category_overrides") || "{}");
         overrides[editingCategoryIdInDropdown] = {
           name: newCategoryNameInDropdown,
@@ -271,17 +327,62 @@ export function useCategories({
     categoryId: string,
   ) => {
     try {
-      if (!session?.access_token) {
-        toast.error(
-          ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
-        );
-        return;
-      }
+      const isGoogleCategory = categoryId.startsWith("gcal-");
 
-      await categoriesAPI.delete(
-        categoryId,
-        session.access_token,
-      );
+      if (isGoogleCategory) {
+        // 구글 캘린더: Google Calendar API로 실제 삭제/구독해제
+        const googleCalendarId = categoryId.replace("gcal-", "");
+        const googleToken = getGoogleToken(session);
+
+        if (googleToken) {
+          // accessRole 확인
+          const cat = categories.find((c) => c.id === categoryId);
+          const accessRole = (cat as any)?.googleCalendarAccessRole;
+
+          if (accessRole === "owner") {
+            // 소유한 캘린더: 영구 삭제
+            const res = await fetch(
+              `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(googleCalendarId)}`,
+              {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${googleToken}` },
+              },
+            );
+            if (!res.ok && res.status !== 204) {
+              const err = await res.json().catch(() => ({}));
+              console.error("[GoogleCalendar] DELETE calendar failed:", err);
+              throw new Error("Google Calendar 삭제 실패");
+            }
+          } else {
+            // 구독한 캘린더(reader 등): 구독 해제
+            const res = await fetch(
+              `https://www.googleapis.com/calendar/v3/users/me/calendarList/${encodeURIComponent(googleCalendarId)}`,
+              {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${googleToken}` },
+              },
+            );
+            if (!res.ok && res.status !== 204) {
+              const err = await res.json().catch(() => ({}));
+              console.error("[GoogleCalendar] DELETE calendarList failed:", err);
+              throw new Error("Google Calendar 구독 해제 실패");
+            }
+          }
+        }
+
+        // localStorage override 정리
+        const overrides = JSON.parse(localStorage.getItem("gcal_category_overrides") || "{}");
+        delete overrides[categoryId];
+        localStorage.setItem("gcal_category_overrides", JSON.stringify(overrides));
+      } else {
+        if (!session?.access_token) {
+          toast.error(
+            ({ ko: "로그인이 필요합니다", en: "Login required", zh: "需要登录" } as Record<string, string>)[language] || "Login required",
+          );
+          return;
+        }
+        await categoriesAPI.delete(categoryId, session.access_token);
+      }
 
       // 로컬 상태 업데이트
       setCategories(
@@ -417,21 +518,24 @@ export function useCategories({
               const data = await response.json();
               const googleCalendars = data.calendars || [];
 
-              // localStorage에서 Google 카테고리 커스텀 오버라이드 가져오기
+              // localStorage에서 Google 카테고리 커스텀 오버라이드 + 숨김 목록 가져오기
               const gcalOverrides = JSON.parse(localStorage.getItem("gcal_category_overrides") || "{}");
+              const gcalHidden: string[] = JSON.parse(localStorage.getItem("gcal_hidden_calendars") || "[]");
 
-              const googleCategories: Category[] = googleCalendars.map((cal: any) => {
-                const catId = `gcal-${cal.id}`;
-                const override = gcalOverrides[catId];
-                return {
-                  id: catId,
-                  name: override?.name || cal.summary || cal.id,
-                  color: override?.color || cal.backgroundColor || GOOGLE_CALENDAR_COLOR_MAP[cal.colorId] || '#4285F4',
-                  isGoogleCalendar: true,
-                  googleCalendarId: cal.id,
-                  googleCalendarAccessRole: cal.accessRole,
-                };
-              });
+              const googleCategories: Category[] = googleCalendars
+                .map((cal: any) => {
+                  const catId = `gcal-${cal.id}`;
+                  const override = gcalOverrides[catId];
+                  return {
+                    id: catId,
+                    name: override?.name || cal.summary || cal.id,
+                    color: override?.color || findClosestPresetColor(cal.backgroundColor || GOOGLE_CALENDAR_COLOR_MAP[cal.colorId] || '#4285F4'),
+                    isGoogleCalendar: true,
+                    googleCalendarId: cal.id,
+                    googleCalendarAccessRole: cal.accessRole,
+                  };
+                })
+                .filter((cat: any) => !gcalHidden.includes(cat.id)); // 숨김 처리된 캘린더 제외
 
               allCategories = [...sortedCategories, ...googleCategories];
               console.log("[Calendar] ✅ Added", googleCategories.length, "Google Calendar categories");
@@ -439,6 +543,20 @@ export function useCategories({
           } catch (error) {
             console.warn("[Calendar] ⚠️ Failed to load Google Calendars:", error);
           }
+        }
+
+        // localStorage에 저장된 순서가 있으면 반영
+        const savedOrder = localStorage.getItem("category_order");
+        if (savedOrder) {
+          try {
+            const orderMap = JSON.parse(savedOrder) as { id: string; order_index: number }[];
+            const orderLookup = new Map(orderMap.map(o => [o.id, o.order_index]));
+            allCategories.sort((a, b) => {
+              const aOrder = orderLookup.get(a.id) ?? 999;
+              const bOrder = orderLookup.get(b.id) ?? 999;
+              return aOrder - bOrder;
+            });
+          } catch {}
         }
 
         setCategories(allCategories);

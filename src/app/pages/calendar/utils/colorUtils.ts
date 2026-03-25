@@ -54,6 +54,36 @@ export const colorPalette = [
 ];
 
 /**
+ * 주어진 hex 색상에서 가장 가까운 프리셋 색상 반환 (RGB 유클리드 거리)
+ */
+export const findClosestPresetColor = (hex: string): string => {
+  const parse = (h: string) => {
+    const c = h.replace("#", "");
+    return [
+      parseInt(c.substring(0, 2), 16),
+      parseInt(c.substring(2, 4), 16),
+      parseInt(c.substring(4, 6), 16),
+    ];
+  };
+  try {
+    const [r, g, b] = parse(hex);
+    let minDist = Infinity;
+    let closest = COLOR_PRESETS[0];
+    for (const preset of COLOR_PRESETS) {
+      const [pr, pg, pb] = parse(preset);
+      const dist = (r - pr) ** 2 + (g - pg) ** 2 + (b - pb) ** 2;
+      if (dist < minDist) {
+        minDist = dist;
+        closest = preset;
+      }
+    }
+    return closest;
+  } catch {
+    return COLOR_PRESETS[0];
+  }
+};
+
+/**
  * 색상을 10% 불투명도로 변환하는 함수
  * #RRGGBB 형식을 rgba로 변환
  */

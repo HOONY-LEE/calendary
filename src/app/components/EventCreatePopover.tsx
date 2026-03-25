@@ -1224,7 +1224,11 @@ export function EventCreatePopover({
                         cat.isGoogleCalendar &&
                         (cat.googleCalendarAccessRole === 'owner' || cat.googleCalendarAccessRole === 'writer')
                       )
-                    : localCategories
+                    : localCategories.filter((cat) =>
+                        !cat.isGoogleCalendar ||
+                        cat.googleCalendarAccessRole === 'owner' ||
+                        cat.googleCalendarAccessRole === 'writer'
+                      )
                   ).map((cat, index) => {
                     const isChecked = formData.categoryId === cat.id;
                     const isEditing = editingCategoryId === cat.id;

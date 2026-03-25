@@ -216,7 +216,8 @@ export function useCalendarEvents({
 
       // 공휴일 fetch
       let holidayEvents: CalendarEvent[] = [];
-      const holidayEnabled = localStorage.getItem("holiday_enabled") === "true";
+      // 미설정(신규 가입)이면 기본값 true (한국 공휴일 ON)
+      const holidayEnabled = localStorage.getItem("holiday_enabled") !== "false";
       const holidayCountry = localStorage.getItem("holiday_country") || "KR";
 
       if (holidayEnabled && holidayCountry) {

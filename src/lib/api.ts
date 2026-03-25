@@ -592,20 +592,22 @@ export const categoriesAPI = {
     categoryOrders: { id: string; order_index: number }[],
     accessToken: string
   ): Promise<void> {
-    console.log('[API] Reordering categories via Supabase Client (direct):', categoryOrders.length);
-    
-    // 🔥 각 카테고리의 order_index를 병렬로 업데이트
-    await Promise.all(
-      categoryOrders.map(({ id, order_index }) =>
-        supabaseClientFetch<DBCategory>(
-          'categories',
-          'update',
-          { data: { order_index }, filter: { id } }
-        )
-      )
-    );
-    
-    console.log('[API] Successfully reordered categories');
+    console.log('[API] Reordering categories:', categoryOrders.length);
+
+    // supabaseClientFetch 대신 직접 호출 (빈 반환값에 에러 던지지 않도록)
+    for (const { id, order_index } of categoryOrders) {
+      const { error } = await supabase
+        .from('categories')
+        .update({ order_index })
+        .eq('id', id);
+
+      if (error) {
+        console.error('[API] ❌ Failed to update order_index for', id, error);
+        throw new Error(error.message);
+      }
+    }
+
+    console.log('[API] ✅ Successfully reordered categories');
   },
 };
 

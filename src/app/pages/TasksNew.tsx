@@ -9,6 +9,8 @@ import {
   ChevronRight,
   CornerDownLeft,
   Calendar,
+  ArrowRight,
+  Copy,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../components/ui/button";
@@ -70,6 +72,8 @@ export function Tasks() {
   const [pendingTasks, setPendingTasks] = useState<any[]>([]);
   const [selectedPendingTasks, setSelectedPendingTasks] =
     useState<Set<number | string>>(new Set());
+  const [tasksToMoveToday, setTasksToMoveToday] =
+    useState<Set<number | string>>(new Set());
 
   // 🔥 미완료 태스크 확인 (페이지 로드 시)
   useEffect(() => {
@@ -92,9 +96,8 @@ export function Tasks() {
 
       if (incompletePastTasks.length > 0) {
         setPendingTasks(incompletePastTasks);
-        setSelectedPendingTasks(
-          new Set(incompletePastTasks.map((t) => t.id)),
-        );
+        setSelectedPendingTasks(new Set());
+        setTasksToMoveToday(new Set());
         setShowPendingTasksModal(true);
       }
     }
@@ -103,31 +106,62 @@ export function Tasks() {
     localStorage.setItem("calendary-last-visit-date", today);
   }, [tasks]);
 
-  // 🔥 선택한 미완료 태스크를 오늘로 이동
-  const movePendingTasksToToday = async () => {
+  // 🔥 모달 확인: 왼쪽에서 완료 체크한 것은 완료 처리, 오른쪽으로 이동한 것은 오늘로 복사
+  const confirmPendingActions = async () => {
     const today = getTodayInTimezone();
 
+    // 1. 완료 처리 (왼쪽에서 체크한 것)
     for (const taskId of selectedPendingTasks) {
-      await updateTask(taskId, { date: today });
+      await updateTask(taskId, { completed: true });
     }
 
-    setShowPendingTasksModal(false);
-    setPendingTasks([]);
-    setSelectedPendingTasks(new Set());
+    // 2. 오늘로 복사 (오른쪽으로 이동한 것, 원본은 미완료 유지)
+    for (const taskId of tasksToMoveToday) {
+      if (!selectedPendingTasks.has(taskId)) {
+        // 완료 처리한 건 복사 안 함
+        const original = pendingTasks.find((t) => t.id === taskId);
+        if (original) {
+          await contextAddTask({
+            title: original.title,
+            completed: false,
+            date: today,
+            categoryId: original.categoryId,
+          });
+        }
+      }
+    }
 
-    // 새로고침하여 UI 업데이트
+    closePendingModal();
     await refreshAll();
   };
 
-  // 🔥 태스크 선택 토글
-  const togglePendingTask = (taskId: number | string) => {
-    const newSelected = new Set(selectedPendingTasks);
-    if (newSelected.has(taskId)) {
-      newSelected.delete(taskId);
+  // 개별 태스크 완료 토글 (왼쪽 패널)
+  const toggleCompleteTask = (taskId: number | string) => {
+    const newSet = new Set(selectedPendingTasks);
+    if (newSet.has(taskId)) {
+      newSet.delete(taskId);
     } else {
-      newSelected.add(taskId);
+      newSet.add(taskId);
     }
-    setSelectedPendingTasks(newSelected);
+    setSelectedPendingTasks(newSet);
+  };
+
+  // 개별 태스크를 오늘로 이동 (→ 버튼)
+  const toggleMoveToToday = (taskId: number | string) => {
+    const newSet = new Set(tasksToMoveToday);
+    if (newSet.has(taskId)) {
+      newSet.delete(taskId);
+    } else {
+      newSet.add(taskId);
+    }
+    setTasksToMoveToday(newSet);
+  };
+
+  const closePendingModal = () => {
+    setShowPendingTasksModal(false);
+    setPendingTasks([]);
+    setSelectedPendingTasks(new Set());
+    setTasksToMoveToday(new Set());
   };
 
   // 🔥 날짜 변경 핸들러
@@ -388,133 +422,114 @@ export function Tasks() {
       )}
 
       {/* Filter Buttons */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex flex-col gap-2">
-            {/* 🔥 날짜 네비게이션 */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handlePrevDay}
-                className="h-8 w-8 p-0"
-                title={
-                  ({ ko: "이전 날", en: "Previous day", zh: "前一天" } as Record<string, string>)[language] || "Previous day"
-                }
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
+      <div className="mb-6 flex flex-col gap-3">
+        {/* 1행: < 날짜 > 오늘 버튼 테스트 버튼 */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handlePrevDay}
+            className="h-8 w-8 p-0"
+            title={
+              ({ ko: "이전 날", en: "Previous day", zh: "前一天" } as Record<string, string>)[language] || "Previous day"
+            }
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
 
-              <button className="text-sm text-gray-500 dark:text-gray-400 transition-colors px-2">
-                {currentDate.toLocaleDateString(
-                  ({ ko: "ko-KR", en: "en-US", zh: "zh-CN" } as Record<string, string>)[language] || "en-US",
-                  {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                    weekday: "long",
-                  },
-                )}
-              </button>
+          <span className="text-sm text-gray-500 dark:text-gray-400 px-1 select-none">
+            {(() => {
+              const locale = ({ ko: "ko-KR", en: "en-US", zh: "zh-CN" } as Record<string, string>)[language] || "en-US";
+              const dateStr = currentDate.toLocaleDateString(locale, { year: "numeric", month: "long", day: "numeric" });
+              const weekdayShort = currentDate.toLocaleDateString(locale, { weekday: "short" });
+              return `${dateStr}(${weekdayShort})`;
+            })()}
+          </span>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleNextDay}
-                className="h-8 w-8 p-0"
-                title={
-                  ({ ko: "다음 날", en: "Next day", zh: "后一天" } as Record<string, string>)[language] || "Next day"
-                }
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleNextDay}
+            className="h-8 w-8 p-0"
+            title={
+              ({ ko: "다음 날", en: "Next day", zh: "后一天" } as Record<string, string>)[language] || "Next day"
+            }
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
 
-              {/* 🔥 오늘 버튼 */}
-              {formatDate(currentDate) !==
-                getTodayInTimezone() && (
-                <Button
-                  onClick={handleToday}
-                  variant="outline"
-                  size="sm"
-                >
-                  {({ ko: "오늘", en: "Today", zh: "今天" } as Record<string, string>)[language] || "Today"}
-                </Button>
-              )}
+          <Button onClick={handleToday} variant="outline" size="sm">
+            {({ ko: "오늘", en: "Today", zh: "今天" } as Record<string, string>)[language] || "Today"}
+          </Button>
 
-              {/* 🧪 임시 디버그: 미완료 태스크 모달 테스트 */}
-              <Button
-                onClick={() => {
-                  const today = getTodayInTimezone();
-                  const incompletePastTasks = tasks.filter((task) => {
-                    const taskDate = task.date || "";
-                    return taskDate < today && !task.completed;
-                  });
-                  if (incompletePastTasks.length > 0) {
-                    setPendingTasks(incompletePastTasks);
-                    setSelectedPendingTasks(new Set(incompletePastTasks.map((t) => t.id)));
-                    setShowPendingTasksModal(true);
-                  } else {
-                    alert("미완료 과거 태스크가 없습니다.");
-                  }
-                }}
-                variant="outline"
-                size="sm"
-                className="text-xs border-dashed border-orange-400 text-orange-500"
-              >
-                🧪 날짜변경 모달 테스트
-              </Button>
-            </div>
+          {/* 🧪 임시 디버그: 미완료 태스크 모달 테스트 */}
+          {/* <Button
+            onClick={() => {
+              const today = getTodayInTimezone();
+              const incompletePastTasks = tasks.filter((task) => {
+                const taskDate = task.date || "";
+                return taskDate < today && !task.completed;
+              });
+              if (incompletePastTasks.length > 0) {
+                setPendingTasks(incompletePastTasks);
+                setSelectedPendingTasks(new Set());
+                setTasksToMoveToday(new Set());
+                setShowPendingTasksModal(true);
+              } else {
+                alert("미완료 과거 태스크가 없습니다.");
+              }
+            }}
+            variant="outline"
+            size="sm"
+            className="text-xs border-dashed border-orange-400 text-orange-500"
+          >
+            🧪 날짜변경 모달 테스트
+          </Button> */}
+        </div>
 
-            <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-bold">
-                {({ ko: "오늘 할 일", en: "Today's Tasks", zh: "今日任务" } as Record<string, string>)[language] || "Today's Tasks"}
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isLoading || isRefreshing}
-                className="h-9 w-9 p-0"
-                title={
-                  ({ ko: "새로고침", en: "Refresh", zh: "刷新" } as Record<string, string>)[language] || "Refresh"
-                }
-              >
-                {isLoading || isRefreshing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4" />
-                )}
-              </Button>
-              {isLoading && (
-                <span className="text-sm text-muted-foreground">
-                  {({ ko: "로딩 중...", en: "Loading...", zh: "加载中..." } as Record<string, string>)[language] || "Loading..."}
-                </span>
-              )}
-            </div>
-          </div>
-
+        {/* 2행: 타이틀 + 새로고침  |  탭 */}
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <SegmentTabs
-              value={filter}
-              onValueChange={(value) => setFilter(value)}
-              options={[
-                {
-                  value: "all",
-                  label: ({ ko: "전체", en: "All", zh: "全部" } as Record<string, string>)[language] || "All",
-                },
-                {
-                  value: "inProgress",
-                  label:
-                    ({ ko: "진행중", en: "In Progress", zh: "进行中" } as Record<string, string>)[language] || "In Progress",
-                },
-                {
-                  value: "completed",
-                  label:
-                    ({ ko: "완료됨", en: "Completed", zh: "已完成" } as Record<string, string>)[language] || "Completed",
-                },
-              ]}
-            />
+            <h2 className="text-2xl font-bold">
+              {currentDateString === getTodayInTimezone()
+                ? (({ ko: "오늘 할 일", en: "Today's Tasks", zh: "今日任务" } as Record<string, string>)[language] || "Today's Tasks")
+                : (({ ko: "작업 목록", en: "Tasks", zh: "任务列表" } as Record<string, string>)[language] || "Tasks")}
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading || isRefreshing}
+              className="h-9 w-9 p-0"
+              title={
+                ({ ko: "새로고침", en: "Refresh", zh: "刷新" } as Record<string, string>)[language] || "Refresh"
+              }
+            >
+              {isLoading || isRefreshing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+            </Button>
           </div>
+          <SegmentTabs
+            value={filter}
+            onValueChange={(value) => setFilter(value)}
+            options={[
+              {
+                value: "all",
+                label: ({ ko: "전체", en: "All", zh: "全部" } as Record<string, string>)[language] || "All",
+              },
+              {
+                value: "inProgress",
+                label: ({ ko: "진행중", en: "In Progress", zh: "进行中" } as Record<string, string>)[language] || "In Progress",
+              },
+              {
+                value: "completed",
+                label: ({ ko: "완료됨", en: "Completed", zh: "已完成" } as Record<string, string>)[language] || "Completed",
+              },
+            ]}
+          />
         </div>
       </div>
 
@@ -535,6 +550,38 @@ export function Tasks() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* 📊 통계 카드 */}
+      {todayTasks.length > 0 && (
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {/* 진행률 카드 */}
+          <div className="bg-card rounded-lg border border-border px-4 py-3">
+            <p className="text-xs text-muted-foreground mb-1.5">
+              {({ ko: "진행률", en: "Progress", zh: "进度" } as Record<string, string>)[language] || "Progress"}
+            </p>
+            <p className="text-2xl font-bold mb-2.5">
+              {Math.round((todayTasks.filter((t) => t.completed).length / todayTasks.length) * 100)}
+              <span className="text-sm font-normal text-muted-foreground ml-0.5">%</span>
+            </p>
+            <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-foreground rounded-full transition-all duration-500"
+                style={{
+                  width: `${Math.round((todayTasks.filter((t) => t.completed).length / todayTasks.length) * 100)}%`,
+                }}
+              />
+            </div>
+          </div>
+          {/* Task 카드 */}
+          <div className="bg-card rounded-lg border border-border px-4 py-3">
+            <p className="text-xs text-muted-foreground mb-1.5">Task</p>
+            <p className="text-2xl font-bold">
+              {todayTasks.filter((t) => t.completed).length}
+              <span className="text-sm font-normal text-muted-foreground ml-1">/ {todayTasks.length}</span>
+            </p>
+          </div>
         </div>
       )}
 
@@ -628,99 +675,147 @@ export function Tasks() {
         </div>
       </div>
 
-      {/* 🔥 미완료 태스크 이동 모달 */}
-      {showPendingTasksModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-card border border-border rounded-xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden">
-            {/* 헤더 */}
-            <div className="px-6 py-4 border-b border-border">
-              <h3 className="text-lg font-semibold">
-                {({ ko: "완료하지 못한 작업이 있습니다", en: "You have incomplete tasks", zh: "您有未完成的任务" } as Record<string, string>)[language] || "You have incomplete tasks"}
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {({ ko: "이전 날짜의 미완료 작업을 오늘로 이동하시겠습니까?", en: "Would you like to move incomplete tasks to today?", zh: "是否将未完成的任务移至今天？" } as Record<string, string>)[language] || "Would you like to move incomplete tasks to today?"}
-              </p>
-            </div>
+      {/* 🔥 미완료 태스크 모달 - 2패널 */}
+      {showPendingTasksModal && (() => {
+        const todayStr = getTodayInTimezone();
+        const locale = ({ ko: "ko-KR", en: "en-US", zh: "zh-CN" } as Record<string, string>)[language] || "en-US";
+        const formatDateLabel = (dateStr: string) => {
+          const d = new Date(dateStr + "T00:00:00");
+          const mdPart = d.toLocaleDateString(locale, { month: "long", day: "numeric" });
+          const weekPart = d.toLocaleDateString(locale, { weekday: "short" });
+          return `${mdPart}(${weekPart})`;
+        };
 
-            {/* 태스크 리스트 */}
-            <div className="px-6 py-4 max-h-96 overflow-y-auto">
-              <div className="space-y-2">
-                {pendingTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="flex items-start gap-3 p-3 rounded-lg border border-border hover:border-[#0C8CE9]/30 transition-colors cursor-pointer"
-                    onClick={() => togglePendingTask(task.id)}
-                  >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        togglePendingTask(task.id);
-                      }}
-                      className="flex-shrink-0 mt-0.5"
-                    >
-                      <div
-                        className="w-5 h-5 rounded flex items-center justify-center border-2 transition-all"
-                        style={{
-                          backgroundColor:
-                            selectedPendingTasks.has(task.id)
-                              ? "#0C8CE9"
-                              : "transparent",
-                          borderColor: selectedPendingTasks.has(
-                            task.id,
-                          )
-                            ? "#0C8CE9"
-                            : "#D1D5DB",
-                        }}
-                      >
-                        {selectedPendingTasks.has(task.id) && (
-                          <Check className="h-3.5 w-3.5 text-white stroke-[3]" />
-                        )}
-                      </div>
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">
-                        {task.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {new Date(task.date).toLocaleDateString(
-                          ({ ko: "ko-KR", en: "en-US", zh: "zh-CN" } as Record<string, string>)[language] || "en-US",
-                          {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          },
-                        )}
+        const yesterdayDates = [...new Set(pendingTasks.map((t) => t.date))].sort();
+        const yesterdayDateLabel = yesterdayDates.length === 1
+          ? formatDateLabel(yesterdayDates[0])
+          : `${formatDateLabel(yesterdayDates[0])} ~ ${formatDateLabel(yesterdayDates[yesterdayDates.length - 1])}`;
+
+        const yesterdayTitle = ({ ko: "미완료된 작업", en: "Incomplete tasks", zh: "未完成的任务" } as Record<string, string>)[language] || "Incomplete tasks";
+        const todayTitle = ({ ko: "오늘 할 일", en: "Today's tasks", zh: "今天的任务" } as Record<string, string>)[language] || "Today's tasks";
+        const todayDateLabel = formatDateLabel(todayStr);
+
+        const movedTasks = pendingTasks.filter((t) => tasksToMoveToday.has(t.id) && !selectedPendingTasks.has(t.id));
+        const hasActions = selectedPendingTasks.size > 0 || tasksToMoveToday.size > 0;
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <div className="bg-card rounded-2xl shadow-2xl w-full max-w-[620px] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+
+              {/* 2패널 컬럼 헤더 */}
+              <div className="grid grid-cols-2 border-b border-border">
+                <div className="px-5 pt-5 pb-3">
+                  <p className="text-lg font-bold text-foreground">{yesterdayTitle}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{yesterdayDateLabel}</p>
+                </div>
+                <div className="px-5 pt-5 pb-3 border-l border-border">
+                  <p className="text-lg font-bold text-[#0C8CE9]">{todayTitle}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{todayDateLabel}</p>
+                </div>
+              </div>
+
+              {/* 2패널 본문 */}
+              <div className="grid grid-cols-2 min-h-[420px] max-h-[72vh]">
+                {/* 왼쪽: 미완료 */}
+                <div className="overflow-y-auto px-3 py-3">
+                  <div className="space-y-1">
+                    {pendingTasks.filter((task) => !tasksToMoveToday.has(task.id)).map((task) => {
+                      const isCompleted = selectedPendingTasks.has(task.id);
+                      const isMoved = false;
+                      return (
+                        <div
+                          key={task.id}
+                          onClick={() => toggleCompleteTask(task.id)}
+                          className={`group flex items-center gap-3 px-3 h-10 rounded-lg border transition-all cursor-pointer ${
+                            isCompleted ? "border-border/50" : "border-border/60 hover:bg-muted/40"
+                          }`}
+                        >
+                          {/* 체크박스 - 기존 태스크와 동일한 스타일 */}
+                          <div
+                            className="w-5 h-5 rounded flex items-center justify-center border-2 transition-all flex-shrink-0"
+                            style={{
+                              backgroundColor: isCompleted ? "#0C8CE9" : "transparent",
+                              borderColor: isCompleted ? "#0C8CE9" : "#D1D5DB",
+                            }}
+                          >
+                            {isCompleted && <Check className="h-3.5 w-3.5 text-white stroke-[3]" />}
+                          </div>
+
+                          <span className={`text-sm flex-1 min-w-0 truncate ${isCompleted ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                            {task.title}
+                          </span>
+
+                          {/* → 오늘로 복사 */}
+                          {!isCompleted && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); toggleMoveToToday(task.id); }}
+                              className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
+                                isMoved
+                                  ? "bg-[#0C8CE9] text-white"
+                                  : "text-muted-foreground/40 hover:text-[#0C8CE9] hover:bg-[#0C8CE9]/10"
+                              }`}
+                            >
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 오른쪽: 오늘 */}
+                <div className="overflow-y-auto border-l border-border px-3 py-3">
+                  {movedTasks.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 select-none">
+                      <ArrowRight className="w-7 h-7 mb-2 opacity-50" />
+                      <p className="text-[13px] text-center leading-relaxed whitespace-pre-line">
+                        {({ ko: "미완료 작업을 완료처리하거나\n화살표를 눌러 오늘 할 일에\n추가하세요", en: "Mark tasks complete or\npress → to add to today", zh: "完成任务或按箭头\n添加到今天" } as Record<string, string>)[language] || "Mark tasks complete or\npress → to add to today"}
                       </p>
                     </div>
-                  </div>
-                ))}
+                  ) : (
+                    <div className="space-y-1">
+                      {movedTasks.map((task) => (
+                        <div
+                          key={`today-${task.id}`}
+                          className="group flex items-center gap-3 px-3 h-10 rounded-lg border border-[#0C8CE9]/20 bg-[#0C8CE9]/[0.03] transition-all"
+                        >
+                          <div className="w-5 h-5 rounded border-2 border-[#0C8CE9]/25 flex-shrink-0" />
+                          <span className="text-sm flex-1 min-w-0 truncate text-foreground">{task.title}</span>
+                          <button
+                            onClick={() => toggleMoveToToday(task.id)}
+                            className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-transparent group-hover:text-muted-foreground hover:!text-red-400 transition-all"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 푸터 */}
+              <div className="px-5 py-3.5 border-t border-border flex items-center justify-between">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={closePendingModal}
+                >
+                  {({ ko: "건너뛰기", en: "Skip", zh: "跳过" } as Record<string, string>)[language] || "Skip"}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={confirmPendingActions}
+                  className="px-7 bg-[#0C8CE9] hover:bg-[#0C8CE9]/90 text-white"
+                >
+                  {({ ko: "확인", en: "Done", zh: "完成" } as Record<string, string>)[language] || "Done"}
+                </Button>
               </div>
             </div>
-
-            {/* 푸터 */}
-            <div className="px-6 py-4 border-t border-border flex items-center justify-between gap-3">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowPendingTasksModal(false);
-                  setPendingTasks([]);
-                  setSelectedPendingTasks(new Set());
-                }}
-                className="flex-1"
-              >
-                {({ ko: "건너뛰기", en: "Skip", zh: "跳过" } as Record<string, string>)[language] || "Skip"}
-              </Button>
-              <Button
-                onClick={movePendingTasksToToday}
-                disabled={selectedPendingTasks.size === 0}
-                className="flex-1 bg-[#0C8CE9] hover:bg-[#0C8CE9]/90"
-              >
-                {({ ko: `오늘로 이동 (${selectedPendingTasks.size})`, en: `Move to Today (${selectedPendingTasks.size})`, zh: `移至今天 (${selectedPendingTasks.size})` } as Record<string, string>)[language] || `Move to Today (${selectedPendingTasks.size})`}
-              </Button>
-            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

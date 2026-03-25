@@ -522,8 +522,19 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   };
 
   // Task 순서 변경 (UI 즉시 업데이트 - optimistic)
-  const moveTask = (dragIndex: number, hoverIndex: number) => {
+  const moveTask = (dragIndex: number, hoverIndex: number, dragId?: string | number, hoverId?: string | number) => {
     setTasks(prev => {
+      // ID 기반으로 실제 인덱스를 찾아서 이동 (필터링된 리스트와 전체 리스트 인덱스 불일치 해결)
+      if (dragId !== undefined && hoverId !== undefined) {
+        const updated = [...prev];
+        const actualDragIndex = updated.findIndex(t => t.id === dragId);
+        const actualHoverIndex = updated.findIndex(t => t.id === hoverId);
+        if (actualDragIndex === -1 || actualHoverIndex === -1) return prev;
+        const [removed] = updated.splice(actualDragIndex, 1);
+        updated.splice(actualHoverIndex, 0, removed);
+        return updated;
+      }
+      // fallback: 인덱스 기반
       const updated = [...prev];
       const [removed] = updated.splice(dragIndex, 1);
       updated.splice(hoverIndex, 0, removed);

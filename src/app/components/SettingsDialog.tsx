@@ -38,9 +38,9 @@ import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json";
 
-// 경도 → SVG x 변환 (equirectangular, center=140°E, scale=75, svgWidth=540)
-const MAP_CENTER = 140;
-const MAP_SCALE_FACTOR = 90 * Math.PI / 180; // ~1.571
+// 경도 → SVG x 변환 (equirectangular, center=150°E, scale=87, svgWidth=540)
+const MAP_CENTER = 150;
+const MAP_SCALE_FACTOR = 87 * Math.PI / 180; // ~1.5184
 const MAP_SVG_CX = 270;
 const lonToSvgX = (lon: number): number => {
   let rotated = lon - MAP_CENTER;
@@ -127,7 +127,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   // 공휴일 설정
   const [holidayEnabled, setHolidayEnabled] = useState<boolean>(() => {
-    return localStorage.getItem("holiday_enabled") === "true";
+    // 미설정(신규 가입)이면 기본값 true (한국 공휴일 ON)
+    return localStorage.getItem("holiday_enabled") !== "false";
   });
   const [holidayCountry, setHolidayCountry] = useState<string>(() => {
     return localStorage.getItem("holiday_country") || "KR";
@@ -224,6 +225,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     return localStorage.getItem("app_timezone") || browserTimezone;
   });
   const [timezoneSearch, setTimezoneSearch] = useState("");
+  const [timezoneDropdownOpen, setTimezoneDropdownOpen] = useState(false);
   const [hoveredOffset, setHoveredOffset] = useState<number | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
@@ -528,7 +530,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           {/* Content */}
           <div className="flex h-[580px]">
             {/* Left nav - full height divider like Apple Calendar */}
-            <nav className="w-[180px] flex-shrink-0 pt-14 pb-6 px-3 border-r border-border">
+            <nav className="w-[180px] flex-shrink-0 pt-10 pb-4 px-3 border-r border-border">
               <div className="space-y-0.5">
                 {tabs.map((tab) => {
                   const isActive = activeTab === tab.id;
@@ -551,7 +553,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             </nav>
 
             {/* Right content */}
-            <div className="flex-1 px-6 pt-12 pb-4 overflow-y-auto">
+            <div className="flex-1 px-6 pt-12 pb-4 overflow-hidden">
               {activeTab === "google" && (
                 <div className="space-y-6">
                   {/* 1. 공휴일 표시 */}
@@ -787,9 +789,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   >
                     <ComposableMap
                       projection="geoEquirectangular"
-                      projectionConfig={{ rotate: [-140, -10, 0], scale: 90 }}
+                      projectionConfig={{ rotate: [-148, -15, 0], scale: 87 }}
                       width={540}
-                      height={280}
+                      height={230}
                       style={{ width: "100%", height: "auto", display: "block" }}
                     >
                       {/* 대륙 (추상화 - 국경선 없음) */}
@@ -814,14 +816,34 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         const bandX = lonToSvgX(hoveredOffset * 15);
                         const bandW = 15 * MAP_SCALE_FACTOR;
                         return (
-                          <rect
-                            x={bandX - bandW / 2}
-                            y={-20}
-                            width={bandW}
-                            height={300}
-                            fill="rgba(227, 0, 0, 0.10)"
-                            pointerEvents="none"
-                          />
+                          <g pointerEvents="none">
+                            {/* 배경 */}
+                            <rect
+                              x={bandX - bandW / 2}
+                              y={-20}
+                              width={bandW}
+                              height={300}
+                              fill="rgba(227, 0, 0, 0.05)"
+                            />
+                            {/* 좌측 아웃라인 */}
+                            <line
+                              x1={bandX - bandW / 2}
+                              y1={-20}
+                              x2={bandX - bandW / 2}
+                              y2={280}
+                              stroke="rgba(227, 0, 0, 0.25)"
+                              strokeWidth={0.5}
+                            />
+                            {/* 우측 아웃라인 */}
+                            <line
+                              x1={bandX + bandW / 2}
+                              y1={-20}
+                              x2={bandX + bandW / 2}
+                              y2={280}
+                              stroke="rgba(227, 0, 0, 0.25)"
+                              strokeWidth={0.5}
+                            />
+                          </g>
                         );
                       })()}
 
@@ -898,36 +920,48 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     </div>
                   </div>
 
-                  {/* 검색 */}
-                  <Input
-                    type="text"
-                    value={timezoneSearch}
-                    onChange={(e) => setTimezoneSearch(e.target.value)}
-                    placeholder={t("settings.timezone.searchPlaceholder")}
-                    className="h-8 text-sm"
-                  />
-
-                  {/* 시간대 목록 */}
-                  <div className="space-y-0.5 overflow-y-auto max-h-[120px]">
-                    {filteredTimezones.map((item) => (
-                      <button
-                        key={item.tz}
-                        onClick={() => handleTimezoneChange(item.tz)}
-                        className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                          timezone === item.tz ? "bg-muted font-medium" : "hover:bg-muted/50"
-                        }`}
-                      >
-                        <span>{item.names[i18n.language] || item.names.en}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">{formatTimezoneOffset(item.tz)}</span>
-                          {timezone === item.tz && <Check className="w-4 h-4 text-primary" />}
+                  {/* 검색 드롭다운 */}
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      value={timezoneSearch}
+                      onChange={(e) => setTimezoneSearch(e.target.value)}
+                      onFocus={() => setTimezoneDropdownOpen(true)}
+                      placeholder={t("settings.timezone.searchPlaceholder")}
+                      className="h-8 text-sm"
+                    />
+                    {timezoneDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setTimezoneDropdownOpen(false)} />
+                        <div className="absolute z-50 bottom-full left-0 right-0 mb-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
+                          <div className="space-y-0.5 overflow-y-auto max-h-[200px] p-1">
+                            {filteredTimezones.map((item) => (
+                              <button
+                                key={item.tz}
+                                onClick={() => {
+                                  handleTimezoneChange(item.tz);
+                                  setTimezoneDropdownOpen(false);
+                                  setTimezoneSearch("");
+                                }}
+                                className={`w-full flex items-center justify-between px-3 py-1.5 rounded-md text-sm transition-colors ${
+                                  timezone === item.tz ? "bg-muted font-medium" : "hover:bg-muted/50"
+                                }`}
+                              >
+                                <span>{item.names[i18n.language] || item.names.en}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">{formatTimezoneOffset(item.tz)}</span>
+                                  {timezone === item.tz && <Check className="w-4 h-4 text-primary" />}
+                                </div>
+                              </button>
+                            ))}
+                            {filteredTimezones.length === 0 && (
+                              <p className="text-sm text-muted-foreground text-center py-4">
+                                {t("settings.timezone.noResults")}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </button>
-                    ))}
-                    {filteredTimezones.length === 0 && (
-                      <p className="text-sm text-muted-foreground text-center py-4">
-                        {t("settings.timezone.noResults")}
-                      </p>
+                      </>
                     )}
                   </div>
                 </div>
