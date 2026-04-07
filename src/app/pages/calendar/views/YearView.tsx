@@ -83,7 +83,7 @@ export function YearView({
     return (
       <div className="flex flex-col gap-1">
         {/* 월 헤더와 일정 개수를 같은 라인에 배치 */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between px-2">
           <h3 className="font-medium text-[20px] font-bold">
             {language === "ko"
               ? `${monthIndex + 1}월`
@@ -98,7 +98,7 @@ export function YearView({
           </h3>
           <span className="text-xs text-muted-foreground">
             {getEventsCountForMonth(monthIndex)}{" "}
-            {({ ko: "개", en: "", zh: "个" } as Record<string, string>)[language] ?? ""}
+            {({ ko: "개 일정", en: " events", zh: "个 事件" } as Record<string, string>)[language] ?? ""}
           </span>
         </div>
 
@@ -181,7 +181,7 @@ export function YearView({
                 }}
                 disabled={!day}
                 className={`
-                  h-9 flex items-center justify-center text-sm rounded relative
+                  h-10 w-[85%] mx-auto flex flex-col items-center justify-start pt-0.5 text-sm rounded relative
                   ${!day ? "invisible" : ""}
                   ${isToday ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium" : "hover:bg-[#F5F5F5] dark:hover:bg-[#252525]"}
                   ${!isToday && day ? (isHoliday ? "text-red-500" : "text-foreground") : ""}
@@ -189,7 +189,7 @@ export function YearView({
               >
                 {day}
                 {dayEventsCount > 0 && !isToday && (
-                  <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex gap-0.5">
+                  <div className="flex gap-0.5 mt-0.5">
                     {regularEvents
                       .slice(0, 3)
                       .map((event, i) => {
@@ -219,12 +219,12 @@ export function YearView({
   };
 
   return (
-    <div className="flex-1 overflow-hidden flex items-center justify-center">
-      <div className="grid grid-cols-3 md:grid-cols-4 gap-3 w-full max-w-full  h-full p-[0px]">
+    <div className="flex-1 min-h-0 overflow-auto">
+      <div className="grid grid-cols-3 md:grid-cols-4 gap-2 w-full h-full p-[0px]">
         {months.map((monthIndex) => (
           <div
             key={monthIndex}
-            className="rounded-lg border w-full p-[16px]"
+            className="rounded-sm border w-full px-3 py-2"
           >
             {renderMiniMonth(monthIndex)}
           </div>

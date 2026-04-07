@@ -31,7 +31,7 @@ interface DayViewProps {
   selectedEvent: CalendarEvent | null;
   previewEvent: PreviewEvent | null;
   onEventClick: (event: CalendarEvent, element?: HTMLElement) => void;
-  onAddEventClick: (date: Date, hour?: number) => void;
+  onAddEventClick: (date: Date, hour?: number, clientX?: number, clientY?: number) => void;
 }
 
 const getCategoryIcon = (
@@ -116,21 +116,21 @@ export function DayView({
     })
     .filter(
       (event) =>
-        !event.categoryId ||
-        selectedCategoryIds.includes(event.categoryId),
+        !event.isHoliday && (!event.categoryId ||
+        selectedCategoryIds.includes(event.categoryId)),
     );
 
   return (
     <div
-      className="grid flex-1 min-h-0 border border-border rounded-md overflow-hidden"
+      className="grid flex-1 min-h-0 border border-border rounded-sm overflow-hidden"
       style={{
         gridTemplateColumns: "64px 1fr",
         gridTemplateRows: "auto 1fr",
       }}
     >
-      <div className="border-b border-r bg-muted/30" />
+      <div className="border-b border-r bg-muted/30 py-0.5" />
 
-      <div className="border-b bg-muted/30 px-2 py-1 text-center">
+      <div className="border-b bg-muted/30 px-2 py-0.5 text-center">
         <span
           className={`text-[13px] ${
             currentDate.getDay() === 0
@@ -180,7 +180,7 @@ export function DayView({
               }
               e.preventDefault();
               e.stopPropagation();
-              onAddEventClick(currentDate, hour);
+              onAddEventClick(currentDate, hour, e.clientX, e.clientY);
             }}
             className="absolute left-0 right-0 cursor-pointer hover:bg-muted/10"
             style={{
@@ -266,14 +266,14 @@ export function DayView({
             <div
               key={event.id}
               data-event="true"
-              className={`absolute rounded px-2 py-1 cursor-pointer hover:opacity-80 transition-opacity overflow-hidden ${isBeingEdited ? "opacity-50 bg-muted/40" : ""}`}
+              className={`absolute rounded-[4px] px-2 py-1 cursor-pointer hover:opacity-80 transition-opacity overflow-hidden ${isBeingEdited ? "opacity-50 bg-muted/40" : ""}`}
               style={{
                 top: `${displayStartPosition}%`,
                 height: `${displayDuration}%`,
                 left: "8px",
                 width: "calc(100% - 16px)",
                 backgroundColor: displayColor + "20",
-                minHeight: "24px",
+                minHeight: "23px",
               }}
               onClick={(e) =>
                 onEventClick(event, e.currentTarget)
@@ -297,7 +297,7 @@ export function DayView({
                   />
                 )}
                 <div
-                  className={`truncate text-[13px] ${isBeingEdited ? "italic" : ""}`}
+                  className={`truncate text-[13px] `}
                   style={{ color: displayColor }}
                 >
                   {displayData.title ||

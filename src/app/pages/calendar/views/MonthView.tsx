@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import { eventsAPI, categoriesAPI } from "../../../../lib/api";
 import { projectId, publicAnonKey } from "../../../../lib/supabase-info";
-import { getGoogleToken } from "../../../../lib/google-token";
+import { getGoogleToken, googleFetch } from "../../../../lib/google-token";
 
 interface PreviewEvent {
   title: string;
@@ -116,7 +116,7 @@ export function MonthView({
 
   const { days, rows } = getDaysInMonth(currentDate);
   // 주 수에 따라 표시할 이벤트 수 동적 조정
-  const maxEventsToShow = rows === 4 ? 7 : rows === 5 ? 5 : 4;
+  const maxEventsToShow = rows === 4 ? 8 : rows === 5 ? 6 : 5;
 
   // 현재 월의 시작과 끝 날짜 계산
   const monthStart = new Date(
@@ -339,7 +339,7 @@ export function MonthView({
   );
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col border border-border rounded-md overflow-hidden">
+    <div className="flex-1 min-h-0 flex flex-col border border-border rounded-sm overflow-hidden">
       <div className="grid grid-cols-7 border-b bg-muted/30 shrink-0">
         {dayNames[language].map((day, index) => {
           const getDayColor = () => {
@@ -351,10 +351,10 @@ export function MonthView({
           return (
             <div
               key={index}
-              className="border-r px-3 py-1 text-right last:border-r-0"
+              className="border-r px-3 py-0.5 text-right last:border-r-0"
             >
               <span
-                className={`text-sm font-semibold ${getDayColor()}`}
+                className={`text-[12px] font-medium ${getDayColor()}`}
               >
                 {day}
               </span>
@@ -434,7 +434,7 @@ export function MonthView({
             }
           }
 
-          const periodEventsHeight = (maxLayer + 1) * 24; // 각 레이어는 22px + 2px gap
+          const periodEventsHeight = (maxLayer + 1) * 22; // 각 레이어는 21px + 1px gap
 
           // 현재 행 번호 계산
           const rowIndex = Math.floor(index / 7);
@@ -450,14 +450,12 @@ export function MonthView({
           const hasMoreEvents =
             totalEventsCount > effectiveMaxEvents;
 
-          // 표시할 단일 이벤트 수 계산 (더 많은 이벤트가 있으면 1개 줄여서 "외 n개" 표시)
+          // 표시할 단일 이벤트 수 계산
           const maxSingleEvents =
             effectiveMaxEvents - periodEventsForDay.length;
           const displayEvents = singleEventsForDay.slice(
             0,
-            hasMoreEvents
-              ? maxSingleEvents - 1
-              : maxSingleEvents,
+            maxSingleEvents,
           );
 
           // 남은 이벤트 수 계산 (표시되지 않은 단일 이벤트 수)
@@ -466,6 +464,25 @@ export function MonthView({
 
           const isLastColumn = index % 7 === 6;
           const isLastRow = index >= days.length - 7;
+
+          // +새 일정 버튼 숨김 여부 (모달 열림, 미리보기 표시, 드래그 중)
+          const shouldHideNewEventButton =
+            monthViewPopoverOpen ||
+            (clickedDateForNewEvent !== null &&
+              clickedDateForNewEvent.toDateString() ===
+                date!.toDateString()) ||
+            (monthViewPopoverDate !== null &&
+              monthViewPopoverDate.toDateString() ===
+                date!.toDateString()) ||
+            (previewEvent &&
+              previewEvent.startDate &&
+              previewEvent.startDate.toDateString() ===
+                date!.toDateString()) ||
+            (isDragging &&
+              dragStartDate &&
+              dragEndDate &&
+              dragStartDate.getTime() !==
+                dragEndDate.getTime());
 
           // 공휴일 체크
           const isHoliday =
@@ -487,9 +504,9 @@ export function MonthView({
               onMouseUp={onMouseUp}
             >
               <div className="flex flex-col h-full min-h-[100px] overflow-hidden p-[0px]">
-                <div className="flex justify-between items-start shrink-0 m-[4px]">
+                <div className="flex justify-between items-center shrink-0 mx-[4px] mt-[2px] mb-[1px]" style={{ height: "21px" }}>
                   {/* 🎌 공휴일 표시: 왼쪽에 공휴일 이름 */}
-                  <div className="flex-1 mr-1 pl-[4px] h-[18px] overflow-hidden">
+                  <div className="flex-1 mr-1 pl-[4px] overflow-hidden">
                     {(() => {
                       const holiday =
                         date &&
@@ -504,7 +521,7 @@ export function MonthView({
                               date.getFullYear(),
                         );
                       return holiday ? (
-                        <span className="text-[13px] text-red-500 truncate block">
+                        <span className="text-[12px] text-red-500 truncate block">
                           {holiday.title}
                         </span>
                       ) : null;
@@ -512,7 +529,7 @@ export function MonthView({
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span
-                      className={`text-[14px] w-6 h-6 flex items-center justify-center ${
+                      className={`text-[13px] w-5 h-5 flex items-center justify-center ${
                         !isInCurrentMonth
                           ? "text-muted-foreground/50"
                           : isTodayDate
@@ -618,7 +635,7 @@ export function MonthView({
 
                       return (
                         <div
-                          className={`absolute left-0 right-0 flex items-center gap-2 ${paddingClass} ${marginClass} opacity-60 pointer-events-none pl-2 pr-[8px] select-none`}
+                          className={`absolute left-0 right-0 flex items-center gap-1 ${paddingClass} ${marginClass} opacity-60 pointer-events-none pl-2 pr-[8px] select-none`}
                           style={{
                             backgroundColor:
                               getBackgroundColor(
@@ -641,8 +658,8 @@ export function MonthView({
                               isEndDate || isLastDayOfWeek
                                 ? "6px"
                                 : "0",
-                            height: "22px",
-                            top: `${layer * 24}px`,
+                            height: "21px",
+                            top: `${layer * 22}px`,
                             zIndex: 100,
                           }}
                         >
@@ -659,7 +676,7 @@ export function MonthView({
                                 }}
                               />
                               <span
-                                className="text-[13px] font-normal"
+                                className="text-[13px] font-medium"
                                 style={{
                                   color:
                                     categories[0]?.color ||
@@ -758,22 +775,22 @@ export function MonthView({
                             getBackgroundColor(displayColor),
                           borderTopLeftRadius:
                             isStartDate || isFirstDayOfWeek
-                              ? "6px"
+                              ? "4px"
                               : "0",
                           borderBottomLeftRadius:
                             isStartDate || isFirstDayOfWeek
-                              ? "6px"
+                              ? "4px"
                               : "0",
                           borderTopRightRadius:
                             isEndDate || isLastDayOfWeek
-                              ? "6px"
+                              ? "4px"
                               : "0",
                           borderBottomRightRadius:
                             isEndDate || isLastDayOfWeek
-                              ? "6px"
+                              ? "4px"
                               : "0",
-                          height: "22px", // 고정 높이
-                          top: `${layer * 24}px`, // 레이어에 따른 위치 (22px height + 2px gap)
+                          height: "21px",
+                          top: `${layer * 22}px`,
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -787,7 +804,7 @@ export function MonthView({
                         {(isStartDate ||
                           isFirstDayOfWeek) && (
                           <span
-                            className={`truncate flex-1 text-[13px] font-normal ${isBeingEdited ? "italic" : ""}`}
+                            className={`truncate flex-1 text-[13px] font-normal `}
                             style={{ color: displayColor }}
                           >
                             {displayData.title ||
@@ -894,14 +911,14 @@ export function MonthView({
                               isEndDate || isLastDayOfWeek
                                 ? "6px"
                                 : "0",
-                            height: "22px",
-                            top: `${layer * 24}px`,
+                            height: "21px",
+                            top: `${layer * 22}px`,
                           }}
                         >
                           {(isStartDate ||
                             isFirstDayOfWeek) && (
                             <span
-                              className="truncate flex-1 text-[13px] font-normal italic"
+                              className="truncate flex-1 text-[13px] font-normal"
                               style={{ color: previewColor }}
                             >
                               {previewEvent.title ||
@@ -950,32 +967,21 @@ export function MonthView({
                       <div
                         key={event.id}
                         data-event="true"
-                        className={`cursor-pointer transition-all shrink-0 flex items-center gap-2 pl-[4px] pr-[8px] rounded-sm select-none ${isBeingEdited ? "opacity-50 bg-muted/40" : ""}`}
+                        className={`cursor-pointer shrink-0 flex items-center gap-1 pl-[4px] pr-[8px] rounded-[4px] select-none hover:bg-[var(--event-hover-color)] ${isBeingEdited ? "opacity-50 bg-muted/40" : ""}`}
                         style={
-                          eventIndex === 0
-                            ? {
-                                marginTop: `${periodEventsHeight}px`,
-                                height: "24px",
-                              }
-                            : {
-                                height: "24px",
-                              }
+                          {
+                            "--event-hover-color": displayColor + "08",
+                            ...(eventIndex === 0
+                              ? {
+                                  marginTop: `${periodEventsHeight}px`,
+                                  height: "21px",
+                                }
+                              : {
+                                  marginTop: "1px",
+                                  height: "21px",
+                                }),
+                          } as React.CSSProperties
                         }
-                        onMouseEnter={(e) => {
-                          if (
-                            !isBeingEdited &&
-                            displayColor
-                          ) {
-                            e.currentTarget.style.backgroundColor =
-                              displayColor + "0D"; // 95% 투명도 (5% 불투명도)
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isBeingEdited) {
-                            e.currentTarget.style.backgroundColor =
-                              "transparent";
-                          }
-                        }}
                         onClick={(e) => {
                           e.stopPropagation();
                           onEventClick(
@@ -986,7 +992,7 @@ export function MonthView({
                       >
                         {/* 왼쪽 색상 바 */}
                         <div
-                          className="w-[4px] h-[16px] rounded-full shrink-0"
+                          className="w-[4px] h-[14px] rounded-full shrink-0"
                           style={{
                             backgroundColor: displayColor,
                           }}
@@ -994,167 +1000,72 @@ export function MonthView({
 
                         {/* 제목 */}
                         <span
-                          className={`truncate flex-1 text-[13px] text-foreground ${isBeingEdited ? "italic" : ""}`}
+                          className={`truncate flex-1 text-[13px] text-foreground `}
                         >
                           {displayData.title ||
                             (({ ko: "(제목 없음)", en: "(No title)", zh: "(无标题)" } as Record<string, string>)[language] || "(No title)")}
                         </span>
 
-                        {/* 반복 아이콘 */}
-                        {(event.recurrence ||
-                          event.rrule) && (
-                          <Repeat className="w-3 h-3 text-muted-foreground shrink-0" />
-                        )}
-
-                        {/* 시간 */}
-                        {displayData.startTime && (
-                          <span className="text-muted-foreground shrink-0 text-[12px]">
-                            {formatTime(
-                              displayData.startTime,
-                            )}
+                        {/* 반복 아이콘 또는 +n개 뱃지 */}
+                        {hasMoreEvents && remainingCount > 0 && eventIndex === displayEvents.length - 1 ? (
+                          <span
+                            className="shrink-0 text-[13px] text-[#0C8CE9] hover:text-[#0A7AD4] cursor-pointer transition-colors font-medium"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedRows((prev) => {
+                                const newSet = new Set(prev);
+                                if (newSet.has(rowIndex)) {
+                                  newSet.delete(rowIndex);
+                                } else {
+                                  newSet.add(rowIndex);
+                                }
+                                return newSet;
+                              });
+                            }}
+                          >
+                            {({ ko: `+${remainingCount}개 일정`, en: `+${remainingCount} more`, zh: `+${remainingCount} 更多` } as Record<string, string>)[language] || `+${remainingCount} more`}
                           </span>
+                        ) : (
+                          <>
+                            {(event.recurrence ||
+                              event.rrule) && (
+                              <Repeat className="w-3 h-3 text-muted-foreground shrink-0" />
+                            )}
+                            {displayData.startTime && (
+                              <span className="text-muted-foreground shrink-0 text-[12px]">
+                                {formatTime(
+                                  displayData.startTime,
+                                )}
+                              </span>
+                            )}
+                          </>
                         )}
                       </div>
                     );
                   })}
 
-                  {/* 미리보기 일정 - 단일 일정인 경우에만 (기간 일정 아래에 배치) */}
-                  {previewEvent &&
-                    !selectedEvent &&
-                    !previewEvent.isPeriod &&
-                    previewEvent.startDate &&
-                    date &&
-                    previewEvent.startDate.getDate() ===
-                      date.getDate() &&
-                    previewEvent.startDate.getMonth() ===
-                      date.getMonth() &&
-                    previewEvent.startDate.getFullYear() ===
-                      date.getFullYear() && (
-                      <div
-                        className="shrink-0 flex items-center gap-2 pl-[4px] pr-[8px] opacity-50 select-none"
-                        style={
-                          displayEvents.length === 0
-                            ? {
-                                marginTop: `${periodEventsHeight}px`,
-                                height: "24px",
-                              }
-                            : {
-                                height: "24px",
-                              }
-                        }
-                      >
-                        {/* 왼쪽 색상 바 */}
-                        <div
-                          className="w-[4px] h-[16px] rounded-full shrink-0"
-                          style={{
-                            backgroundColor:
-                              categories.find(
-                                (c) =>
-                                  c.id ===
-                                  previewEvent.categoryId,
-                              )?.color || "#000",
-                          }}
-                        />
-
-                        {/* 제목 */}
-                        <span className="truncate flex-1 text-[13px] text-foreground italic">
-                          {previewEvent.title ||
-                            (({ ko: "(제목 없음)", en: "(No title)", zh: "(无标题)" } as Record<string, string>)[language] || "(No title)")}
-                        </span>
-
-                        {/* 시간 */}
-                        {previewEvent.startTime && (
-                          <span className="text-muted-foreground shrink-0 text-[12px]">
-                            {(() => {
-                              const [hour, minute] =
-                                previewEvent.startTime.split(
-                                  ":",
-                                );
-                              const hourNum = parseInt(hour);
-                              const period =
-                                (({ ko: hourNum < 12 ? "오전" : "오후", en: hourNum < 12 ? "AM" : "PM", zh: hourNum < 12 ? "上午" : "下午" } as Record<string, string>)[language] || (hourNum < 12 ? "AM" : "PM"));
-                              const displayHour =
-                                hourNum === 0
-                                  ? 12
-                                  : hourNum > 12
-                                    ? hourNum - 12
-                                    : hourNum;
-                              return `${period} ${displayHour}시`;
-                            })()}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                  {/* 더 많은 이벤트가 있을 때 "외 n개의 일정" 표시 */}
-                  {hasMoreEvents && remainingCount > 0 && (
-                    <div
-                      className="shrink-0 flex items-center justify-end gap-2 pl-2 pr-[8px] cursor-pointer select-none hover:text-[#0C8CE9] transition-colors"
-                      style={
-                        displayEvents.length === 0
-                          ? {
-                              marginTop: `${periodEventsHeight}px`,
-                              height: "24px",
-                            }
-                          : {
-                              height: "24px",
-                            }
-                      }
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // 행 확장/축소 토글
-                        setExpandedRows((prev) => {
-                          const newSet = new Set(prev);
-                          if (newSet.has(rowIndex)) {
-                            newSet.delete(rowIndex);
-                          } else {
-                            newSet.add(rowIndex);
-                          }
-                          return newSet;
-                        });
-                      }}
-                    >
-                      <span className="text-[13px] text-muted-foreground group-hover:text-[#0C8CE9]">
-                        {({ ko: `+ ${remainingCount}개 일정`, en: `+${remainingCount} more`, zh: `+${remainingCount} 更多` } as Record<string, string>)[language] || `+${remainingCount} more`}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* 새 일정 추가 버튼 (호버 시 표시) - 기간 일정 아래에 배치 */}
+                  {/* 새 일정 추가 버튼 (호버 시 표시) - 모달 앵커 위치 */}
                   <EventCreatePopover
                     trigger={
                       <div
-                        className={`transition-opacity shrink-0 flex items-center gap-2 pl-2 pr-[8px] bg-muted/30 mx-[4px] cursor-pointer hover:bg-muted/40 ${
-                          monthViewPopoverOpen ||
-                          (clickedDateForNewEvent !== null &&
-                            clickedDateForNewEvent.toDateString() ===
-                              date!.toDateString()) ||
-                          (monthViewPopoverDate !== null &&
-                            monthViewPopoverDate.toDateString() ===
-                              date!.toDateString()) ||
-                          (previewEvent &&
-                            previewEvent.startDate &&
-                            previewEvent.startDate.toDateString() ===
-                              date!.toDateString()) ||
-                          (isDragging &&
-                            dragStartDate &&
-                            dragEndDate &&
-                            dragStartDate.getTime() !==
-                              dragEndDate.getTime())
-                            ? "opacity-0 pointer-events-none"
+                        className={`shrink-0 flex items-center gap-1 pl-2 pr-[8px] bg-muted/30 mx-[4px] mt-[1px] cursor-pointer hover:bg-muted/40 ${
+                          shouldHideNewEventButton
+                            ? "invisible overflow-hidden pointer-events-none"
                             : "opacity-0 group-hover:opacity-100 group-has-[[data-event]:hover]:opacity-0"
                         }`}
                         style={
-                          displayEvents.length === 0
-                            ? {
-                                marginTop: `${periodEventsHeight}px`,
-                                height: "24px",
-                                borderRadius: "6px",
-                              }
-                            : {
-                                height: "24px",
-                                borderRadius: "6px",
-                              }
+                          shouldHideNewEventButton
+                            ? { height: 0, padding: 0, margin: 0 }
+                            : displayEvents.length === 0
+                              ? {
+                                  marginTop: `${periodEventsHeight}px`,
+                                  height: "21px",
+                                  borderRadius: "4px",
+                                }
+                              : {
+                                  height: "21px",
+                                  borderRadius: "4px",
+                                }
                         }
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1412,7 +1323,7 @@ export function MonthView({
                             selectedCategory.googleCalendarId,
                           );
 
-                          const response = await fetch(
+                          const response = await googleFetch(
                             `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(selectedCategory.googleCalendarId!)}`,
                             {
                               method: "POST",
@@ -1422,8 +1333,6 @@ export function MonthView({
                                 Authorization: `Bearer ${publicAnonKey}`,
                                 "X-User-JWT":
                                   session.access_token,
-                                "X-Google-Access-Token":
-                                  getGoogleToken(session),
                               },
                               body: JSON.stringify({
                                 title: eventData.title,
@@ -1447,8 +1356,10 @@ export function MonthView({
                                   eventData.startTime,
                                 endTime: eventData.endTime,
                                 isAllDay: isAllDay,
+                                rrule: eventData.rrule || undefined,
                               }),
                             },
+                            session,
                           );
 
                           if (!response.ok) {
@@ -1799,6 +1710,76 @@ export function MonthView({
                       }
                     }}
                   />
+
+                  {/* 미리보기 일정 - 단일 일정인 경우에만 (새 일정 버튼 아래에 배치) */}
+                  {previewEvent &&
+                    !selectedEvent &&
+                    !previewEvent.isPeriod &&
+                    previewEvent.startDate &&
+                    date &&
+                    previewEvent.startDate.getDate() ===
+                      date.getDate() &&
+                    previewEvent.startDate.getMonth() ===
+                      date.getMonth() &&
+                    previewEvent.startDate.getFullYear() ===
+                      date.getFullYear() && (
+                      <div
+                        className="shrink-0 flex items-center gap-1 pl-[4px] pr-[8px] opacity-50 select-none"
+                        style={
+                          displayEvents.length === 0
+                            ? {
+                                marginTop: `${periodEventsHeight}px`,
+                                height: "21px",
+                              }
+                            : {
+                                marginTop: "1px",
+                                height: "21px",
+                              }
+                        }
+                      >
+                        {/* 왼쪽 색상 바 */}
+                        <div
+                          className="w-[4px] h-[14px] rounded-full shrink-0"
+                          style={{
+                            backgroundColor:
+                              categories.find(
+                                (c) =>
+                                  c.id ===
+                                  previewEvent.categoryId,
+                              )?.color || "#000",
+                          }}
+                        />
+
+                        {/* 제목 */}
+                        <span className="truncate flex-1 text-[13px] text-foreground">
+                          {previewEvent.title ||
+                            (({ ko: "(제목 없음)", en: "(No title)", zh: "(无标题)" } as Record<string, string>)[language] || "(No title)")}
+                        </span>
+
+                        {/* 시간 */}
+                        {previewEvent.startTime && (
+                          <span className="text-muted-foreground shrink-0 text-[12px]">
+                            {(() => {
+                              const [hour, minute] =
+                                previewEvent.startTime.split(
+                                  ":",
+                                );
+                              const hourNum = parseInt(hour);
+                              const period =
+                                (({ ko: hourNum < 12 ? "오전" : "오후", en: hourNum < 12 ? "AM" : "PM", zh: hourNum < 12 ? "上午" : "下午" } as Record<string, string>)[language] || (hourNum < 12 ? "AM" : "PM"));
+                              const displayHour =
+                                hourNum === 0
+                                  ? 12
+                                  : hourNum > 12
+                                    ? hourNum - 12
+                                    : hourNum;
+                              return `${period} ${displayHour}시`;
+                            })()}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
                 </div>
               </div>
             </div>

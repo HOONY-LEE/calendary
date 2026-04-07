@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import {
   Plus,
-  Check,
   X,
   RefreshCw,
   Loader2,
@@ -70,64 +69,52 @@ export function Tasks() {
   const [showPendingTasksModal, setShowPendingTasksModal] =
     useState(false);
   const [pendingTasks, setPendingTasks] = useState<any[]>([]);
-  const [selectedPendingTasks, setSelectedPendingTasks] =
-    useState<Set<number | string>>(new Set());
   const [tasksToMoveToday, setTasksToMoveToday] =
     useState<Set<number | string>>(new Set());
 
-  // 🔥 미완료 태스크 확인 (페이지 로드 시)
+  // 🔥 미완료 태스크 확인 (페이지 진입 시)
   useEffect(() => {
-    const lastVisitDate = localStorage.getItem(
-      "calendary-last-visit-date",
-    );
+    if (tasks.length === 0) return;
+
     const today = getTodayInTimezone();
+    const modalShownDate = localStorage.getItem("calendary-pending-modal-shown-date");
 
-    // 첫 방문이 아니고, 마지막 방문일이 오늘이 아닐 때
-    if (
-      lastVisitDate &&
-      lastVisitDate !== today &&
-      tasks.length > 0
-    ) {
-      // 어제와 그 이전의 미완료 태스크 찾기
-      const incompletePastTasks = tasks.filter((task) => {
-        const taskDate = task.date || "";
-        return taskDate < today && !task.completed;
-      });
+    // 오늘 이미 모달을 띄웠으면 스킵
+    if (modalShownDate === today) return;
 
-      if (incompletePastTasks.length > 0) {
-        setPendingTasks(incompletePastTasks);
-        setSelectedPendingTasks(new Set());
-        setTasksToMoveToday(new Set());
-        setShowPendingTasksModal(true);
-      }
+    // 전날 날짜 계산
+    const yesterdayDate = new Date(today + "T00:00:00");
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterday = yesterdayDate.toISOString().slice(0, 10);
+
+    // 전날 미완료 태스크만
+    const incompletePastTasks = tasks.filter((task) => {
+      const taskDate = task.date || "";
+      return taskDate === yesterday && !task.completed;
+    });
+
+    if (incompletePastTasks.length > 0) {
+      setPendingTasks(incompletePastTasks);
+      setTasksToMoveToday(new Set());
+      setShowPendingTasksModal(true);
+      localStorage.setItem("calendary-pending-modal-shown-date", today);
     }
-
-    // 마지막 방문 날짜 업데이트
-    localStorage.setItem("calendary-last-visit-date", today);
   }, [tasks]);
 
-  // 🔥 모달 확인: 왼쪽에서 완료 체크한 것은 완료 처리, 오른쪽으로 이동한 것은 오늘로 복사
+  // 🔥 모달 확인: 오른쪽으로 이동한 것은 오늘로 복사
   const confirmPendingActions = async () => {
     const today = getTodayInTimezone();
 
-    // 1. 완료 처리 (왼쪽에서 체크한 것)
-    for (const taskId of selectedPendingTasks) {
-      await updateTask(taskId, { completed: true });
-    }
-
-    // 2. 오늘로 복사 (오른쪽으로 이동한 것, 원본은 미완료 유지)
+    // 오늘로 복사 (오른쪽으로 이동한 것, 원본은 미완료 유지)
     for (const taskId of tasksToMoveToday) {
-      if (!selectedPendingTasks.has(taskId)) {
-        // 완료 처리한 건 복사 안 함
-        const original = pendingTasks.find((t) => t.id === taskId);
-        if (original) {
-          await contextAddTask({
-            title: original.title,
-            completed: false,
-            date: today,
-            categoryId: original.categoryId,
-          });
-        }
+      const original = pendingTasks.find((t) => t.id === taskId);
+      if (original) {
+        await contextAddTask({
+          title: original.title,
+          completed: false,
+          date: today,
+          categoryId: original.categoryId,
+        });
       }
     }
 
@@ -135,18 +122,7 @@ export function Tasks() {
     await refreshAll();
   };
 
-  // 개별 태스크 완료 토글 (왼쪽 패널)
-  const toggleCompleteTask = (taskId: number | string) => {
-    const newSet = new Set(selectedPendingTasks);
-    if (newSet.has(taskId)) {
-      newSet.delete(taskId);
-    } else {
-      newSet.add(taskId);
-    }
-    setSelectedPendingTasks(newSet);
-  };
-
-  // 개별 태스크를 오늘로 이동 (→ 버튼)
+  // 개별 태스크를 오늘로 이동 (클릭 or → 버튼)
   const toggleMoveToToday = (taskId: number | string) => {
     const newSet = new Set(tasksToMoveToday);
     if (newSet.has(taskId)) {
@@ -160,7 +136,6 @@ export function Tasks() {
   const closePendingModal = () => {
     setShowPendingTasksModal(false);
     setPendingTasks([]);
-    setSelectedPendingTasks(new Set());
     setTasksToMoveToday(new Set());
   };
 
@@ -423,7 +398,7 @@ export function Tasks() {
 
       {/* Filter Buttons */}
       <div className="mb-6 flex flex-col gap-3">
-        {/* 1행: < 날짜 > 오늘 버튼 테스트 버튼 */}
+        {/* 1행: < 날짜 > 오늘 버튼 */}
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
@@ -462,29 +437,6 @@ export function Tasks() {
             {({ ko: "오늘", en: "Today", zh: "今天" } as Record<string, string>)[language] || "Today"}
           </Button>
 
-          {/* 🧪 임시 디버그: 미완료 태스크 모달 테스트 */}
-          {/* <Button
-            onClick={() => {
-              const today = getTodayInTimezone();
-              const incompletePastTasks = tasks.filter((task) => {
-                const taskDate = task.date || "";
-                return taskDate < today && !task.completed;
-              });
-              if (incompletePastTasks.length > 0) {
-                setPendingTasks(incompletePastTasks);
-                setSelectedPendingTasks(new Set());
-                setTasksToMoveToday(new Set());
-                setShowPendingTasksModal(true);
-              } else {
-                alert("미완료 과거 태스크가 없습니다.");
-              }
-            }}
-            variant="outline"
-            size="sm"
-            className="text-xs border-dashed border-orange-400 text-orange-500"
-          >
-            🧪 날짜변경 모달 테스트
-          </Button> */}
         </div>
 
         {/* 2행: 타이틀 + 새로고침  |  탭 */}
@@ -557,14 +509,16 @@ export function Tasks() {
       {todayTasks.length > 0 && (
         <div className="grid grid-cols-2 gap-3 mb-4">
           {/* 진행률 카드 */}
-          <div className="bg-card rounded-lg border border-border px-4 py-3">
-            <p className="text-xs text-muted-foreground mb-1.5">
-              {({ ko: "진행률", en: "Progress", zh: "进度" } as Record<string, string>)[language] || "Progress"}
-            </p>
-            <p className="text-2xl font-bold mb-2.5">
-              {Math.round((todayTasks.filter((t) => t.completed).length / todayTasks.length) * 100)}
-              <span className="text-sm font-normal text-muted-foreground ml-0.5">%</span>
-            </p>
+          <div className="bg-card rounded-lg border border-border px-4 py-2.5">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[13px] text-muted-foreground">
+                {({ ko: "진행률", en: "Progress", zh: "进度" } as Record<string, string>)[language] || "Progress"}
+              </span>
+              <span className="text-lg font-bold">
+                {Math.round((todayTasks.filter((t) => t.completed).length / todayTasks.length) * 100)}
+                <span className="text-xs font-normal text-muted-foreground ml-0.5">%</span>
+              </span>
+            </div>
             <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
               <div
                 className="h-full bg-foreground rounded-full transition-all duration-500"
@@ -575,12 +529,14 @@ export function Tasks() {
             </div>
           </div>
           {/* Task 카드 */}
-          <div className="bg-card rounded-lg border border-border px-4 py-3">
-            <p className="text-xs text-muted-foreground mb-1.5">Task</p>
-            <p className="text-2xl font-bold">
-              {todayTasks.filter((t) => t.completed).length}
-              <span className="text-sm font-normal text-muted-foreground ml-1">/ {todayTasks.length}</span>
-            </p>
+          <div className="bg-card rounded-lg border border-border px-4 py-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[13px] text-muted-foreground">Task</span>
+              <span className="text-lg font-bold">
+                {todayTasks.filter((t) => t.completed).length}
+                <span className="text-xs font-normal text-muted-foreground ml-1">/ {todayTasks.length}</span>
+              </span>
+            </div>
           </div>
         </div>
       )}
@@ -695,15 +651,15 @@ export function Tasks() {
         const todayTitle = ({ ko: "오늘 할 일", en: "Today's tasks", zh: "今天的任务" } as Record<string, string>)[language] || "Today's tasks";
         const todayDateLabel = formatDateLabel(todayStr);
 
-        const movedTasks = pendingTasks.filter((t) => tasksToMoveToday.has(t.id) && !selectedPendingTasks.has(t.id));
-        const hasActions = selectedPendingTasks.size > 0 || tasksToMoveToday.size > 0;
+        const movedTasks = pendingTasks.filter((t) => tasksToMoveToday.has(t.id));
+        const hasActions = tasksToMoveToday.size > 0;
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <div className="bg-card rounded-2xl shadow-2xl w-full max-w-[620px] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-card rounded-2xl shadow-2xl w-full max-w-[620px] overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
 
               {/* 2패널 컬럼 헤더 */}
-              <div className="grid grid-cols-2 border-b border-border">
+              <div className="grid grid-cols-2 border-b border-border flex-shrink-0">
                 <div className="px-5 pt-5 pb-3">
                   <p className="text-lg font-bold text-foreground">{yesterdayTitle}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{yesterdayDateLabel}</p>
@@ -715,57 +671,28 @@ export function Tasks() {
               </div>
 
               {/* 2패널 본문 */}
-              <div className="grid grid-cols-2 min-h-[420px] max-h-[72vh]">
+              <div className="flex overflow-hidden">
                 {/* 왼쪽: 미완료 */}
-                <div className="overflow-y-auto px-3 py-3">
+                <div className="overflow-y-auto px-3 py-3 flex-1 max-h-[460px]">
                   <div className="space-y-1">
-                    {pendingTasks.filter((task) => !tasksToMoveToday.has(task.id)).map((task) => {
-                      const isCompleted = selectedPendingTasks.has(task.id);
-                      const isMoved = false;
-                      return (
-                        <div
-                          key={task.id}
-                          onClick={() => toggleCompleteTask(task.id)}
-                          className={`group flex items-center gap-3 px-3 h-10 rounded-lg border transition-all cursor-pointer ${
-                            isCompleted ? "border-border/50" : "border-border/60 hover:bg-muted/40"
-                          }`}
-                        >
-                          {/* 체크박스 - 기존 태스크와 동일한 스타일 */}
-                          <div
-                            className="w-5 h-5 rounded flex items-center justify-center border-2 transition-all flex-shrink-0"
-                            style={{
-                              backgroundColor: isCompleted ? "#0C8CE9" : "transparent",
-                              borderColor: isCompleted ? "#0C8CE9" : "#D1D5DB",
-                            }}
-                          >
-                            {isCompleted && <Check className="h-3.5 w-3.5 text-white stroke-[3]" />}
-                          </div>
-
-                          <span className={`text-sm flex-1 min-w-0 truncate ${isCompleted ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                            {task.title}
-                          </span>
-
-                          {/* → 오늘로 복사 */}
-                          {!isCompleted && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); toggleMoveToToday(task.id); }}
-                              className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
-                                isMoved
-                                  ? "bg-[#0C8CE9] text-white"
-                                  : "text-muted-foreground/40 hover:text-[#0C8CE9] hover:bg-[#0C8CE9]/10"
-                              }`}
-                            >
-                              <ArrowRight className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
+                    {pendingTasks.filter((task) => !tasksToMoveToday.has(task.id)).map((task) => (
+                      <div
+                        key={task.id}
+                        onClick={() => toggleMoveToToday(task.id)}
+                        className="group flex items-center gap-3 px-3 h-10 rounded-lg border border-border/60 hover:bg-[#0C8CE9]/5 hover:border-[#0C8CE9]/30 transition-all cursor-pointer"
+                      >
+                        <div className="w-5 h-5 rounded flex-shrink-0 border-2 border-[#D1D5DB]" />
+                        <span className="text-sm flex-1 min-w-0 truncate text-foreground">
+                          {task.title}
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground/30 group-hover:text-[#0C8CE9] transition-colors" />
+                      </div>
+                    ))}
                   </div>
                 </div>
 
                 {/* 오른쪽: 오늘 */}
-                <div className="overflow-y-auto border-l border-border px-3 py-3">
+                <div className="overflow-y-auto border-l border-border px-3 py-3 flex-1 max-h-[460px]">
                   {movedTasks.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 select-none">
                       <ArrowRight className="w-7 h-7 mb-2 opacity-50" />
@@ -796,7 +723,7 @@ export function Tasks() {
               </div>
 
               {/* 푸터 */}
-              <div className="px-5 py-3.5 border-t border-border flex items-center justify-between">
+              <div className="px-5 py-3.5 border-t border-border flex items-center justify-between flex-shrink-0">
                 <Button
                   variant="ghost"
                   size="sm"

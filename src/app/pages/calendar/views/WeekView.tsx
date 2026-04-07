@@ -36,7 +36,7 @@ interface WeekViewProps {
   selectedEvent: CalendarEvent | null;
   previewEvent: PreviewEvent | null;
   onEventClick: (event: CalendarEvent, element?: HTMLElement) => void;
-  onAddEventClick: (date: Date, hour?: number) => void;
+  onAddEventClick: (date: Date, hour?: number, clientX?: number, clientY?: number) => void;
 }
 
 const getCategoryIcon = (
@@ -121,20 +121,20 @@ export function WeekView({
       })
       .filter(
         (event) =>
-          !event.categoryId ||
-          selectedCategoryIds.includes(event.categoryId),
+          !event.isHoliday && (!event.categoryId ||
+          selectedCategoryIds.includes(event.categoryId)),
       );
   };
 
   return (
     <div
-      className="grid flex-1 min-h-0 border border-border rounded-md overflow-hidden"
+      className="grid flex-1 min-h-0 border border-border rounded-sm overflow-hidden"
       style={{
         gridTemplateColumns: "64px repeat(7, 1fr)",
         gridTemplateRows: "auto 1fr",
       }}
     >
-      <div className="border-b border-r bg-muted/30" />
+      <div className="border-b border-r bg-muted/30 py-0.5" />
 
       {weekDays.map((day, index) => {
         const isTodayDate = isToday(day);
@@ -143,7 +143,7 @@ export function WeekView({
         return (
           <div
             key={index}
-            className="px-2 py-1 text-center bg-muted/30 border-b border-r last:border-r-0 relative"
+            className="px-2 py-0.5 text-center bg-muted/30 border-b border-r last:border-r-0 relative"
           >
             <span className={`text-[13px] ${getTextColor(isTodayDate, dayOfWeek)}`}>
               {dayNames[language][day.getDay()]} (
@@ -196,7 +196,7 @@ export function WeekView({
                   }
                   e.preventDefault();
                   e.stopPropagation();
-                  onAddEventClick(day, hour);
+                  onAddEventClick(day, hour, e.clientX, e.clientY);
                 }}
                 className="absolute left-0 right-0 cursor-pointer hover:bg-muted/10"
                 style={{
@@ -289,7 +289,7 @@ export function WeekView({
                 <div
                   key={event.id}
                   data-event="true"
-                  className={`absolute rounded-sm px-2 py-1 cursor-pointer hover:opacity-80 transition-opacity overflow-hidden pointer-events-auto flex items-center ${isBeingEdited ? "opacity-50 bg-muted/40" : ""}`}
+                  className={`absolute rounded-[4px] px-2 py-1 cursor-pointer hover:opacity-80 transition-opacity overflow-hidden pointer-events-auto flex items-center ${isBeingEdited ? "opacity-50 bg-muted/40" : ""}`}
                   style={{
                     top: `${displayStartPosition}%`,
                     height: `${displayDuration}%`,
@@ -297,14 +297,14 @@ export function WeekView({
                     width: "calc(100% - 8px)",
                     backgroundColor: displayColor + "20",
                     borderLeft: `3px solid ${displayColor}`,
-                    minHeight: "28px",
+                    minHeight: "27px",
                   }}
                   onClick={(e) =>
                     onEventClick(event, e.currentTarget)
                   }
                 >
                   <div
-                    className={`flex items-center gap-1.5 truncate text-[13px] font-medium ${isBeingEdited ? "italic" : ""}`}
+                    className={`flex items-center gap-1.5 truncate text-[13px] font-medium `}
                     style={{ color: displayColor }}
                   >
                     <span className="shrink-0">

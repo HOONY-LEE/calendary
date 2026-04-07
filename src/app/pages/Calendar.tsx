@@ -30,6 +30,7 @@ import {
   MoreVertical,
   Edit2,
   Trash2,
+  Search,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../components/ui/button";
@@ -109,7 +110,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "../../lib/supabase";
 import { projectId, publicAnonKey } from "../../lib/supabase-info";
-import { getGoogleToken } from "../../lib/google-token";
+import { getGoogleToken, googleFetch } from "../../lib/google-token";
 import { AppleSpinner } from "../components/AppleSpinner";
 import googleIcon from "@/assets/ebb9edcfadcb4a0ed9d4fb9a34c8c95ec3d0a6aa.png";
 import { YearView } from "./calendar/views/YearView";
@@ -158,10 +159,23 @@ export function Calendar() {
   const [clickedDateForNewEvent, setClickedDateForNewEvent] =
     useState<Date | null>(null);
 
+  // 클릭한 반복 일정 인스턴스 정보 (삭제용)
+  const [clickedInstanceInfo, setClickedInstanceInfo] = useState<{
+    date: Date;
+    googleEventId?: string; // 인스턴스의 구글 이벤트 ID (예: baseId_20260325T090000Z)
+    googleRecurringEventId?: string; // 원본 반복 이벤트 ID
+  } | null>(null);
+
   // 월간 뷰 확장된 행 상태
   const [expandedRows, setExpandedRows] = useState<Set<number>>(
     new Set(),
   );
+
+  // 검색
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const virtualAnchorRef = useRef<HTMLElement | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -171,9 +185,20 @@ export function Calendar() {
     categoryId: "" as string,
   });
 
-  const { events, setEvents, loadEvents, isLoading, setIsLoading } = useCalendarEvents({ session, user, signOut, language });
+  const { events, setEvents, loadEvents, isLoading, setIsLoading } = useCalendarEvents({ session, user, signOut, language, currentDate });
   const { categories, setCategories, selectedCategoryIds, setSelectedCategoryIds, showAddCategoryInDropdown, setShowAddCategoryInDropdown, newCategoryNameInDropdown, setNewCategoryNameInDropdown, newCategoryColorInDropdown, setNewCategoryColorInDropdown, showColorPickerInDropdown, setShowColorPickerInDropdown, editingCategoryIdInDropdown, setEditingCategoryIdInDropdown, deletingCategoryIdInDropdown, setDeletingCategoryIdInDropdown, handleCreateCategoryInDropdown, handleCancelAddCategoryInDropdown, handleUpdateCategoryInDropdown, handleDeleteCategoryInDropdown, moveCategory, saveCategoryOrder } = useCategories({ session, user, signOut, language, setIsLoading, formData, setFormData });
   const { isDragging, setIsDragging, dragStartDate, setDragStartDate, dragEndDate, setDragEndDate, isDateInDragRange, handleMouseDown, handleMouseEnter, handleMouseUp } = useDragSelection({ events, categories, setSelectedDate, setSelectedEvent, setFormData, setPreviewEvent, setMonthViewPopoverDate, setMonthViewPopoverOpen });
+
+  // 검색 필터링된 이벤트
+  const filteredEvents = searchQuery.trim()
+    ? events.filter((e) => {
+        const q = searchQuery.trim().toLowerCase();
+        return (
+          (e.title && e.title.toLowerCase().includes(q)) ||
+          (e.description && e.description.toLowerCase().includes(q))
+        );
+      })
+    : events;
 
   // 네이티브 드래그용 ref (항상 최신 categories 참조)
   const categoriesRef = useRef(categories);
@@ -204,7 +229,7 @@ export function Calendar() {
   };
 
   const getEventsForDateLocal = (date: Date | null) => {
-    return getEventsForDate(date, events, selectedCategoryIds);
+    return getEventsForDate(date, filteredEvents, selectedCategoryIds);
   };
 
   const isCurrentMonthLocal = (date: Date | null) => {
@@ -227,15 +252,34 @@ export function Calendar() {
     event: CalendarEvent,
     element?: HTMLElement,
   ) => {
+    // 공휴일 일정은 클릭해도 편집 팝오버 열지 않음
+    if (event.isHoliday) return;
+
     // 반복 일정의 인스턴스를 클릭한 경우, 원본 일정을 찾음
     let targetEvent = event;
     if (event.isRecurringInstance && event.recurringEventId) {
+      // 클릭한 인스턴스 정보 저장 (반복 일정 삭제 시 사용)
+      setClickedInstanceInfo({
+        date: event.date,
+        googleEventId: event.googleEventId,
+        googleRecurringEventId: event.googleRecurringEventId,
+      });
+
       const originalEvent = events.find(
         (e) => e.id === event.recurringEventId,
       );
       if (originalEvent) {
         targetEvent = originalEvent;
       }
+    } else if (event.recurrence) {
+      // 원본 반복 일정을 직접 클릭한 경우
+      setClickedInstanceInfo({
+        date: event.date,
+        googleEventId: event.googleEventId,
+        googleRecurringEventId: event.googleRecurringEventId,
+      });
+    } else {
+      setClickedInstanceInfo(null);
     }
 
     setSelectedEvent(targetEvent);
@@ -271,7 +315,7 @@ export function Calendar() {
     setPopoverMode(true);
   };
 
-  const handleAddEventClick = (date: Date, hour?: number) => {
+  const handleAddEventClick = (date: Date, hour?: number, clientX?: number, clientY?: number) => {
     setSelectedEvent(null);
     setSelectedDate(date);
 
@@ -281,7 +325,7 @@ export function Calendar() {
         : "09:00";
     const defaultEndTime =
       hour !== undefined
-        ? `${(hour + 1).toString().padStart(2, "0")}:00`
+        ? `${Math.min(hour + 1, 23).toString().padStart(2, "0")}:00`
         : "10:00";
 
     setFormData({
@@ -292,15 +336,24 @@ export function Calendar() {
       categoryId: categories.length > 0 ? categories[0].id : "",
     });
     setIsCreating(true);
+    setPreviewEvent(null);
 
-    // 미리보기 즉시 설정
-    setPreviewEvent({
-      title: "",
-      startTime: defaultStartTime,
-      endTime: defaultEndTime,
-      description: "",
-      categoryId: categories.length > 0 ? categories[0].id : "",
-    });
+    // 클릭 좌표 기반 가상 앵커 생성
+    if (clientX !== undefined && clientY !== undefined) {
+      if (virtualAnchorRef.current && document.body.contains(virtualAnchorRef.current)) {
+        document.body.removeChild(virtualAnchorRef.current);
+      }
+      const el = document.createElement("div");
+      el.style.cssText = `position:fixed;left:${clientX}px;top:${clientY}px;width:0;height:0;pointer-events:none;`;
+      document.body.appendChild(el);
+      virtualAnchorRef.current = el;
+      setPopoverAnchor(el);
+    } else {
+      setPopoverAnchor(null);
+    }
+
+    setCreatePopoverOpen(true);
+    setPopoverMode(true);
   };
 
   const handleSave = async () => {
@@ -406,7 +459,7 @@ export function Calendar() {
             selectedCategory.googleCalendarId,
           );
 
-          const response = await fetch(
+          const response = await googleFetch(
             `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(selectedCategory.googleCalendarId!)}`,
             {
               method: "POST",
@@ -414,7 +467,6 @@ export function Calendar() {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${publicAnonKey}`,
                 "X-User-JWT": session.access_token,
-                "X-Google-Access-Token": getGoogleToken(session),
               },
               body: JSON.stringify({
                 title: formData.title,
@@ -424,8 +476,10 @@ export function Calendar() {
                 startTime: formData.startTime,
                 endTime: formData.endTime,
                 isAllDay: isAllDay,
+                rrule: formData.rrule || undefined,
               }),
             },
+            session,
           );
 
           if (!response.ok) {
@@ -621,7 +675,7 @@ export function Calendar() {
           selectedEvent.googleCalendarId &&
           getGoogleToken(session)
         ) {
-          const response = await fetch(
+          const response = await googleFetch(
             `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(selectedEvent.googleCalendarId)}/${selectedEvent.googleEventId}`,
             {
               method: "PATCH",
@@ -629,7 +683,6 @@ export function Calendar() {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${publicAnonKey}`,
                 "X-User-JWT": session.access_token,
-                "X-Google-Access-Token": getGoogleToken(session),
               },
               body: JSON.stringify({
                 title: formData.title,
@@ -639,8 +692,10 @@ export function Calendar() {
                 startTime: formData.startTime,
                 endTime: formData.endTime,
                 isAllDay: isAllDay,
+                rrule: formData.rrule || undefined,
               }),
             },
+            session,
           );
 
           if (!response.ok) {
@@ -745,100 +800,6 @@ export function Calendar() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!selectedEvent || !session?.access_token) return;
-
-    try {
-      // 구글 캘린더 이벤트인 경우
-      if (selectedEvent.isGoogleEvent) {
-        if (!getGoogleToken(session)) {
-          toast.error(
-            ({ ko: "구글 캘린더 연동이 만료되었습니다. 설정에서 다시 연동해주세요.", en: "Google Calendar connection expired. Please reconnect in Settings.", zh: "Google 日历连接已过期。请在设置中重新连接。" } as Record<string, string>)[language] || "Google Calendar connection expired. Please reconnect in Settings.",
-            {
-              duration: 5000,
-              action: {
-                label: "Settings",
-                onClick: () => {},
-              },
-            },
-          );
-          return;
-        }
-      }
-
-      // 🔥 낙관적 UI 업데이트: 먼저 UI에서 제거
-      const deletedEvent = selectedEvent;
-      setEvents(
-        events.filter((e) => e.id !== deletedEvent.id),
-      );
-      toast.success(
-        ({ ko: "일정이 삭제되었습니다", en: "Event deleted", zh: "事件已删除" } as Record<string, string>)[language] || "Event deleted",
-      );
-
-      // 구글 캘린더 이벤트인 경우 구글 API로 백그라운드 삭제
-      if (
-        deletedEvent.isGoogleEvent &&
-        deletedEvent.googleEventId &&
-        deletedEvent.googleCalendarId &&
-        getGoogleToken(session)
-      ) {
-        fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(deletedEvent.googleCalendarId)}/${deletedEvent.googleEventId}`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${publicAnonKey}`,
-              "X-User-JWT": session.access_token,
-              "X-Google-Access-Token": getGoogleToken(session),
-            },
-          },
-        ).then(async (response) => {
-          if (!response.ok) {
-            console.error("[Calendar] Google delete failed, restoring event");
-            // 실패 시 이벤트 복원
-            setEvents((prev) => [...prev, deletedEvent]);
-            toast.error(
-              ({ ko: "구글 캘린더 삭제에 실패했습니다. 일정이 복원됩니다.", en: "Failed to delete from Google Calendar. Event restored.", zh: "Google 日历删除失败。事件已恢复。" } as Record<string, string>)[language] || "Failed to delete from Google Calendar. Event restored.",
-            );
-          }
-        }).catch(() => {
-          setEvents((prev) => [...prev, deletedEvent]);
-          toast.error(
-            ({ ko: "구글 캘린더 삭제에 실패했습니다. 일정이 복원됩니다.", en: "Failed to delete from Google Calendar. Event restored.", zh: "Google 日历删除失败。事件已恢复。" } as Record<string, string>)[language] || "Failed to delete from Google Calendar. Event restored.",
-          );
-        });
-      } else {
-        // 일반 이벤트는 Supabase DB에서 삭제
-        await eventsAPI.delete(
-          deletedEvent.id,
-          session.access_token,
-        );
-      }
-    } catch (error) {
-      console.error(
-        "[Calendar] Failed to delete event:",
-        error,
-      );
-
-      // 401 에러 (세션 만료) 처리
-      if (
-        error instanceof Error &&
-        error.message.includes("Authentication failed")
-      ) {
-        console.log("[Calendar] Session expired, signing out");
-        toast.error(
-          ({ ko: "세션이 만료되었습니다. 다시 로그인해주세요.", en: "Session expired. Please sign in again.", zh: "会话已过期。请重新登录。" } as Record<string, string>)[language] || "Session expired. Please sign in again.",
-        );
-        await signOut();
-        return;
-      }
-
-      toast.error(
-        ({ ko: "일정 삭제에 실패했습니다", en: "Failed to delete event", zh: "删除事件失败" } as Record<string, string>)[language] || "Failed to delete event",
-      );
-    }
-  };
-
   const handleCancel = () => {
     if (isCreating) {
       setIsCreating(false);
@@ -879,7 +840,7 @@ export function Calendar() {
       {/* 로딩 오버레이 */}
       {isLoading && (
         <div className="fixed inset-0 bg-black/5 z-50 flex items-center justify-center">
-          <AppleSpinner size={48} className="text-muted-foreground" />
+          <AppleSpinner size={32} className="text-muted-foreground" />
         </div>
       )}
 
@@ -914,6 +875,59 @@ export function Calendar() {
           >
             {({ ko: "오늘", en: "Today", zh: "今天" } as Record<string, string>)[language] || "Today"}
           </Button>
+
+          {/* 검색 */}
+          <div className="flex items-center">
+            {showSearch ? (
+              <div className="flex items-center gap-1 animate-in fade-in slide-in-from-left-2 duration-200">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        setSearchQuery("");
+                        setShowSearch(false);
+                      }
+                    }}
+                    placeholder={({ ko: "일정 검색...", en: "Search events...", zh: "搜索日程..." } as Record<string, string>)[language] || "Search events..."}
+                    className="h-8 w-[180px] rounded-md border border-border bg-background pl-8 pr-8 text-sm outline-none focus:ring-1 focus:ring-ring"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer"
+                    >
+                      <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                    </button>
+                  )}
+                </div>
+                <Button
+                  onClick={() => { setSearchQuery(""); setShowSearch(false); }}
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={() => {
+                  setShowSearch(true);
+                  setTimeout(() => searchInputRef.current?.focus(), 50);
+                }}
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -1144,7 +1158,7 @@ export function Calendar() {
       {viewType === "day" && (
         <DayView
           currentDate={currentDate}
-          events={events}
+          events={filteredEvents}
           selectedCategoryIds={selectedCategoryIds}
           categories={categories}
           language={language}
@@ -1157,7 +1171,7 @@ export function Calendar() {
       {viewType === "week" && (
         <WeekView
           currentDate={currentDate}
-          events={events}
+          events={filteredEvents}
           selectedCategoryIds={selectedCategoryIds}
           categories={categories}
           language={language}
@@ -1170,7 +1184,7 @@ export function Calendar() {
       {viewType === "month" && (
         <MonthView
           currentDate={currentDate}
-          events={events}
+          events={filteredEvents}
           selectedCategoryIds={selectedCategoryIds}
           categories={categories}
           language={language}
@@ -1207,7 +1221,7 @@ export function Calendar() {
       {viewType === "year" && (
         <YearView
           currentDate={currentDate}
-          events={events}
+          events={filteredEvents}
           selectedCategoryIds={selectedCategoryIds}
           categories={categories}
           language={language}
@@ -1221,8 +1235,8 @@ export function Calendar() {
         anchorElement={popoverAnchor}
         selectedDate={selectedDate}
         selectedEndDate={selectedEvent?.endDate}
-        defaultStartTime="09:00"
-        defaultEndTime="10:00"
+        defaultStartTime={formData.startTime || "09:00"}
+        defaultEndTime={formData.endTime || "10:00"}
         categories={categories}
         language={language}
         open={createPopoverOpen && popoverMode}
@@ -1233,6 +1247,13 @@ export function Calendar() {
             setPopoverAnchor(null);
             setSelectedEvent(null);
             setPreviewEvent(null);
+            // 닫기 애니메이션 완료 후 가상 앵커 제거 (즉시 제거 시 flash 발생)
+            setTimeout(() => {
+              if (virtualAnchorRef.current && document.body.contains(virtualAnchorRef.current)) {
+                document.body.removeChild(virtualAnchorRef.current);
+                virtualAnchorRef.current = null;
+              }
+            }, 300);
           }
         }}
         event={
@@ -1356,7 +1377,7 @@ export function Calendar() {
 
                 if (categoryChanged) {
                   // 다른 구글 캘린더로 이동 + 수정
-                  const moveResponse = await fetch(
+                  const moveResponse = await googleFetch(
                     `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(selectedEvent.googleCalendarId)}/${selectedEvent.googleEventId}/move`,
                     {
                       method: "POST",
@@ -1364,14 +1385,13 @@ export function Calendar() {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${publicAnonKey}`,
                         "X-User-JWT": session.access_token,
-                        "X-Google-Access-Token":
-                          getGoogleToken(session),
                       },
                       body: JSON.stringify({
                         destinationCalendarId: newGoogleCalendarId,
                         eventData: eventBody,
                       }),
                     },
+                    session,
                   );
 
                   if (!moveResponse.ok) {
@@ -1383,7 +1403,7 @@ export function Calendar() {
                   }
                 } else {
                   // 같은 캘린더 내 수정
-                  const updateResponse = await fetch(
+                  const updateResponse = await googleFetch(
                     `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(selectedEvent.googleCalendarId)}/${selectedEvent.googleEventId}`,
                     {
                       method: "PATCH",
@@ -1391,11 +1411,10 @@ export function Calendar() {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${publicAnonKey}`,
                         "X-User-JWT": session.access_token,
-                        "X-Google-Access-Token":
-                          getGoogleToken(session),
                       },
                       body: JSON.stringify(eventBody),
                     },
+                    session,
                   );
 
                   if (!updateResponse.ok) {
@@ -1451,11 +1470,122 @@ export function Calendar() {
                     : e,
                 ),
               );
+            } else {
+              // 새 일정 생성
+              const startDate = new Date(eventData.startDate);
+              const endDate = eventData.endDate
+                ? new Date(eventData.endDate)
+                : new Date(eventData.startDate);
+
+              if (eventData.startTime) {
+                const [h, m] = eventData.startTime.split(":").map(Number);
+                startDate.setHours(h, m, 0, 0);
+              }
+              if (eventData.endTime) {
+                const [h, m] = eventData.endTime.split(":").map(Number);
+                endDate.setHours(h, m, 0, 0);
+              }
+
+              const isAllDay = !eventData.startTime && !eventData.endTime;
+              const recurrence = eventData.rrule ? [eventData.rrule] : undefined;
+
+              let dbEndDate = eventData.endDate
+                ? new Date(eventData.endDate)
+                : new Date(eventData.startDate);
+              if (isAllDay && eventData.endDate && eventData.endDate.getTime() !== eventData.startDate.getTime()) {
+                dbEndDate = new Date(dbEndDate);
+                dbEndDate.setDate(dbEndDate.getDate() + 1);
+              }
+
+              const selectedCategory = categories.find((c) => c.id === eventData.categoryId);
+              const isGoogleCalendarCategory = selectedCategory?.isGoogleCalendar && selectedCategory?.googleCalendarId;
+
+              if (isGoogleCalendarCategory && getGoogleToken(session)) {
+                const response = await googleFetch(
+                  `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(selectedCategory.googleCalendarId!)}`,
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${publicAnonKey}`,
+                      "X-User-JWT": session.access_token,
+                    },
+                    body: JSON.stringify({
+                      title: eventData.title,
+                      description: eventData.description,
+                      startDate: formatDate(new Date(eventData.startDate)),
+                      endDate: formatDate(eventData.endDate ? new Date(eventData.endDate) : new Date(eventData.startDate)),
+                      startTime: eventData.startTime,
+                      endTime: eventData.endTime,
+                      isAllDay,
+                      rrule: eventData.rrule || undefined,
+                    }),
+                  },
+                  session,
+                );
+                if (!response.ok) throw new Error("Failed to create Google Calendar event");
+                const googleEvent = await response.json();
+                setEvents((prev) => [
+                  ...prev,
+                  {
+                    id: `google-${googleEvent.id}`,
+                    title: eventData.title,
+                    date: eventData.startDate,
+                    endDate: eventData.endDate,
+                    startTime: eventData.startTime,
+                    endTime: eventData.endTime,
+                    description: eventData.description,
+                    categoryId: eventData.categoryId,
+                    recurrence: eventData.recurrence,
+                    rrule: eventData.rrule,
+                    isGoogleEvent: true,
+                    googleEventId: googleEvent.id,
+                    googleCalendarId: selectedCategory.googleCalendarId,
+                    googleCalendarName: selectedCategory.name,
+                  },
+                ]);
+                toast.success(({ ko: "구글 캘린더에 일정이 생성되었습니다", en: "Event created in Google Calendar", zh: "已在 Google 日历中创建事件" } as Record<string, string>)[language] || "Event created in Google Calendar");
+              } else {
+                const dbEvent = await eventsAPI.create(
+                  {
+                    summary: eventData.title,
+                    description: eventData.description || undefined,
+                    is_all_day: isAllDay,
+                    start_date: isAllDay ? formatDate(new Date(eventData.startDate)) : undefined,
+                    end_date: isAllDay ? formatDate(dbEndDate) : undefined,
+                    start_datetime: !isAllDay ? startDate.toISOString() : undefined,
+                    end_datetime: !isAllDay ? endDate.toISOString() : undefined,
+                    category_id: eventData.categoryId || undefined,
+                    recurrence,
+                    user_id: user?.id,
+                  },
+                  session.access_token,
+                );
+                setEvents((prev) => [
+                  ...prev,
+                  {
+                    id: dbEvent.id,
+                    title: eventData.title,
+                    date: eventData.startDate,
+                    endDate: eventData.endDate,
+                    startTime: eventData.startTime,
+                    endTime: eventData.endTime,
+                    description: eventData.description,
+                    categoryId: eventData.categoryId,
+                    recurrence: eventData.recurrence,
+                    rrule: eventData.rrule,
+                  },
+                ]);
+                toast.success(({ ko: "일정이 생성되었습니다", en: "Event created", zh: "事件已创建" } as Record<string, string>)[language] || "Event created");
+              }
+              setIsCreating(false);
+              setCreatePopoverOpen(false);
+              setPopoverMode(false);
             }
           } catch (error) {
-            console.error("Failed to update event:", error);
+            console.error("Failed to save event:", error);
             toast.error(
-              ({ ko: "일정 수정에 실패했습니다", en: "Failed to update event", zh: "更新事件失败" } as Record<string, string>)[language] || "Failed to update event",
+              ({ ko: "일정 저장에 실패했습니다", en: "Failed to save event", zh: "保存事件失败" } as Record<string, string>)[language] || "Failed to save event",
             );
           }
         }}
@@ -1463,9 +1593,6 @@ export function Calendar() {
           if (!selectedEvent || !session?.access_token) return;
 
           try {
-            const selectedCategory = categories.find(
-              (c) => c.id === selectedEvent.categoryId,
-            );
             // 구글 이벤트인 경우 토큰 확인
             if (selectedEvent.isGoogleEvent && !getGoogleToken(session)) {
               toast.error(
@@ -1475,9 +1602,19 @@ export function Calendar() {
               return;
             }
 
-            // 🔥 낙관적 UI 업데이트: 먼저 UI에서 제거
             const deletedEvent = selectedEvent;
-            setEvents((prev) => prev.filter((e) => e.id !== deletedEvent.id));
+            const instanceInfo = clickedInstanceInfo;
+            const isRecurring = !!deletedEvent.recurrence;
+            const effectiveDeleteType = isRecurring ? (deleteType || "all") : "all";
+
+            // 🔥 낙관적 UI 업데이트
+            if (effectiveDeleteType === "all") {
+              // 모든 반복 일정 제거 (원본 + 확장된 인스턴스)
+              setEvents((prev) => prev.filter((e) => e.id !== deletedEvent.id));
+            } else {
+              // "this" 또는 "following"은 리로드로 처리
+              setEvents((prev) => prev.filter((e) => e.id !== deletedEvent.id));
+            }
             toast.success(
               ({ ko: "일정이 삭제되었습니다", en: "Event deleted", zh: "事件已删除" } as Record<string, string>)[language] || "Event deleted",
             );
@@ -1485,43 +1622,103 @@ export function Calendar() {
             setPopoverMode(false);
             setPopoverAnchor(null);
             setSelectedEvent(null);
+            setClickedInstanceInfo(null);
 
             if (
               deletedEvent.isGoogleEvent &&
               getGoogleToken(session) &&
-              deletedEvent.googleEventId &&
               deletedEvent.googleCalendarId
             ) {
-              // 구글 캘린더 일정 백그라운드 삭제
-              fetch(
-                `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events/${encodeURIComponent(deletedEvent.googleCalendarId)}/${deletedEvent.googleEventId}`,
-                {
-                  method: "DELETE",
-                  headers: {
-                    Authorization: `Bearer ${publicAnonKey}`,
-                    "X-User-JWT": session.access_token,
-                    "X-Google-Access-Token": getGoogleToken(session),
-                  },
-                },
-              ).then(async (res) => {
-                if (!res.ok) {
-                  setEvents((prev) => [...prev, deletedEvent]);
-                  toast.error(
-                    ({ ko: "구글 캘린더 삭제 실패. 일정이 복원됩니다.", en: "Google delete failed. Event restored.", zh: "Google 删除失败。事件已恢复。" } as Record<string, string>)[language] || "Google delete failed. Event restored.",
-                  );
-                }
-              }).catch(() => {
+              const calendarId = encodeURIComponent(deletedEvent.googleCalendarId);
+              const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-f973dbc1/google-calendar/events`;
+              const headers = {
+                Authorization: `Bearer ${publicAnonKey}`,
+                "X-User-JWT": session.access_token,
+              };
+
+              const handleGoogleError = () => {
                 setEvents((prev) => [...prev, deletedEvent]);
                 toast.error(
                   ({ ko: "구글 캘린더 삭제 실패. 일정이 복원됩니다.", en: "Google delete failed. Event restored.", zh: "Google 删除失败。事件已恢复。" } as Record<string, string>)[language] || "Google delete failed. Event restored.",
                 );
-              });
+              };
+
+              try {
+                if (effectiveDeleteType === "this" && instanceInfo?.googleEventId) {
+                  // 이 일정만 삭제: 인스턴스 ID로 DELETE
+                  const res = await googleFetch(
+                    `${baseUrl}/${calendarId}/${instanceInfo.googleEventId}`,
+                    { method: "DELETE", headers },
+                    session,
+                  );
+                  if (!res.ok) handleGoogleError();
+                  else loadEvents(); // 리로드하여 나머지 인스턴스 표시
+                } else if (effectiveDeleteType === "following" && instanceInfo?.googleRecurringEventId) {
+                  // 이후 모든 일정 삭제: 원본 이벤트의 recurrence에 UNTIL 추가
+                  const instanceDate = instanceInfo.date;
+                  // UNTIL은 이 인스턴스 하루 전 날짜로 설정
+                  const untilDate = new Date(instanceDate);
+                  untilDate.setDate(untilDate.getDate() - 1);
+                  const untilStr = `${untilDate.getFullYear()}${String(untilDate.getMonth() + 1).padStart(2, '0')}${String(untilDate.getDate()).padStart(2, '0')}`;
+
+                  const res = await googleFetch(
+                    `${baseUrl}/${calendarId}/${instanceInfo.googleRecurringEventId}/truncate-recurrence`,
+                    {
+                      method: "POST",
+                      headers: { ...headers, "Content-Type": "application/json" },
+                      body: JSON.stringify({ untilDate: untilStr }),
+                    },
+                    session,
+                  );
+                  if (!res.ok) handleGoogleError();
+                  else loadEvents(); // 리로드
+                } else {
+                  // 모든 반복 일정 삭제: 원본 이벤트 ID로 DELETE
+                  const eventIdToDelete = instanceInfo?.googleRecurringEventId || deletedEvent.googleEventId;
+                  if (eventIdToDelete) {
+                    const res = await googleFetch(
+                      `${baseUrl}/${calendarId}/${eventIdToDelete}`,
+                      { method: "DELETE", headers },
+                      session,
+                    );
+                    if (!res.ok) handleGoogleError();
+                    else loadEvents(); // 리로드
+                  }
+                }
+              } catch {
+                handleGoogleError();
+              }
             } else if (!deletedEvent.isGoogleEvent) {
               // 로컬 일정 삭제
-              await eventsAPI.delete(
-                deletedEvent.id,
-                session.access_token,
-              );
+              if (effectiveDeleteType === "all" || !isRecurring) {
+                await eventsAPI.delete(
+                  deletedEvent.id,
+                  session.access_token,
+                );
+              } else if (effectiveDeleteType === "this" && instanceInfo) {
+                // 로컬 반복 일정: exdate에 해당 날짜 추가
+                const exdateStr = instanceInfo.date.toISOString();
+                const currentExdates = deletedEvent.exdate || [];
+                await eventsAPI.patchRecurrence(
+                  deletedEvent.id,
+                  { exdate: [...currentExdates.map(d => d.toISOString()), exdateStr] },
+                  session.access_token,
+                );
+                loadEvents();
+              } else if (effectiveDeleteType === "following" && instanceInfo && deletedEvent.rrule) {
+                // 로컬 반복 일정: rrule에 UNTIL 추가
+                const untilDate = new Date(instanceInfo.date);
+                untilDate.setDate(untilDate.getDate() - 1);
+                const untilStr = `${untilDate.getFullYear()}${String(untilDate.getMonth() + 1).padStart(2, '0')}${String(untilDate.getDate()).padStart(2, '0')}T235959Z`;
+                let updatedRrule = deletedEvent.rrule.replace(/;?(UNTIL|COUNT)=[^;]*/g, '');
+                updatedRrule = `${updatedRrule};UNTIL=${untilStr}`;
+                await eventsAPI.patchRecurrence(
+                  deletedEvent.id,
+                  { recurrence: [updatedRrule] },
+                  session.access_token,
+                );
+                loadEvents();
+              }
             }
           } catch (error) {
             console.error("Failed to delete event:", error);
@@ -1593,14 +1790,72 @@ export function Calendar() {
           }
 
           try {
-            await categoriesAPI.update(
-              categoryId,
-              {
+            const isGoogleCategory = categoryId.startsWith("gcal-");
+
+            if (isGoogleCategory) {
+              // Google 카테고리: Google Calendar API로 이름+색상 변경
+              const googleCalendarId = categoryId.replace("gcal-", "");
+              const googleToken = getGoogleToken(session);
+
+              if (googleToken) {
+                // 1. 이름 변경
+                const namePatchRes = await fetch(
+                  `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(googleCalendarId)}`,
+                  {
+                    method: "PATCH",
+                    headers: {
+                      Authorization: `Bearer ${googleToken}`,
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ summary: categoryData.name }),
+                  },
+                );
+                if (!namePatchRes.ok) {
+                  console.error("[GoogleCalendar] name PATCH failed");
+                  throw new Error("Google Calendar 이름 변경 실패");
+                }
+
+                // 2. 색상 변경
+                const colorPatchRes = await fetch(
+                  `https://www.googleapis.com/calendar/v3/users/me/calendarList/${encodeURIComponent(googleCalendarId)}`,
+                  {
+                    method: "PATCH",
+                    headers: {
+                      Authorization: `Bearer ${googleToken}`,
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      backgroundColor: categoryData.color,
+                      foregroundColor: "#ffffff",
+                    }),
+                  },
+                );
+                if (!colorPatchRes.ok) {
+                  console.error("[GoogleCalendar] color PATCH failed");
+                  toast.warning(
+                    ({ ko: "이름은 변경됐지만 색상 동기화에 실패했습니다", en: "Name updated but color sync failed", zh: "名称已更新但颜色同步失败" } as Record<string, string>)[language] || "Name updated but color sync failed",
+                  );
+                }
+              }
+
+              // localStorage override 동기화
+              const overrides = JSON.parse(localStorage.getItem("gcal_category_overrides") || "{}");
+              overrides[categoryId] = {
                 name: categoryData.name,
                 color: categoryData.color,
-              },
-              session.access_token,
-            );
+              };
+              localStorage.setItem("gcal_category_overrides", JSON.stringify(overrides));
+            } else {
+              // 로컬 카테고리: DB 업데이트
+              await categoriesAPI.update(
+                categoryId,
+                {
+                  name: categoryData.name,
+                  color: categoryData.color,
+                },
+                session.access_token,
+              );
+            }
 
             setCategories(
               categories.map((cat) =>

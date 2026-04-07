@@ -173,6 +173,17 @@ export function EventCreatePopover({
       event?.categoryId || categories[0]?.id || "default",
   });
 
+  // 새 일정 생성 시 사용할 기본 카테고리 (쓰기 가능한 첫 번째 카테고리)
+  const defaultCategoryId = useMemo(() => {
+    const writable = categories.find(
+      (cat) =>
+        !cat.isGoogleCalendar ||
+        cat.googleCalendarAccessRole === "owner" ||
+        cat.googleCalendarAccessRole === "writer"
+    );
+    return writable?.id || categories[0]?.id || "default";
+  }, [categories]);
+
   // 시간 duration 계산 헬퍼 함수
   const calculateTimeDuration = (
     start: string,
@@ -285,6 +296,11 @@ export function EventCreatePopover({
     // 팝오버가 열릴 때만 실행
     if (!isOpen) return;
 
+    // 상태 초기화
+    setShowDeleteOptions(false);
+    setSelectedDeleteType("this");
+    setShowDescription(false);
+
     if (event) {
       // 기존 이벤트 편집
       console.log("EventCreatePopover: event opened", {
@@ -308,9 +324,11 @@ export function EventCreatePopover({
         endTime: event.endTime || defaultEndTime,
         description: event.description || "",
         categoryId:
-          event.categoryId ||
-          (categories.length > 0 ? categories[0].id : ""),
+          event.categoryId || defaultCategoryId,
       });
+
+      // 설명이 있으면 설명 영역 펼침
+      if (event.description) setShowDescription(true);
 
       // prevStartTimeRef 업데이트
       prevStartTimeRef.current = newStartTime;
@@ -374,7 +392,7 @@ export function EventCreatePopover({
         startTime: defaultStartTime,
         endTime: defaultEndTime,
         description: "",
-        categoryId: categories[0]?.id || "default",
+        categoryId: defaultCategoryId,
       });
 
       // prevStartTimeRef 업데이트
@@ -409,7 +427,7 @@ export function EventCreatePopover({
     if (formData.startTime !== (event.startTime || defaultStartTime)) return true;
     if (formData.endTime !== (event.endTime || defaultEndTime)) return true;
     if (formData.description !== (event.description || "")) return true;
-    if (formData.categoryId !== (event.categoryId || categories[0]?.id || "default")) return true;
+    if (formData.categoryId !== (event.categoryId || defaultCategoryId)) return true;
     
     // 날짜 비교
     if (!isSameDate(internalStartDate, selectedDate)) return true;
@@ -592,7 +610,7 @@ export function EventCreatePopover({
           startTime: defaultStartTime,
           endTime: defaultEndTime,
           description: "",
-          categoryId: categories[0]?.id || "default",
+          categoryId: defaultCategoryId,
         });
         setIsRecurring(false);
       }
@@ -607,7 +625,7 @@ export function EventCreatePopover({
         startTime: defaultStartTime,
         endTime: defaultEndTime,
         description: "",
-        categoryId: categories[0]?.id || "default",
+        categoryId: defaultCategoryId,
       });
     } else {
       setFormData({
@@ -616,7 +634,7 @@ export function EventCreatePopover({
         endTime: event.endTime || defaultEndTime,
         description: event.description || "",
         categoryId:
-          event.categoryId || categories[0]?.id || "default",
+          event.categoryId || defaultCategoryId,
       });
     }
     setIsOpen(false);
@@ -952,6 +970,16 @@ export function EventCreatePopover({
           align="start"
           side={popoverSide}
           sideOffset={8}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey && internalStartDate) {
+              // textarea나 카테고리 입력 중이면 무시
+              const target = e.target as HTMLElement;
+              if (target.tagName === "TEXTAREA") return;
+              if (target.closest("[data-category-input]")) return;
+              e.preventDefault();
+              handleSave();
+            }
+          }}
           onOpenAutoFocus={(e) => {
             // 새 일정 생성 시에만 제목 입력란에 포커스
             if (!event) {
@@ -1429,162 +1457,170 @@ export function EventCreatePopover({
             )}
 
             {/* Actions */}
-            {!showDeleteOptions ? (
-              <div className="flex gap-2 p-[0px]">
-                <Button
-                  onClick={handleCancel}
-                  variant="outline"
-                  className="flex-1 h-9 text-sm hover:bg-muted/50 rounded-sm cursor-pointer"
-                >
-                  {({ ko: "취소", en: "Cancel", zh: "取消" } as Record<string, string>)[language] || "Cancel"}
-                </Button>
-                <Button
-                  onClick={() => {
-                    console.log(
-                      "[EventCreatePopover] Save button clicked!",
-                    );
-                    console.log(
-                      "[EventCreatePopover] Button disabled?",
-                      event
-                        ? !formData.title.trim() || !internalStartDate || !hasChanges
-                        : !formData.title.trim() || !internalStartDate,
-                    );
-                    handleSave();
-                  }}
-                  className="flex-1 h-9 text-sm bg-[#0C8CE9] hover:bg-[#0C8CE9]/90 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed rounded-sm cursor-pointer"
-                  disabled={
+            <div className="flex gap-2 p-[0px]">
+              <Button
+                onClick={handleCancel}
+                variant="outline"
+                className="flex-1 h-9 text-sm hover:bg-muted/50 rounded-sm cursor-pointer"
+              >
+                {({ ko: "취소", en: "Cancel", zh: "取消" } as Record<string, string>)[language] || "Cancel"}
+              </Button>
+              <Button
+                onClick={() => {
+                  console.log(
+                    "[EventCreatePopover] Save button clicked!",
+                  );
+                  console.log(
+                    "[EventCreatePopover] Button disabled?",
                     event
                       ? !formData.title.trim() || !internalStartDate || !hasChanges
-                      : !formData.title.trim() || !internalStartDate
-                  }
-                >
-                  {event
-                    ? (({ ko: "수정", en: "Update", zh: "更新" } as Record<string, string>)[language] || "Update")
-                    : (({ ko: "추가하기", en: "Add", zh: "添加" } as Record<string, string>)[language] || "Add")}
-                </Button>
-                {onDelete && (
-                  <Button
-                    onClick={() => {
-                      // 반복 일정이면 삭제 옵션 표시, 아니면 바로 삭제
-                      if (event?.recurrence) {
-                        setShowDeleteOptions(true);
-                        setSelectedDeleteType("this");
-                      } else {
-                        handleDelete();
-                      }
-                    }}
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 hover:bg-muted/50"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ) : (
-              // 삭제 옵션 선택 UI
-              <div className="space-y-2 pt-2">
-                <div className="text-sm font-medium text-center pb-1 border-b">
-                  {({ ko: "삭제 범위 선택", en: "Select delete range", zh: "选择删除范围" } as Record<string, string>)[language] || "Select delete range"}
-                </div>
-                <div className="space-y-1.5">
-                  <button
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors cursor-pointer ${
-                      selectedDeleteType === "this"
-                        ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
-                        : "hover:bg-muted"
-                    }`}
-                    onClick={() =>
-                      setSelectedDeleteType("this")
-                    }
-                  >
-                    <div
-                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        selectedDeleteType === "this"
-                          ? "border-red-600 dark:border-red-400"
-                          : "border-gray-300 dark:border-gray-600"
-                      }`}
-                    >
-                      {selectedDeleteType === "this" && (
-                        <div className="w-2 h-2 rounded-full bg-red-600 dark:bg-red-400" />
-                      )}
-                    </div>
-                    <span>
-                      {({ ko: "이 일정만", en: "This event only", zh: "仅此事件" } as Record<string, string>)[language] || "This event only"}
-                    </span>
-                  </button>
-                  <button
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors cursor-pointer ${
-                      selectedDeleteType === "following"
-                        ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
-                        : "hover:bg-muted"
-                    }`}
-                    onClick={() =>
-                      setSelectedDeleteType("following")
-                    }
-                  >
-                    <div
-                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        selectedDeleteType === "following"
-                          ? "border-red-600 dark:border-red-400"
-                          : "border-gray-300 dark:border-gray-600"
-                      }`}
-                    >
-                      {selectedDeleteType === "following" && (
-                        <div className="w-2 h-2 rounded-full bg-red-600 dark:bg-red-400" />
-                      )}
-                    </div>
-                    <span>
-                      {({ ko: "이후 모든 일정", en: "This and following events", zh: "此事件及后续事件" } as Record<string, string>)[language] || "This and following events"}
-                    </span>
-                  </button>
-                  <button
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors cursor-pointer ${
-                      selectedDeleteType === "all"
-                        ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
-                        : "hover:bg-muted"
-                    }`}
-                    onClick={() => setSelectedDeleteType("all")}
-                  >
-                    <div
-                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        selectedDeleteType === "all"
-                          ? "border-red-600 dark:border-red-400"
-                          : "border-gray-300 dark:border-gray-600"
-                      }`}
-                    >
-                      {selectedDeleteType === "all" && (
-                        <div className="w-2 h-2 rounded-full bg-red-600 dark:bg-red-400" />
-                      )}
-                    </div>
-                    <span>
-                      {({ ko: "모든 반복 일정", en: "All recurring events", zh: "所有重复事件" } as Record<string, string>)[language] || "All recurring events"}
-                    </span>
-                  </button>
-                </div>
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    onClick={() => {
-                      setShowDeleteOptions(false);
+                      : !formData.title.trim() || !internalStartDate,
+                  );
+                  handleSave();
+                }}
+                className="flex-1 h-9 text-sm bg-[#0C8CE9] hover:bg-[#0C8CE9]/90 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed rounded-sm cursor-pointer"
+                disabled={
+                  event
+                    ? !formData.title.trim() || !internalStartDate || !hasChanges
+                    : !formData.title.trim() || !internalStartDate
+                }
+              >
+                {event
+                  ? (({ ko: "수정", en: "Update", zh: "更新" } as Record<string, string>)[language] || "Update")
+                  : (({ ko: "추가하기", en: "Add", zh: "添加" } as Record<string, string>)[language] || "Add")}
+              </Button>
+              {onDelete && (
+                <Button
+                  onClick={() => {
+                    // 반복 일정이면 삭제 옵션 모달 표시, 아니면 바로 삭제
+                    if (event?.recurrence) {
+                      setShowDeleteOptions(true);
                       setSelectedDeleteType("this");
-                    }}
-                    variant="outline"
-                    className="flex-1 h-9 text-sm"
-                  >
-                    {({ ko: "취소", en: "Cancel", zh: "取消" } as Record<string, string>)[language] || "Cancel"}
-                  </Button>
-                  <Button
-                    onClick={handleDelete}
-                    className="flex-1 h-9 text-sm bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    {({ ko: "삭제", en: "Delete", zh: "删除" } as Record<string, string>)[language] || "Delete"}
-                  </Button>
-                </div>
-              </div>
-            )}
+                    } else {
+                      handleDelete();
+                    }
+                  }}
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 hover:bg-muted/50 cursor-pointer"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </PopoverContent>
       </Popover>
+
+      {/* 반복 일정 삭제 옵션 모달 */}
+      <AlertDialog
+        open={showDeleteOptions}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowDeleteOptions(false);
+            setSelectedDeleteType("this");
+          }
+        }}
+      >
+        <AlertDialogContent className="max-w-[320px] p-5">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-base font-semibold text-center">
+              {({ ko: "반복 일정 삭제", en: "Delete recurring event", zh: "删除重复事件" } as Record<string, string>)[language] || "Delete recurring event"}
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <div className="space-y-1.5 py-2">
+            <button
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer ${
+                selectedDeleteType === "this"
+                  ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
+                  : "hover:bg-muted border border-transparent"
+              }`}
+              onClick={() => setSelectedDeleteType("this")}
+            >
+              <div
+                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                  selectedDeleteType === "this"
+                    ? "border-red-600 dark:border-red-400"
+                    : "border-gray-300 dark:border-gray-600"
+                }`}
+              >
+                {selectedDeleteType === "this" && (
+                  <div className="w-2 h-2 rounded-full bg-red-600 dark:bg-red-400" />
+                )}
+              </div>
+              <span>
+                {({ ko: "이 일정만", en: "This event only", zh: "仅此事件" } as Record<string, string>)[language] || "This event only"}
+              </span>
+            </button>
+            <button
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer ${
+                selectedDeleteType === "following"
+                  ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
+                  : "hover:bg-muted border border-transparent"
+              }`}
+              onClick={() => setSelectedDeleteType("following")}
+            >
+              <div
+                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                  selectedDeleteType === "following"
+                    ? "border-red-600 dark:border-red-400"
+                    : "border-gray-300 dark:border-gray-600"
+                }`}
+              >
+                {selectedDeleteType === "following" && (
+                  <div className="w-2 h-2 rounded-full bg-red-600 dark:bg-red-400" />
+                )}
+              </div>
+              <span>
+                {({ ko: "이 일정 및 향후 일정", en: "This and following events", zh: "此事件及后续事件" } as Record<string, string>)[language] || "This and following events"}
+              </span>
+            </button>
+            <button
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer ${
+                selectedDeleteType === "all"
+                  ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
+                  : "hover:bg-muted border border-transparent"
+              }`}
+              onClick={() => setSelectedDeleteType("all")}
+            >
+              <div
+                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                  selectedDeleteType === "all"
+                    ? "border-red-600 dark:border-red-400"
+                    : "border-gray-300 dark:border-gray-600"
+                }`}
+              >
+                {selectedDeleteType === "all" && (
+                  <div className="w-2 h-2 rounded-full bg-red-600 dark:bg-red-400" />
+                )}
+              </div>
+              <span>
+                {({ ko: "모든 반복 일정", en: "All recurring events", zh: "所有重复事件" } as Record<string, string>)[language] || "All recurring events"}
+              </span>
+            </button>
+          </div>
+          <AlertDialogFooter className="flex gap-2 sm:gap-2">
+            <AlertDialogCancel
+              className="flex-1 h-9 text-sm cursor-pointer"
+              onClick={() => {
+                setShowDeleteOptions(false);
+                setSelectedDeleteType("this");
+              }}
+            >
+              {({ ko: "취소", en: "Cancel", zh: "取消" } as Record<string, string>)[language] || "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="flex-1 h-9 text-sm bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+              onClick={() => {
+                setShowDeleteOptions(false);
+                handleDelete();
+              }}
+            >
+              {({ ko: "삭제", en: "Delete", zh: "删除" } as Record<string, string>)[language] || "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* 카테고리 삭제 확인 AlertDialog */}
       <AlertDialog
